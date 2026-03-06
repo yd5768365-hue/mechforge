@@ -1,0 +1,278 @@
+# 发布工作流 - 自动发布到 PyPI 和创建 GitHub Release
+#
+# 触发条件:
+#   - 推送版本标签 (v*.*.*)
+#   - 手动触发
+#
+# 需要配置的 Secrets:
+#   - PYPI_API_TOKEN: PyPI API Token
+#   - GITHUB_TOKEN: GitHub Token (自动提供)
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 0.5.0)'
+        required: true
+        type: string
+
+jobs:
+  # 验证版本号
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
+
+      - name: Check version in pyproject.toml
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          FILE_VERSION=$(grep -E '^version\s*=\s*"' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ "$VERSION" != "$FILE_VERSION" ]; then
+            echo "Version mismatch!"
+            echo "Tag version: $VERSION"
+            echo "pyproject.toml version: $FILE_VERSION"
+            echo "Please update pyproject.toml before tagging."
+            exit 1
+          fi
+          echo "Version check passed: $VERSION"
+
+  # 运行测试
+  test:
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,all]"
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  # 构建包
+  build:
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 5
+
+  # 发布到 PyPI
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mechforge-ai
+    permissions:
+      id-token: write  # 用于 OIDC 认证
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  # 创建 GitHub Release
+  create-release:
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          
+          # 获取上一个标签
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # 如果没有上一个标签，获取所有提交
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # 获取两个标签之间的提交
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges ${PREVIOUS_TAG}..HEAD)
+          fi
+          
+          # 转义换行符
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.validate.outputs.version }}
+          name: Release v${{ needs.validate.outputs.version }}
+          body: |
+            ## MechForge AI v${{ needs.validate.outputs.version }}
+
+            ### 更新内容
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### 安装
+            ```bash
+            pip install mechforge-ai==${{ needs.validate.outputs.version }}
+            ```
+
+            ### Docker 镜像
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.version }}
+            ```
+
+            ### 完整变更日志
+            查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(needs.validate.outputs.version, 'a') || contains(needs.validate.outputs.version, 'b') || contains(needs.validate.outputs.version, 'rc') }}
+
+  # 更新 Docker 镜像标签
+  tag-docker:
+    needs: [validate, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag Docker images with version
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          REPO="ghcr.io/${{ github.repository }}"
+          
+          # 为每个变体添加版本标签
+          for variant in ai rag work web ""; do
+            if [ -z "$variant" ]; then
+              SOURCE="${REPO}:latest"
+              TARGET="${REPO}:${VERSION}"
+            else
+              SOURCE="${REPO}-${variant}:latest"
+              TARGET="${REPO}-${variant}:${VERSION}"
+            fi
+            
+            # 拉取 latest 并重新标记
+            docker pull $SOURCE
+            docker tag $SOURCE $TARGET
+            docker push $TARGET
+            
+            echo "Tagged: $TARGET"
+          done
+
+  # 发布摘要
+  summary:
+    needs: [create-release, tag-docker]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Release Summary
+        run: |
+          echo "## 🎉 Release v${{ needs.validate.outputs.version }} 完成!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 发布内容" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PyPI: https://pypi.org/p/mechforge-ai" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Docker Images: ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 安装命令" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "pip install mechforge-ai==${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

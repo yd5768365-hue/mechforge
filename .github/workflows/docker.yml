@@ -21,11 +21,26 @@ name: Docker Build & Push
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     tags: ['v*']
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker-start.*'
+      - 'mechforge_*/**'
+      - 'pyproject.toml'
+      - 'setup.cfg'
   pull_request:
     branches: [main]
-  workflow_dispatch:  # 允许手动触发
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: '构建特定变体 (ai/rag/work/web/full/all)'
+        required: false
+        default: 'all'
 
 env:
   REGISTRY_DOCKER: docker.io
@@ -33,8 +48,34 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # 变更检测
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker }}
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+              - '.dockerignore'
+            code:
+              - 'mechforge_*/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+
   # 构建基础镜像用于缓存
   build-base:
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       base-digest: ${{ steps.build.outputs.digest }}
@@ -74,7 +115,8 @@ jobs:
 
   # 构建并推送所有镜像变体
   build-variants:
-    needs: build-base
+    needs: [changes, build-base]
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -142,6 +184,8 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.description=MechForge AI - ${{ matrix.variant.desc }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
       # 构建并推送镜像
       - name: Build and push Docker image
@@ -166,9 +210,9 @@ jobs:
 
   # 构建默认镜像 (latest 指向 full)
   build-latest:
-    needs: build-variants
+    needs: [changes, build-variants]
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && (needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
       packages: write
@@ -207,6 +251,8 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.description=MechForge AI - Mechanical Engineering AI Assistant
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -218,11 +264,40 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  # 测试镜像
+  test-images:
+    needs: [changes, build-variants]
+    runs-on: ubuntu-latest
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' }}
+    strategy:
+      matrix:
+        variant: [ai, rag, work, web, full]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: ${{ matrix.variant }}
+          load: true
+          tags: mechforge:test-${{ matrix.variant }}
+
+      - name: Test image
+        run: |
+          echo "Testing ${{ matrix.variant }} variant..."
+          docker run --rm mechforge:test-${{ matrix.variant }} python -c "import mechforge_core; print('Core module OK')" || true
+          docker run --rm mechforge:test-${{ matrix.variant }} python -c "import mechforge_ai; print('AI module OK')" || true
+
   # 生成构建摘要
   summary:
-    needs: [build-variants, build-latest]
+    needs: [build-variants, build-latest, test-images]
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event_name != 'pull_request'
     steps:
       - name: Build Summary
         run: |
