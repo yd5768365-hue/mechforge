@@ -6,6 +6,7 @@ MCP 客户端实现
 
 import json
 import subprocess
+import sys
 from typing import Any
 
 from .tools import Tool, ToolParameter
@@ -33,13 +34,18 @@ class MCPClient:
     def start(self) -> bool:
         """启动 MCP 服务器进程"""
         try:
+            # Windows 需要使用 shell=True 来执行 npx 等命令
+            use_shell = sys.platform == "win32"
+            cmd = f"{self.command} {' '.join(self.args)}" if use_shell else [self.command] + self.args
+
             self.process = subprocess.Popen(
-                [self.command] + self.args,
+                cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 env=self.env,
+                shell=use_shell,
             )
 
             # 发送初始化请求

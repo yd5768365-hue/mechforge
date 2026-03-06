@@ -289,6 +289,8 @@ mechforge-web --port 8081
 - `docs/DOCKER.md` - Docker 部署指南
 - `config.yaml` - 配置文件示例
 - `.env.example` - 环境变量模板
+- `开发日志/DEV_LOG.md` - 开发日志（Qwen 记录）
+- `.qwen/mcp_config.json` - MCP 服务器配置
 
 
 ## Qwen Added Memories

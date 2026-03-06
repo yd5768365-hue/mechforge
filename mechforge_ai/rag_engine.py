@@ -336,7 +336,13 @@ class RAGEngine:
         use_rerank: bool = True,
     ):
         self.config = get_config()
-        self.knowledge_path = knowledge_path or Path(self.config.knowledge.path)
+        # 使用统一的路径查找函数
+        if knowledge_path:
+            self.knowledge_path = knowledge_path
+        else:
+            from mechforge_core.config import find_knowledge_path
+            found_path = find_knowledge_path()
+            self.knowledge_path = found_path or Path(self.config.knowledge.path)
         self.top_k = top_k
         self.use_vector = use_vector
         self.use_bm25 = use_bm25

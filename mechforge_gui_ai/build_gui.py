@@ -22,12 +22,12 @@ def clean_build():
     for dir_name in dirs_to_clean:
         if Path(dir_name).exists():
             shutil.rmtree(dir_name)
-            print(f"✓ 已清理: {dir_name}")
+            print(f"[OK] 已清理: {dir_name}")
 
     # 清理 .spec 文件
     for spec_file in Path(".").glob("*.spec"):
         spec_file.unlink()
-        print(f"✓ 已清理: {spec_file}")
+        print(f"[OK] 已清理: {spec_file}")
 
 
 def build_exe():
@@ -66,12 +66,15 @@ def build_exe():
         "--exclude-module=PIL",
         "--exclude-module=scipy",
         "--exclude-module=numpy.f2py",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PyQt6",
+        "--exclude-module=PySide2",
 
         # 图标 (如果存在)
         # "--icon=assets/icon.ico",
 
-        # 入口点
-        "-m", "mechforge_gui_ai.app",
+        # 入口点脚本
+        "mechforge_gui_ai/app.py",
     ]
 
     print("开始打包...")
@@ -83,13 +86,13 @@ def build_exe():
         exe_path = Path("dist") / "MechForge.exe"
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"\n✓ 打包成功!")
+            print(f"\n[OK] 打包成功!")
             print(f"  输出文件: {exe_path.absolute()}")
             print(f"  文件大小: {size_mb:.1f} MB")
         else:
-            print("\n✗ 打包失败: 未找到输出文件")
+            print("\n[ERROR] 打包失败: 未找到输出文件")
     else:
-        print(f"\n✗ 打包失败: 返回码 {result.returncode}")
+        print(f"\n[ERROR] 打包失败: 返回码 {result.returncode}")
 
     return result.returncode
 

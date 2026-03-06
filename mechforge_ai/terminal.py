@@ -48,23 +48,9 @@ class MechForgeTerminal:
         return self._rag_engine
 
     def _create_rag_engine(self) -> RAGEngine:
-        """创建 RAG 引擎"""
-        # 查找知识库路径
-        knowledge_path = None
-        config_path = Path(self.config.knowledge.path)
-        if config_path.exists() and list(config_path.glob("*.md")):
-            knowledge_path = config_path
-        else:
-            search_paths = [
-                Path(__file__).parent.parent.parent.parent / "knowledge",
-                Path(__file__).parent.parent.parent.parent / "data" / "knowledge",
-                Path.home() / "knowledge",
-                Path.cwd() / "knowledge",
-            ]
-            for path in search_paths:
-                if path.exists() and list(path.glob("*.md")):
-                    knowledge_path = path
-                    break
+        """创建 RAG 引擎（使用统一的路径查找）"""
+        from mechforge_core.config import find_knowledge_path
+        knowledge_path = find_knowledge_path()
 
         return RAGEngine(knowledge_path=knowledge_path, top_k=self.config.knowledge.rag.top_k)
 

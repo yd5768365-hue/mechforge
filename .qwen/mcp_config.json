@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--headless",
+        "--slim"
+      ],
+      "description": "Chrome DevTools MCP 服务器 - 用于网页截图、JS执行、导航",
+      "env": {}
+    }
+  }
+}

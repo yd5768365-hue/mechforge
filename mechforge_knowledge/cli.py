@@ -31,18 +31,9 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
 
 
 def _find_knowledge_path() -> Path | None:
-    """查找知识库路径"""
-    search_paths = [
-        Path(__file__).parent.parent.parent.parent / "knowledge",
-        Path(__file__).parent.parent.parent.parent / "data" / "knowledge",
-        Path.home() / "knowledge",
-        Path.cwd() / "knowledge",
-    ]
-
-    for path in search_paths:
-        if path.exists() and list(path.glob("*.md")):
-            return path
-    return None
+    """查找知识库路径（使用核心模块的统一函数）"""
+    from mechforge_core.config import find_knowledge_path as core_find_path
+    return core_find_path()
 
 
 def load_knowledge_files(knowledge_dir: Path) -> list[dict]:

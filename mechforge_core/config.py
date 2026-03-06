@@ -48,6 +48,43 @@ def _get_default_config_file() -> Path | None:
     for path in paths:
         if path.exists():
             return path
+
+
+def find_knowledge_path() -> Path | None:
+    """查找知识库路径（AI模式和知识库模式统一使用）
+
+    按优先级搜索以下路径：
+    1. 配置文件中的 knowledge.path
+    2. 项目根目录的 knowledge 文件夹
+    3. 项目根目录的 data/knowledge 文件夹
+    4. 用户主目录的 .mechforge/knowledge 文件夹
+    5. 当前工作目录的 knowledge 文件夹
+    """
+    # 首先检查配置文件
+    try:
+        config = get_config()
+        if config.knowledge and config.knowledge.path:
+            config_path = Path(config.knowledge.path)
+            if config_path.exists():
+                return config_path
+    except Exception:
+        pass
+
+    # 搜索其他路径
+    search_paths = [
+        _get_app_dir() / "knowledge",
+        _get_app_dir() / "data" / "knowledge",
+        _get_config_dir() / "knowledge",
+        Path.home() / ".mechforge" / "knowledge",
+        Path.cwd() / "knowledge",
+    ]
+
+    for path in search_paths:
+        if path.exists() and list(path.glob("*.md")):
+            return path
+
+    # 返回默认路径（即使不存在）
+    return Path.cwd() / "knowledge"
     return None
 
 

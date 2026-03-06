@@ -1,8 +1,9 @@
 """
-主窗口 - 终端风格 GUI
+主窗口 - Modern Dark Glassmorphism GUI
 """
 
 import json
+import random
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -27,7 +28,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from mechforge_gui_ai.theme import THEME, FONT_FAMILY, FONT_SIZE, WINDOW, get_stylesheet
+from mechforge_gui_ai.theme import (
+    THEME, FONT_FAMILY, FONT_FAMILY_UI, FONT_FAMILY_TITLE, FONT_FAMILY_CN, FONT_FAMILY_TERMINAL,
+    FONT_SIZE, WINDOW, get_stylesheet
+)
 
 if TYPE_CHECKING:
     from mechforge_ai.llm_client import LLMClient
@@ -54,7 +58,7 @@ class APICallThread(QThread):
 
 
 class MessageWidget(QWidget):
-    """消息显示组件 - 气泡式布局"""
+    """消息显示组件 - 精致气泡式布局"""
 
     def __init__(self, role: str, content: str, parent=None):
         super().__init__(parent)
@@ -65,8 +69,8 @@ class MessageWidget(QWidget):
     def _setup_ui(self):
         """设置气泡式消息 UI"""
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 8, 0, 8)
-        main_layout.setSpacing(12)
+        main_layout.setContentsMargins(12, 5, 12, 5)
+        main_layout.setSpacing(10)
 
         is_user = self.role == "user"
         is_assistant = self.role == "assistant"
@@ -77,45 +81,58 @@ class MessageWidget(QWidget):
         avatar.setAlignment(Qt.AlignCenter)
 
         if is_assistant:
-            avatar.setText("◉")
-            avatar_font = QFont("Segoe UI Symbol", 16, QFont.Bold)
+            avatar.setText("AI")
+            avatar_font = QFont("Segoe UI", 9, QFont.Bold)
             avatar.setFont(avatar_font)
             avatar.setStyleSheet(f"""
                 QLabel {{
-                    background: qradialgradient(
-                        cx: 0.5, cy: 0.5, radius: 0.5,
-                        stop: 0 {THEME['accent_cyan']},
-                        stop: 1 transparent
+                    background: qlineargradient(
+                        x1: 0, y1: 0, x2: 1, y2: 1,
+                        stop: 0 rgba(34, 211, 238, 0.22),
+                        stop: 1 rgba(34, 211, 238, 0.08)
                     );
                     color: {THEME['accent_cyan']};
                     border-radius: 18px;
-                    border: 2px solid {THEME['accent_cyan']};
+                    border: 1px solid rgba(34, 211, 238, 0.45);
+                    font-weight: bold;
+                    font-family: "Segoe UI";
+                    font-size: 9px;
+                    letter-spacing: 1px;
                 }}
             """)
         elif is_user:
-            avatar.setText("◆")
-            avatar_font = QFont("Segoe UI Symbol", 14, QFont.Bold)
+            avatar.setText("ME")
+            avatar_font = QFont("Segoe UI", 9, QFont.Bold)
             avatar.setFont(avatar_font)
             avatar.setStyleSheet(f"""
                 QLabel {{
-                    background: qradialgradient(
-                        cx: 0.5, cy: 0.5, radius: 0.5,
-                        stop: 0 {THEME['accent_purple']},
-                        stop: 1 transparent
+                    background: qlineargradient(
+                        x1: 0, y1: 0, x2: 1, y2: 1,
+                        stop: 0 rgba(129, 140, 248, 0.22),
+                        stop: 1 rgba(129, 140, 248, 0.08)
                     );
                     color: {THEME['accent_purple']};
                     border-radius: 18px;
-                    border: 2px solid {THEME['accent_purple']};
+                    border: 1px solid rgba(129, 140, 248, 0.45);
+                    font-weight: bold;
+                    font-family: "Segoe UI";
+                    font-size: 9px;
+                    letter-spacing: 1px;
                 }}
             """)
         else:
-            avatar.setText("⚙")
+            avatar.setText("SYS")
+            avatar_font = QFont("Segoe UI", 8, QFont.Bold)
+            avatar.setFont(avatar_font)
             avatar.setStyleSheet(f"""
                 QLabel {{
-                    background-color: {THEME['bg_secondary']};
+                    background: rgba(129, 140, 248, 0.10);
                     color: {THEME['system_color']};
                     border-radius: 18px;
-                    border: 1px solid {THEME['system_color']};
+                    border: 1px solid rgba(129, 140, 248, 0.30);
+                    font-family: "Segoe UI";
+                    font-size: 8px;
+                    letter-spacing: 0.5px;
                 }}
             """)
 
@@ -123,22 +140,47 @@ class MessageWidget(QWidget):
         bubble_container = QWidget()
         bubble_layout = QVBoxLayout(bubble_container)
         bubble_layout.setContentsMargins(0, 0, 0, 0)
-        bubble_layout.setSpacing(4)
+        bubble_layout.setSpacing(5)
+        # 限制气泡最大宽度，实现更精致的聊天布局
+        if is_user:
+            bubble_container.setMaximumWidth(620)
+        elif is_assistant:
+            bubble_container.setMaximumWidth(700)
+        else:
+            bubble_container.setMaximumWidth(560)
 
         # 角色名称
         name_label = QLabel()
         if is_user:
             name_label.setText("你")
             name_label.setAlignment(Qt.AlignRight)
-            name_label.setStyleSheet(f"color: {THEME['accent_purple']}; font-size: 11px; font-weight: bold;")
+            name_label.setStyleSheet(f"""
+                color: rgba(129, 140, 248, 0.75);
+                font-size: 10px;
+                font-weight: 600;
+                font-family: "Segoe UI";
+                padding-right: 4px;
+                letter-spacing: 0.5px;
+            """)
         elif is_assistant:
             name_label.setText("MechForge AI")
             name_label.setAlignment(Qt.AlignLeft)
-            name_label.setStyleSheet(f"color: {THEME['accent_cyan']}; font-size: 11px; font-weight: bold;")
+            name_label.setStyleSheet(f"""
+                color: rgba(34, 211, 238, 0.75);
+                font-size: 10px;
+                font-weight: 600;
+                font-family: "Segoe UI";
+                padding-left: 4px;
+                letter-spacing: 0.5px;
+            """)
         else:
             name_label.setText("系统")
             name_label.setAlignment(Qt.AlignCenter)
-            name_label.setStyleSheet(f"color: {THEME['system_color']}; font-size: 11px;")
+            name_label.setStyleSheet(f"""
+                color: rgba(129, 140, 248, 0.60);
+                font-size: 10px;
+                font-family: "Segoe UI";
+            """)
 
         # 消息气泡
         bubble = QTextEdit()
@@ -150,65 +192,67 @@ class MessageWidget(QWidget):
 
         # 气泡样式
         if is_user:
-            # 用户消息 - 右侧紫色气泡
+            # 用户消息 - 右侧，精致紫色调
             bubble.setStyleSheet(f"""
                 QTextEdit {{
                     background: qlineargradient(
                         x1: 0, y1: 0, x2: 1, y2: 1,
-                        stop: 0 rgba(160, 32, 240, 0.15),
-                        stop: 1 rgba(160, 32, 240, 0.05)
+                        stop: 0 rgba(129, 140, 248, 0.13),
+                        stop: 1 rgba(99, 102, 241, 0.06)
                     );
                     color: {THEME['text_primary']};
-                    border: 1px solid rgba(160, 32, 240, 0.4);
-                    border-radius: 16px;
-                    border-top-right-radius: 4px;
-                    padding: 12px 16px;
+                    border: 1px solid rgba(129, 140, 248, 0.28);
+                    border-radius: 18px;
+                    border-top-right-radius: 5px;
+                    padding: 12px 18px;
                     font-family: "{FONT_FAMILY}";
-                    font-size: {FONT_SIZE['normal']}px;
+                    font-size: {FONT_SIZE['medium']}px;
+                    line-height: 1.65;
                 }}
                 QScrollBar:vertical {{
                     background: transparent;
-                    width: 4px;
+                    width: 3px;
                 }}
                 QScrollBar::handle:vertical {{
-                    background: rgba(160, 32, 240, 0.5);
-                    border-radius: 2px;
+                    background: rgba(129, 140, 248, 0.40);
+                    border-radius: 1px;
                 }}
             """)
         elif is_assistant:
-            # AI 消息 - 左侧青色气泡
+            # AI 消息 - 左侧，精致青色调
             bubble.setStyleSheet(f"""
                 QTextEdit {{
                     background: qlineargradient(
                         x1: 0, y1: 0, x2: 1, y2: 1,
-                        stop: 0 rgba(0, 245, 255, 0.12),
-                        stop: 1 rgba(0, 245, 255, 0.03)
+                        stop: 0 rgba(34, 211, 238, 0.10),
+                        stop: 1 rgba(14, 165, 233, 0.04)
                     );
                     color: {THEME['text_primary']};
-                    border: 1px solid rgba(0, 245, 255, 0.3);
-                    border-radius: 16px;
-                    border-top-left-radius: 4px;
-                    padding: 12px 16px;
+                    border: 1px solid rgba(34, 211, 238, 0.22);
+                    border-radius: 18px;
+                    border-top-left-radius: 5px;
+                    padding: 12px 18px;
                     font-family: "{FONT_FAMILY}";
-                    font-size: {FONT_SIZE['normal']}px;
+                    font-size: {FONT_SIZE['medium']}px;
+                    line-height: 1.65;
                 }}
                 QScrollBar:vertical {{
                     background: transparent;
-                    width: 4px;
+                    width: 3px;
                 }}
                 QScrollBar::handle:vertical {{
-                    background: rgba(0, 245, 255, 0.5);
-                    border-radius: 2px;
+                    background: rgba(34, 211, 238, 0.35);
+                    border-radius: 1px;
                 }}
             """)
         else:
-            # 系统消息 - 居中橙色
+            # 系统消息 - 居中，精致暗色调
             bubble.setStyleSheet(f"""
                 QTextEdit {{
-                    background-color: rgba(255, 140, 0, 0.1);
-                    color: {THEME['system_color']};
-                    border: 1px solid rgba(255, 140, 0, 0.3);
-                    border-radius: 12px;
+                    background-color: rgba(129, 140, 248, 0.07);
+                    color: rgba(129, 140, 248, 0.85);
+                    border: 1px solid rgba(129, 140, 248, 0.18);
+                    border-radius: 10px;
                     padding: 8px 16px;
                     font-family: "{FONT_FAMILY}";
                     font-size: {FONT_SIZE['small']}px;
@@ -231,9 +275,6 @@ class MessageWidget(QWidget):
             main_layout.addStretch()
             main_layout.addWidget(bubble_container)
             main_layout.addStretch()
-
-
-import random
 
 
 # 随机欢迎词列表
@@ -282,7 +323,7 @@ WELCOME_MESSAGES = [
 
 
 class ChatArea(QWidget):
-    """聊天显示区域 - 电路板纹理背景 + 打字机动画"""
+    """聊天显示区域 - 深空蓝背景 + 精致网格"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -296,7 +337,7 @@ class ChatArea(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # 设置纯色背景（电路板纹理通过 paintEvent 绘制）
+        # 设置纯色背景（通过 paintEvent 绘制）
         self.setStyleSheet(f"background-color: {THEME['bg_primary']};")
 
         # 滚动区域
@@ -306,7 +347,7 @@ class ChatArea(QWidget):
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setFrameShape(QFrame.NoFrame)
 
-        # 超细 cyan 发光滚动条
+        # 精致滚动条
         self.scroll_area.setStyleSheet(f"""
             QScrollArea {{
                 background: transparent;
@@ -314,26 +355,16 @@ class ChatArea(QWidget):
             }}
             QScrollBar:vertical {{
                 background: transparent;
-                width: 3px;
-                margin: 0px;
+                width: 4px;
+                margin: 6px 2px;
             }}
             QScrollBar::handle:vertical {{
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 rgba(0, 245, 255, 0.3),
-                    stop: 0.5 rgba(0, 245, 255, 0.8),
-                    stop: 1 rgba(0, 245, 255, 0.3)
-                );
-                min-height: 30px;
-                border-radius: 1px;
+                background: rgba(34, 211, 238, 0.22);
+                min-height: 32px;
+                border-radius: 2px;
             }}
             QScrollBar::handle:vertical:hover {{
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 rgba(0, 245, 255, 0.5),
-                    stop: 0.5 rgba(0, 245, 255, 1.0),
-                    stop: 1 rgba(0, 245, 255, 0.5)
-                );
+                background: rgba(34, 211, 238, 0.50);
             }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
                 height: 0px;
@@ -348,8 +379,8 @@ class ChatArea(QWidget):
         self.message_container.setStyleSheet("background: transparent;")
         self.message_layout = QVBoxLayout(self.message_container)
         self.message_layout.setAlignment(Qt.AlignTop)
-        self.message_layout.setSpacing(0)
-        self.message_layout.setContentsMargins(16, 16, 16, 16)
+        self.message_layout.setSpacing(2)
+        self.message_layout.setContentsMargins(20, 20, 20, 20)
 
         self.scroll_area.setWidget(self.message_container)
         layout.addWidget(self.scroll_area)
@@ -358,7 +389,7 @@ class ChatArea(QWidget):
         self._show_typing_welcome()
 
     def _show_typing_welcome(self):
-        """显示打字机动画欢迎语 - 随机选择"""
+        """显示欢迎语 - 使用 QTextEdit 确保多行文本清晰显示"""
         # 随机选择一条欢迎词
         self._current_welcome = random.choice(WELCOME_MESSAGES)
 
@@ -366,114 +397,68 @@ class ChatArea(QWidget):
         welcome_layout = QVBoxLayout(self._welcome_widget)
         welcome_layout.setAlignment(Qt.AlignCenter)
         welcome_layout.setSpacing(12)
+        welcome_layout.setContentsMargins(40, 60, 40, 60)
 
-        # 主标题
-        self._welcome_title = QLabel()
-        self._welcome_title.setAlignment(Qt.AlignCenter)
-        title_font = QFont(FONT_FAMILY, 20, QFont.Bold)
-        self._welcome_title.setFont(title_font)
-        self._welcome_title.setStyleSheet(f"""
+        # 主标题 - 使用科幻标题字体
+        title = QLabel(self._current_welcome["title"])
+        title.setAlignment(Qt.AlignCenter)
+        title_font = QFont(FONT_FAMILY_TITLE, 22, QFont.Bold)
+        title.setFont(title_font)
+        title.setStyleSheet(f"""
             color: {THEME['accent_cyan']};
             background: transparent;
             padding: 0 20px;
+            letter-spacing: 1px;
         """)
 
-        # 副标题
-        self._welcome_subtitle = QLabel()
-        self._welcome_subtitle.setAlignment(Qt.AlignCenter)
-        subtitle_font = QFont(FONT_FAMILY, 12)
-        self._welcome_subtitle.setFont(subtitle_font)
-        self._welcome_subtitle.setStyleSheet(f"""
+        # 副标题 - 使用中文科技字体
+        subtitle = QLabel(self._current_welcome["subtitle"])
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle_font = QFont(FONT_FAMILY_CN, 11)
+        subtitle.setFont(subtitle_font)
+        subtitle.setStyleSheet(f"""
             color: {THEME['accent_purple']};
             background: transparent;
             padding: 0 20px;
         """)
 
-        # 内容区域（使用 QTextEdit 支持多行）- 霓虹发光边框
-        self._welcome_content = QTextEdit()
-        self._welcome_content.setReadOnly(True)
-        self._welcome_content.setMaximumWidth(600)
-        self._welcome_content.setMinimumHeight(200)
-        # 玻璃态 + 霓虹发光边框
-        self._welcome_content.setStyleSheet(f"""
+        # 内容区域 - 使用 QTextEdit 确保长文本清晰显示
+        content = QTextEdit()
+        content.setReadOnly(True)
+        content.setPlainText(self._current_welcome["content"])
+        content.setMaximumWidth(580)
+        content.setMinimumHeight(180)
+        content.setMaximumHeight(350)
+        content.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        content.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        content.setStyleSheet(f"""
             QTextEdit {{
-                background: rgba(16, 24, 45, 0.70);
+                background: rgba(15, 23, 42, 0.60);
                 color: {THEME['text_primary']};
-                border: 1px solid rgba(0, 245, 255, 0.40);
-                border-radius: 16px;
-                padding: 20px 24px;
-                font-family: "{FONT_FAMILY}";
+                border: 1px solid rgba(34, 211, 238, 0.20);
+                border-radius: 12px;
+                padding: 16px 20px;
+                font-family: "{FONT_FAMILY_TERMINAL}";
                 font-size: {FONT_SIZE['normal']}px;
-                line-height: 1.7;
+                line-height: 1.6;
             }}
-            QTextEdit:focus {{
-                border: 1px solid rgba(0, 245, 255, 0.80);
+            QScrollBar:vertical {{
+                background: transparent;
+                width: 4px;
+                margin: 4px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: rgba(34, 211, 238, 0.30);
+                border-radius: 2px;
+                min-height: 30px;
             }}
         """)
-        # 添加外发光效果
-        from PySide6.QtWidgets import QGraphicsDropShadowEffect
-        glow_effect = QGraphicsDropShadowEffect()
-        glow_effect.setBlurRadius(30)
-        glow_effect.setColor(QColor(0, 245, 255, 100))
-        glow_effect.setOffset(0, 0)
-        self._welcome_content.setGraphicsEffect(glow_effect)
 
-        welcome_layout.addWidget(self._welcome_title)
-        welcome_layout.addWidget(self._welcome_subtitle)
-        welcome_layout.addWidget(self._welcome_content)
+        welcome_layout.addWidget(title)
+        welcome_layout.addWidget(subtitle)
+        welcome_layout.addWidget(content)
 
         self.message_layout.addWidget(self._welcome_widget)
-
-        # 打字机动画序列
-        self._type_text(self._welcome_title, self._current_welcome["title"], 0, lambda:
-            self._type_text(self._welcome_subtitle, self._current_welcome["subtitle"], 0, lambda:
-                self._type_text_content(self._welcome_content, self._current_welcome["content"], 0)))
-
-    def _type_text(self, label: QLabel, text: str, index: int, callback=None):
-        """打字机效果 - 单行文本"""
-        try:
-            # 检查标签是否还存在
-            if not label or not label.parentWidget():
-                return
-
-            if index <= len(text):
-                label.setText(text[:index] + "▋")
-                QTimer.singleShot(50, lambda: self._type_text(label, text, index + 1, callback))
-            else:
-                label.setText(text)
-                if callback:
-                    callback()
-        except (RuntimeError, AttributeError):
-            # 对象已被删除，忽略
-            pass
-
-    def _type_text_content(self, text_edit: QTextEdit, text: str, index: int):
-        """打字机效果 - 多行内容（带渐隐）"""
-        try:
-            # 检查控件是否还存在
-            if not text_edit or not text_edit.parentWidget():
-                return
-
-            if index <= len(text):
-                # 显示当前文本 + 光标
-                current_text = text[:index]
-                # 使用 HTML 格式添加闪烁光标
-                html_content = current_text.replace("\n", "<br>")
-                html_content += '<span style="color: #00F5FF;">▋</span>'
-                text_edit.setHtml(f'<div style="color: {THEME["text_primary"]};">{html_content}</div>')
-
-                # 计算延迟（标点符号稍微停顿）
-                delay = 30 if index < len(text) and text[index] in '。！？.!?\n' else 15
-                QTimer.singleShot(delay, lambda: self._type_text_content(text_edit, text, index + 1))
-            else:
-                # 打字完成，显示最终文本
-                final_text = text.replace("\n", "<br>")
-                text_edit.setHtml(f'<div style="color: {THEME["text_primary"]};">{final_text}</div>')
-                # 3秒后渐隐
-                QTimer.singleShot(3000, self._fade_out_welcome)
-        except (RuntimeError, AttributeError):
-            # 对象已被删除，忽略
-            pass
 
     def _fade_out_welcome(self):
         """渐隐欢迎语"""
@@ -503,9 +488,9 @@ class ChatArea(QWidget):
 
     def add_message(self, role: str, content: str):
         """添加消息"""
-        # 如果有欢迎语，先移除
-        if self._welcome_widget:
-            self._remove_welcome()
+        # 不显示系统消息
+        if role == "system":
+            return
 
         msg_widget = MessageWidget(role, content)
         self.message_layout.addWidget(msg_widget)
@@ -528,66 +513,92 @@ class ChatArea(QWidget):
         self._show_typing_welcome()
 
     def paintEvent(self, event):
-        """绘制 Dark Glassmorphism 六边形蜂窝网格背景"""
-        from PySide6.QtGui import QPainter, QPen, QColor, QPolygonF, QLinearGradient
+        """绘制深空蓝背景 + 精致网格线"""
+        from PySide6.QtGui import QPainter, QPen, QColor, QLinearGradient
         from PySide6.QtCore import QPointF
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 绘制深海军蓝渐变背景
+        # 深空蓝渐变背景（更精致的色调）
         gradient = QLinearGradient(0, 0, 0, self.height())
-        gradient.setColorAt(0, QColor(THEME['bg_primary']))
-        gradient.setColorAt(1, QColor(THEME['bg_secondary']))
+        gradient.setColorAt(0, QColor("#070D1A"))
+        gradient.setColorAt(0.45, QColor("#0A1221"))
+        gradient.setColorAt(1, QColor("#0F172A"))
         painter.fillRect(self.rect(), gradient)
 
-        # 绘制六边形蜂窝网格
-        hex_size = 25  # 六边形半径
-        hex_height = hex_size * 1.732  # 六边形高度 (√3)
-        opacity = 25  # 极淡的透明度
+        # 微妙的径向中心光晕
+        from PySide6.QtGui import QRadialGradient
+        center_gradient = QRadialGradient(
+            self.width() / 2, self.height() / 2,
+            max(self.width(), self.height()) * 0.75
+        )
+        center_gradient.setColorAt(0, QColor(34, 130, 180, 10))
+        center_gradient.setColorAt(0.5, QColor(20, 80, 120, 4))
+        center_gradient.setColorAt(1, QColor(0, 0, 0, 0))
+        painter.fillRect(self.rect(), center_gradient)
 
-        pen = QPen(QColor(0, 245, 255, opacity))
-        pen.setWidth(1)
-        painter.setPen(pen)
-        painter.setBrush(Qt.NoBrush)
+        # 绘制极淡网格线（更克制、更现代）
+        grid_spacing = 44
+        line_opacity = 14  # 大幅降低不透明度
 
-        # 计算六边形顶点
-        def draw_hexagon(cx, cy, size):
-            points = []
-            for i in range(6):
-                angle = 60 * i - 30  # 从顶部开始
-                x = cx + size * 0.866 * (1 if i in [0, 3] else (-0.5 if i in [1, 2] else 0.5))
-                y = cy + size * (0 if i in [0, 3] else (-0.866 if i in [1, 5] else 0.866))
-                # 修正计算
-                rad = 3.14159 / 180 * (60 * i - 30)
-                px = cx + size * (1 if i == 0 else -0.5 if i in [1, 5] else -0.5 if i == 2 else -1 if i == 3 else 0.5 if i == 4 else 0.5)
-                py = cy + size * (0 if i in [0, 3] else -0.866 if i in [1, 5] else 0.866)
-            
-            # 正确的六边形顶点计算
-            for i in range(6):
-                angle_deg = 60 * i - 30
-                angle_rad = 3.14159 / 180 * angle_deg
-                px = cx + size * (1 if i == 0 else 0.5 if i == 1 else -0.5 if i == 2 else -1 if i == 3 else -0.5 if i == 4 else 0.5)
-                py = cy + size * (0 if i in [0, 3] else -0.866 if i in [1, 5] else 0.866)
-                points.append(QPointF(px, py))
-            
-            polygon = QPolygonF(points)
-            painter.drawPolygon(polygon)
+        from PySide6.QtGui import QBrush
 
-        # 绘制蜂窝网格
-        row_height = hex_height * 0.75
-        for row in range(-1, int(self.height() / row_height) + 2):
-            for col in range(-1, int(self.width() / (hex_size * 3)) + 2):
-                x = col * hex_size * 3 + (hex_size * 1.5 if row % 2 else 0)
-                y = row * row_height
-                draw_hexagon(x, y, hex_size - 2)
+        for i in range(-1, int(self.width() / grid_spacing) + 2):
+            x = i * grid_spacing
+            center_x = self.width() / 2
+            dist_from_center = abs(x - center_x) / max(self.width() / 2, 1)
+            opacity = int(line_opacity * (1 - dist_from_center * 0.75))
+            if opacity <= 0:
+                continue
 
-        # 添加玻璃态模糊层（半透明渐变覆盖）
-        overlay = QLinearGradient(0, 0, self.width(), self.height())
-        overlay.setColorAt(0, QColor(10, 15, 28, 100))
-        overlay.setColorAt(0.5, QColor(10, 15, 28, 0))
-        overlay.setColorAt(1, QColor(10, 15, 28, 100))
-        painter.fillRect(self.rect(), overlay)
+            line_gradient = QLinearGradient(x, 0, x, self.height())
+            line_gradient.setColorAt(0, QColor(34, 211, 238, 0))
+            line_gradient.setColorAt(0.25, QColor(34, 211, 238, opacity))
+            line_gradient.setColorAt(0.75, QColor(34, 211, 238, opacity))
+            line_gradient.setColorAt(1, QColor(34, 211, 238, 0))
+
+            pen = QPen(QBrush(line_gradient), 1)
+            painter.setPen(pen)
+            painter.drawLine(int(x), 0, int(x), self.height())
+
+        for i in range(-1, int(self.height() / grid_spacing) + 2):
+            y = i * grid_spacing
+            center_y = self.height() / 2
+            dist_from_center = abs(y - center_y) / max(self.height() / 2, 1)
+            opacity = int(line_opacity * (1 - dist_from_center * 0.75))
+            if opacity <= 0:
+                continue
+
+            line_gradient = QLinearGradient(0, y, self.width(), y)
+            line_gradient.setColorAt(0, QColor(34, 211, 238, 0))
+            line_gradient.setColorAt(0.25, QColor(34, 211, 238, opacity))
+            line_gradient.setColorAt(0.75, QColor(34, 211, 238, opacity))
+            line_gradient.setColorAt(1, QColor(34, 211, 238, 0))
+
+            pen = QPen(QBrush(line_gradient), 1)
+            painter.setPen(pen)
+            painter.drawLine(0, int(y), self.width(), int(y))
+
+        # 仅在中心区域绘制极淡交叉点（更克制）
+        painter.setPen(Qt.NoPen)
+        for i in range(0, int(self.width() / grid_spacing) + 1):
+            for j in range(0, int(self.height() / grid_spacing) + 1):
+                x = i * grid_spacing
+                y = j * grid_spacing
+                center_x, center_y = self.width() / 2, self.height() / 2
+                dist = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
+                max_dist = ((center_x) ** 2 + (center_y) ** 2) ** 0.5
+                intensity = max(0, 1 - dist / max_dist)
+
+                if intensity > 0.45:
+                    dot_size = 1.5 + intensity * 1.5
+                    dot_color = QColor(34, 211, 238, int(22 * intensity))
+                    painter.setBrush(dot_color)
+                    painter.drawEllipse(
+                        QPointF(x - dot_size/2, y - dot_size/2),
+                        dot_size, dot_size
+                    )
 
         painter.end()
 
@@ -605,35 +616,43 @@ class InputArea(QWidget):
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 8, 16, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(16, 10, 16, 14)
+        layout.setSpacing(0)
 
-        # 玻璃态输入容器
+        # 精致玻璃态输入容器
         input_container = QWidget()
+        input_container.setMinimumHeight(50)
         input_container.setStyleSheet(f"""
             QWidget {{
-                background: rgba(16, 24, 45, 0.60);
-                border: 1px solid rgba(0, 245, 255, 0.20);
-                border-radius: 12px;
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 rgba(22, 33, 55, 0.75),
+                    stop: 1 rgba(15, 23, 42, 0.85)
+                );
+                border: 1px solid rgba(34, 211, 238, 0.18);
+                border-bottom: 1px solid rgba(34, 211, 238, 0.25);
+                border-radius: 14px;
             }}
         """)
         container_layout = QHBoxLayout(input_container)
-        container_layout.setContentsMargins(12, 8, 12, 8)
-        container_layout.setSpacing(8)
+        container_layout.setContentsMargins(14, 10, 10, 10)
+        container_layout.setSpacing(10)
 
-        # 提示符
-        prompt_label = QLabel(">")
+        # 提示符 - 更精致
+        prompt_label = QLabel(">_")
         prompt_label.setStyleSheet(f"""
-            color: {THEME['accent_cyan']};
+            color: rgba(34, 211, 238, 0.65);
             font-weight: bold;
-            font-size: 16px;
+            font-size: 13px;
+            font-family: "{FONT_FAMILY}";
             background: transparent;
+            letter-spacing: -1px;
         """)
-        prompt_label.setFixedWidth(20)
+        prompt_label.setFixedWidth(24)
 
-        # 输入框 - 玻璃态风格
+        # 输入框 - 透明无边框
         self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("输入消息或命令...")
+        self.input_field.setPlaceholderText("输入消息或 /命令...")
         self.input_field.returnPressed.connect(self._on_send)
         self.input_field.installEventFilter(self)
         self.input_field.setStyleSheet(f"""
@@ -642,34 +661,49 @@ class InputArea(QWidget):
                 color: {THEME['text_primary']};
                 border: none;
                 font-family: "{FONT_FAMILY}";
-                font-size: {FONT_SIZE['normal']}px;
-                padding: 4px;
+                font-size: {FONT_SIZE['medium']}px;
+                padding: 2px 4px;
             }}
-            QLineEdit::placeholder {{
+            QLineEdit[text=""] {{
                 color: {THEME['text_muted']};
             }}
         """)
 
-        # 发送按钮 - 霓虹风格
-        self.send_button = QPushButton("发送")
-        self.send_button.setFixedSize(60, 32)
+        # 发送按钮 - 渐变精致风格
+        self.send_button = QPushButton("发 送")
+        self.send_button.setFixedSize(68, 34)
         self.send_button.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(0, 245, 255, 0.15);
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 1,
+                    stop: 0 rgba(34, 211, 238, 0.20),
+                    stop: 1 rgba(14, 165, 233, 0.12)
+                );
                 color: {THEME['accent_cyan']};
-                border: 1px solid rgba(0, 245, 255, 0.40);
-                border-radius: 8px;
-                font-family: "{FONT_FAMILY}";
+                border: 1px solid rgba(34, 211, 238, 0.35);
+                border-radius: 10px;
+                font-family: "{FONT_FAMILY_UI}";
                 font-size: 12px;
-                font-weight: bold;
+                font-weight: 600;
+                letter-spacing: 2px;
             }}
             QPushButton:hover {{
-                background: rgba(0, 245, 255, 0.30);
-                border: 1px solid rgba(0, 245, 255, 0.80);
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 1,
+                    stop: 0 rgba(34, 211, 238, 0.32),
+                    stop: 1 rgba(14, 165, 233, 0.20)
+                );
+                border-color: rgba(34, 211, 238, 0.65);
+                color: #FFFFFF;
             }}
             QPushButton:pressed {{
-                background: rgba(0, 245, 255, 0.50);
-                color: #0A0F1C;
+                background: rgba(34, 211, 238, 0.45);
+                color: {THEME['bg_primary']};
+            }}
+            QPushButton:disabled {{
+                background: rgba(34, 211, 238, 0.05);
+                border-color: rgba(34, 211, 238, 0.10);
+                color: rgba(34, 211, 238, 0.25);
             }}
         """)
         self.send_button.clicked.connect(self._on_send)
@@ -785,67 +819,84 @@ class MainWindow(QMainWindow):
     def _create_banner(self, parent_layout):
         """创建标题栏 - Dark Glassmorphism 玻璃态设计"""
         banner = QWidget()
-        banner.setFixedHeight(52)
-        # 玻璃态效果：半透明 + 模糊 + 边框发光
+        banner.setFixedHeight(58)
+        # 精致玻璃态 Banner
         banner.setStyleSheet(f"""
             QWidget {{
                 background: qlineargradient(
                     x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 rgba(16, 24, 45, 0.85),
-                    stop: 0.5 rgba(16, 24, 45, 0.70),
-                    stop: 1 rgba(16, 24, 45, 0.60)
+                    stop: 0 rgba(22, 33, 62, 0.92),
+                    stop: 0.6 rgba(15, 23, 42, 0.88),
+                    stop: 1 rgba(12, 18, 34, 0.85)
                 );
-                border-bottom: 1px solid rgba(0, 245, 255, 0.25);
+                border-bottom: 1px solid rgba(34, 211, 238, 0.18);
             }}
         """)
 
         banner_layout = QHBoxLayout(banner)
-        banner_layout.setContentsMargins(16, 6, 16, 6)
-        banner_layout.setSpacing(12)
+        banner_layout.setContentsMargins(18, 0, 16, 0)
+        banner_layout.setSpacing(0)
 
-        # 左侧：Logo + 标题
+        # 左侧：Logo + 标题 + 版本
         logo_widget = QWidget()
         logo_layout = QHBoxLayout(logo_widget)
         logo_layout.setContentsMargins(0, 0, 0, 0)
         logo_layout.setSpacing(10)
 
-        # Logo 图标（齿轮样式）
+        # Logo 图标 - 精致齿轮
         logo_icon = QLabel("⚙")
-        logo_icon_font = QFont("Segoe UI Emoji", 18)
+        logo_icon_font = QFont("Segoe UI Emoji", 17)
         logo_icon.setFont(logo_icon_font)
-        logo_icon.setStyleSheet("""
-            color: #00F5FF;
+        logo_icon.setStyleSheet(f"""
+            color: {THEME['accent_cyan']};
             background: transparent;
         """)
-        logo_icon.setFixedSize(28, 28)
+        logo_icon.setFixedSize(26, 26)
         logo_icon.setAlignment(Qt.AlignCenter)
 
-        # 标题文字
+        # 标题 + 副标题 竖排
+        title_group = QWidget()
+        title_group_layout = QVBoxLayout(title_group)
+        title_group_layout.setContentsMargins(0, 0, 0, 0)
+        title_group_layout.setSpacing(0)
+
         title_label = QLabel("MechForge AI")
-        title_font = QFont(FONT_FAMILY, 14, QFont.Bold)
+        title_font = QFont(FONT_FAMILY_TITLE, 14, QFont.Bold)
         title_label.setFont(title_font)
-        title_label.setStyleSheet("""
-            color: #FFFFFF;
+        title_label.setStyleSheet(f"""
+            color: {THEME['text_primary']};
             background: transparent;
-            font-weight: bold;
+            letter-spacing: 1px;
         """)
 
+        subtitle_label = QLabel("机械设计智能助手")
+        subtitle_font = QFont(FONT_FAMILY_CN, 9)
+        subtitle_label.setFont(subtitle_font)
+        subtitle_label.setStyleSheet(f"""
+            color: rgba(34, 211, 238, 0.55);
+            background: transparent;
+            letter-spacing: 1px;
+        """)
+
+        title_group_layout.addWidget(title_label)
+        title_group_layout.addWidget(subtitle_label)
+
         logo_layout.addWidget(logo_icon)
-        logo_layout.addWidget(title_label)
+        logo_layout.addWidget(title_group)
 
         # 右侧：工具栏按钮
         toolbar_widget = QWidget()
         toolbar_layout = QHBoxLayout(toolbar_widget)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(8)
+        toolbar_layout.setSpacing(6)
         toolbar_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # 创建胶囊按钮 - 使用文字+简单符号
-        self._create_pill_button(toolbar_layout, "+ 新建", "新建会话", self._new_session)
-        self._create_pill_button(toolbar_layout, "C 清空", "清空对话", self._clear_conversation)
-        self._create_pill_button(toolbar_layout, "RAG", "RAG开关", self._toggle_rag)
-        self._create_pill_button(toolbar_layout, "? 帮助", "帮助", self._show_help)
-        self._create_pill_button(toolbar_layout, "X 退出", "退出", self.close, is_danger=True)
+        # 创建胶囊按钮
+        self._create_pill_button(toolbar_layout, "＋  新建", "新建会话 (Ctrl+N)", self._new_session)
+        self._create_pill_button(toolbar_layout, "⌫  清空", "清空对话 (Ctrl+L)", self._clear_conversation)
+        self._create_pill_button(toolbar_layout, "  RAG", "开关知识库 (Ctrl+R)", self._toggle_rag)
+        self._create_pill_button(toolbar_layout, "?  帮助", "查看帮助", self._show_help)
+        self._create_pill_button(toolbar_layout, "×  退出", "退出程序", self.close, is_danger=True)
 
         banner_layout.addWidget(logo_widget, stretch=1)
         banner_layout.addWidget(toolbar_widget)
@@ -853,46 +904,49 @@ class MainWindow(QMainWindow):
         parent_layout.addWidget(banner)
 
     def _create_pill_button(self, layout, text, tooltip, callback, is_danger=False):
-        """创建胶囊按钮 - 霓虹青辉光效果"""
+        """创建胶囊按钮 - 精致现代风格"""
         btn = QPushButton(text)
         btn.setCursor(Qt.PointingHandCursor)
         btn.setToolTip(tooltip)
-        btn.setFixedHeight(28)
-
-        # 根据文字长度调整宽度
-        btn.setMinimumWidth(60)
+        btn.setFixedHeight(30)
+        btn.setMinimumWidth(68)
 
         # 颜色配置
         if is_danger:
-            normal_color = "rgba(255, 68, 68, 0.1)"
-            border_color = "rgba(255, 68, 68, 0.4)"
-            hover_color = "rgba(255, 68, 68, 0.25)"
-            text_color = "#FF6666"
+            bg_normal  = "rgba(248, 113, 113, 0.07)"
+            bg_hover   = "rgba(248, 113, 113, 0.16)"
+            bg_pressed = "rgba(248, 113, 113, 0.35)"
+            border_n   = "rgba(248, 113, 113, 0.25)"
+            border_h   = "rgba(248, 113, 113, 0.55)"
+            text_color = "#F87171"
         else:
-            normal_color = "rgba(0, 245, 255, 0.08)"
-            border_color = "rgba(0, 245, 255, 0.3)"
-            hover_color = "rgba(0, 245, 255, 0.2)"
-            text_color = "#00F5FF"
+            bg_normal  = "rgba(34, 211, 238, 0.06)"
+            bg_hover   = "rgba(34, 211, 238, 0.14)"
+            bg_pressed = "rgba(34, 211, 238, 0.28)"
+            border_n   = "rgba(34, 211, 238, 0.18)"
+            border_h   = "rgba(34, 211, 238, 0.50)"
+            text_color = "rgba(34, 211, 238, 0.90)"
 
-        # 基础样式 - 使用 Consolas 字体避免 Unicode 问题
         btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {normal_color};
+                background-color: {bg_normal};
                 color: {text_color};
-                border: 1px solid {border_color};
-                border-radius: 14px;
-                font-size: 11px;
-                font-family: "{FONT_FAMILY}";
-                font-weight: bold;
-                padding: 0 12px;
+                border: 1px solid {border_n};
+                border-radius: 15px;
+                font-size: 12px;
+                font-family: "{FONT_FAMILY_UI}";
+                font-weight: 600;
+                padding: 0 14px;
+                letter-spacing: 0.5px;
             }}
             QPushButton:hover {{
-                background-color: {hover_color};
-                border: 1px solid {text_color};
+                background-color: {bg_hover};
+                border-color: {border_h};
+                color: {'#FFFFFF' if not is_danger else '#FCA5A5'};
             }}
             QPushButton:pressed {{
-                background-color: {text_color};
-                color: #0F1320;
+                background-color: {bg_pressed};
+                border-color: {border_h};
             }}
         """)
 
@@ -900,16 +954,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(btn)
 
     def _setup_statusbar(self):
-        """设置状态栏 - Dark Glassmorphism 风格"""
+        """设置状态栏 - 精致 Chip 指示器风格"""
         self.statusbar = QStatusBar()
-        self.statusbar.setFixedHeight(28)
+        self.statusbar.setFixedHeight(30)
         self.statusbar.setStyleSheet(f"""
             QStatusBar {{
-                background: rgba(10, 15, 28, 0.80);
+                background: rgba(7, 13, 26, 0.95);
                 color: {THEME['text_secondary']};
-                border-top: 1px solid rgba(0, 245, 255, 0.15);
+                border-top: 1px solid rgba(34, 211, 238, 0.10);
                 font-size: {FONT_SIZE['small']}px;
                 font-family: "{FONT_FAMILY}";
+                padding: 0 8px;
             }}
             QStatusBar::item {{
                 border: none;
@@ -917,43 +972,64 @@ class MainWindow(QMainWindow):
         """)
         self.setStatusBar(self.statusbar)
 
-        # API 状态 - 带指示点
-        self.api_indicator = QLabel("●")
-        self.api_indicator.setStyleSheet("color: #555; font-size: 8px;")
-        self.api_label = QLabel("API: --")
-        self.api_label.setStyleSheet(f"color: {THEME['text_secondary']};")
+        # 通用 chip 样式生成函数
+        def make_chip(label_text, dot_color, text_color=None):
+            container = QWidget()
+            container.setStyleSheet("background: transparent;")
+            h = QHBoxLayout(container)
+            h.setContentsMargins(8, 3, 8, 3)
+            h.setSpacing(5)
+            container.setFixedHeight(22)
 
-        # 模型状态
-        self.model_indicator = QLabel("●")
-        self.model_indicator.setStyleSheet("color: #555; font-size: 8px;")
-        self.model_label = QLabel("模型: --")
-        self.model_label.setStyleSheet(f"color: {THEME['text_secondary']};")
+            dot = QLabel("●")
+            dot.setStyleSheet(f"""
+                color: {dot_color};
+                font-size: 7px;
+                background: transparent;
+            """)
 
-        # RAG 状态
-        self.rag_indicator = QLabel("●")
-        self.rag_indicator.setStyleSheet("color: #555; font-size: 8px;")
-        self.rag_label = QLabel("RAG: OFF")
-        self.rag_label.setStyleSheet(f"color: {THEME['text_muted']};")
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet(f"""
+                color: {text_color or THEME['text_secondary']};
+                font-size: 10px;
+                font-family: "{FONT_FAMILY}";
+                background: transparent;
+            """)
+
+            h.addWidget(dot)
+            h.addWidget(lbl)
+            return container, lbl, dot
+
+        # API 指示器
+        api_chip, self.api_label, self.api_indicator = make_chip(
+            "API: --", "#334155", THEME['text_secondary'])
+
+        # 模型指示器
+        model_chip, self.model_label, self.model_indicator = make_chip(
+            "模型: --", "#334155", THEME['text_secondary'])
+
+        # RAG 指示器
+        rag_chip, self.rag_label, self.rag_indicator = make_chip(
+            "RAG: OFF", "#334155", THEME['text_dim'])
+        self._rag_chip = rag_chip
 
         # 消息计数
-        self.msg_label = QLabel("消息: 0")
-        self.msg_label.setStyleSheet(f"color: {THEME['text_secondary']};")
+        msg_chip, self.msg_label, _ = make_chip(
+            "消息: 0", "rgba(34,211,238,0.25)", THEME['text_secondary'])
 
-        # 分隔符
-        separator = QLabel("│")
-        separator.setStyleSheet(f"color: rgba(0, 245, 255, 0.3); padding: 0 8px;")
+        # 分隔
+        def sep():
+            s = QLabel("·")
+            s.setStyleSheet(f"color: rgba(34,211,238,0.15); font-size: 14px; background: transparent;")
+            return s
 
-        # 添加状态项
-        self.statusbar.addWidget(self.api_indicator)
-        self.statusbar.addWidget(self.api_label)
-        self.statusbar.addWidget(QLabel("  "))
-        self.statusbar.addWidget(self.model_indicator)
-        self.statusbar.addWidget(self.model_label)
-        self.statusbar.addWidget(QLabel("  "))
-        self.statusbar.addWidget(self.rag_indicator)
-        self.statusbar.addWidget(self.rag_label)
-        self.statusbar.addWidget(QLabel("  "))
-        self.statusbar.addWidget(self.msg_label)
+        self.statusbar.addWidget(api_chip)
+        self.statusbar.addWidget(sep())
+        self.statusbar.addWidget(model_chip)
+        self.statusbar.addWidget(sep())
+        self.statusbar.addWidget(rag_chip)
+        self.statusbar.addWidget(sep())
+        self.statusbar.addWidget(msg_chip)
     
     def _init_core_modules(self):
         """初始化核心模块"""
@@ -981,11 +1057,28 @@ class MainWindow(QMainWindow):
             model_name = self._llm_client.get_current_model_name()
             
             self.api_label.setText(f"API: {api_type}")
+            self.api_indicator.setStyleSheet(
+                f"color: {THEME['accent_green']}; font-size: 7px; background: transparent;"
+            )
             self.model_label.setText(f"模型: {model_name}")
+            self.model_indicator.setStyleSheet(
+                f"color: {THEME['accent_cyan']}; font-size: 7px; background: transparent;"
+            )
         
-        rag_color = THEME['accent_green'] if self.rag_enabled else THEME['accent_red']
+        if self.rag_enabled:
+            rag_color = THEME['accent_green']
+            rag_text_color = THEME['accent_green']
+        else:
+            rag_color = "#334155"
+            rag_text_color = THEME['text_dim']
+        
         self.rag_label.setText(f"RAG: {'ON' if self.rag_enabled else 'OFF'}")
-        self.rag_label.setStyleSheet(f"color: {rag_color};")
+        self.rag_label.setStyleSheet(
+            f"color: {rag_text_color}; font-size: 10px; font-family: '{FONT_FAMILY}'; background: transparent;"
+        )
+        self.rag_indicator.setStyleSheet(
+            f"color: {rag_color}; font-size: 7px; background: transparent;"
+        )
         
         self.msg_label.setText(f"消息: {len(self.conversation_history)}")
     
@@ -1145,15 +1238,196 @@ class MainWindow(QMainWindow):
         self.chat_area.add_message("system", info_text)
     
     def _toggle_rag(self):
-        """切换 RAG"""
-        if not self.rag_engine or not self.rag_engine.is_available:
-            self.chat_area.add_message("system", "✗ 未找到知识库")
+        """切换 RAG - 检查知识库模块并让用户选择路径"""
+        # 首先检查知识库模块是否安装
+        if not self._check_knowledge_module():
             return
-        
+
+        # 检查知识库路径是否存在
+        from mechforge_core.config import find_knowledge_path
+        kb_path = find_knowledge_path()
+
+        # 如果没有找到知识库，让用户选择
+        if not kb_path or not kb_path.exists() or not self._has_documents(kb_path):
+            kb_path = self._select_knowledge_folder()
+            if not kb_path:
+                return  # 用户取消了选择
+
+        # 切换 RAG 状态
         self.rag_enabled = not self.rag_enabled
         status = "启用" if self.rag_enabled else "禁用"
-        self.chat_area.add_message("system", f"✓ RAG 已{status}")
+
+        # 在状态栏显示提示
+        self.statusbar.showMessage(f"RAG 已{status} | 知识库: {kb_path}", 5000)
         self._update_status()
+
+    def _has_documents(self, path: Path) -> bool:
+        """检查路径是否包含文档文件"""
+        if not path or not path.exists():
+            return False
+        return bool(list(path.glob("*.md")) or list(path.glob("*.txt")))
+
+    def _select_knowledge_folder(self) -> Path | None:
+        """让用户选择知识库文件夹"""
+        from PySide6.QtWidgets import QFileDialog
+
+        # 显示信息提示
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("选择知识库文件夹")
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setText("请选择知识库文件夹")
+        msg_box.setInformativeText(
+            "知识库文件夹应包含 .md 或 .txt 格式的文档。\n"
+            "您可以选择已有文件夹或创建新文件夹。"
+        )
+        msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+        if msg_box.exec() != QMessageBox.Ok:
+            return None
+
+        # 打开文件夹选择对话框
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "选择知识库文件夹",
+            str(Path.home()),
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+
+        if not folder_path:
+            return None
+
+        selected_path = Path(folder_path)
+
+        # 检查是否有文档
+        if not self._has_documents(selected_path):
+            # 询问是否创建示例文档
+            create_msg = QMessageBox(self)
+            create_msg.setWindowTitle("知识库为空")
+            create_msg.setIcon(QMessageBox.Question)
+            create_msg.setText("所选文件夹为空或没有支持的文档")
+            create_msg.setInformativeText(
+                f"路径: {selected_path}\n\n"
+                f"是否创建示例文档？\n"
+                f"您也可以手动添加 .md 或 .txt 文件到此文件夹。"
+            )
+            create_msg.setStandardButtons(
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+            )
+
+            result = create_msg.exec()
+            if result == QMessageBox.Yes:
+                self._create_sample_document(selected_path)
+            elif result == QMessageBox.Cancel:
+                return None
+
+        # 保存到配置
+        self._save_knowledge_path(selected_path)
+
+        # 重新初始化 RAG 引擎
+        self._rag_engine = None
+
+        return selected_path
+
+    def _create_sample_document(self, path: Path):
+        """创建示例知识库文档"""
+        path.mkdir(parents=True, exist_ok=True)
+
+        sample_file = path / "欢迎使用.md"
+        sample_content = """# 欢迎使用 MechForge 知识库
+
+这是您的知识库文件夹。
+
+## 支持的文件格式
+
+- **Markdown (.md)** - 推荐格式，支持标题、列表、代码块等
+- **纯文本 (.txt)** - 简单文本格式
+
+## 如何使用
+
+1. 将您的技术文档、手册、笔记等放入此文件夹
+2. 在 AI 对话中启用 RAG 功能
+3. AI 会自动检索相关知识并回答您的问题
+
+## 示例内容
+
+### 材料力学公式
+
+- 胡克定律: σ = Eε
+- 剪切应力: τ = Gγ
+- 泊松比: ν = -ε_transverse / ε_axial
+
+### 常用材料属性
+
+| 材料 | 弹性模量 (GPa) | 屈服强度 (MPa) |
+|------|---------------|---------------|
+| 钢   | 200           | 250-500       |
+| 铝   | 70            | 50-300        |
+| 钛   | 116           | 200-800       |
+
+---
+
+*提示：您可以删除此文件并添加自己的文档。*
+"""
+        sample_file.write_text(sample_content, encoding="utf-8")
+
+    def _save_knowledge_path(self, path: Path):
+        """保存知识库路径到配置"""
+        try:
+            from mechforge_core.config import save_config
+
+            if self._config:
+                self._config.knowledge.path = str(path)
+                save_config(self._config)
+        except Exception as e:
+            print(f"保存配置失败: {e}")
+
+    def _check_knowledge_module(self) -> bool:
+        """检查知识库模块是否安装，未安装则提示用户"""
+        try:
+            import mechforge_knowledge
+            return True
+        except ImportError:
+            # 显示安装提示对话框
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("知识库模块未安装")
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setText("知识库检索功能需要安装知识库模块")
+            msg_box.setInformativeText(
+                "您可以通过以下命令安装：\n\n"
+                "pip install mechforge-ai[rag]\n\n"
+                "或完整安装：\n\n"
+                "pip install mechforge-ai[all]"
+            )
+            msg_box.setStandardButtons(QMessageBox.Ok)
+            msg_box.setDefaultButton(QMessageBox.Ok)
+
+            # 设置样式匹配主题
+            msg_box.setStyleSheet(f"""
+                QMessageBox {{
+                    background-color: {THEME['bg_secondary']};
+                    color: {THEME['text_primary']};
+                }}
+                QMessageBox QLabel {{
+                    color: {THEME['text_primary']};
+                    font-family: "{FONT_FAMILY}";
+                    font-size: {FONT_SIZE['normal']}px;
+                }}
+                QPushButton {{
+                    background-color: rgba(34, 211, 238, 0.15);
+                    color: {THEME['accent_cyan']};
+                    border: 1px solid rgba(34, 211, 238, 0.35);
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-family: "{FONT_FAMILY}";
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(34, 211, 238, 0.25);
+                }}
+            """)
+
+            msg_box.exec()
+            return False
     
     def _clear_conversation(self):
         """清空对话"""
@@ -1179,7 +1453,7 @@ class MainWindow(QMainWindow):
     
     def _show_model_config(self):
         """显示模型配置对话框"""
-        from mechforge_gui.dialogs import ModelConfigDialog
+        from mechforge_gui_ai.dialogs import ModelConfigDialog
         
         dialog = ModelConfigDialog(self._config, self._llm_client, self)
         if dialog.exec():
