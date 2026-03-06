@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MechForge Web - 机械设计 AI 工作台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-cog fa-spin"></i>
+                    <span>MechForge</span>
+                </div>
+                <div class="version">v0.5.0</div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-mode="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>AI 对话</span>
+                </button>
+                <button class="nav-item" data-mode="knowledge">
+                    <i class="fas fa-book"></i>
+                    <span>知识库</span>
+                </button>
+                <button class="nav-item" data-mode="cae">
+                    <i class="fas fa-cube"></i>
+                    <span>CAE 工作台</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">系统正常</span>
+                </div>
+                <button class="settings-btn" onclick="toggleSettings()">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- AI 对话模式 -->
+            <div class="mode-content active" id="chat-mode">
+                <div class="chat-header">
+                    <h2><i class="fas fa-robot"></i> MechBot AI 助手</h2>
+                    <div class="model-selector">
+                        <select id="model-select">
+                            <option value="ollama">Ollama (本地)</option>
+                            <option value="openai">OpenAI GPT-4</option>
+                            <option value="anthropic">Claude</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">⚙️</div>
+                        <h3>欢迎使用 MechForge AI</h3>
+                        <p>我是您的机械设计助手，可以帮您：</p>
+                        <ul>
+                            <li>📐 计算零件强度和刚度</li>
+                            <li>📚 查询 GB/ISO 标准</li>
+                            <li>🔧 推荐材料和工艺</li>
+                            <li>📊 分析 CAE 结果</li>
+                        </ul>
+                        <div class="quick-actions">
+                            <button onclick="sendQuickMessage('帮我计算一个承受 1000N 的悬臂梁的挠度')">
+                                悬臂梁计算
+                            </button>
+                            <button onclick="sendQuickMessage('查询螺栓 GB/T 5782 的参数')">
+                                查螺栓标准
+                            </button>
+                            <button onclick="sendQuickMessage('推荐一种耐腐蚀的海洋工程材料')">
+                                材料推荐
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="input-toolbar">
+                        <button class="tool-btn" title="上传文件" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button class="tool-btn" title="知识库" onclick="toggleRag()">
+                            <i class="fas fa-book"></i>
+                            <span class="rag-badge" id="rag-badge">OFF</span>
+                        </button>
+                        <button class="tool-btn" title="清空对话" onclick="clearChat()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="input-wrapper">
+                        <textarea
+                            id="chat-input"
+                            placeholder="输入您的问题... (Shift+Enter 换行, Enter 发送)"
+                            rows="1"
+                        ></textarea>
+                        <button class="send-btn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="file-input" hidden accept=".step,.stp,.iges,.igs,.stl,.txt,.md,.pdf">
+                </div>
+            </div>
+
+            <!-- 知识库模式 -->
+            <div class="mode-content" id="knowledge-mode">
+                <div class="knowledge-header">
+                    <h2><i class="fas fa-book"></i> 知识库检索</h2>
+                    <div class="search-stats">
+                        <span id="doc-count">0</span> 个文档
+                    </div>
+                </div>
+
+                <div class="knowledge-search">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input
+                            type="text"
+                            id="knowledge-search-input"
+                            placeholder="搜索标准、材料、零件参数..."
+                        >
+                        <button onclick="searchKnowledge()">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="search-filters">
+                        <label><input type="checkbox" checked> 国家标准 (GB)</label>
+                        <label><input type="checkbox" checked> 机械手册</label>
+                        <label><input type="checkbox" checked> 材料数据</label>
+                    </div>
+                </div>
+
+                <div class="knowledge-results" id="knowledge-results">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>输入关键词开始搜索</p>
+                        <span class="hint">支持：标准号、材料牌号、零件名称</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAE 工作台模式 -->
+            <div class="mode-content" id="cae-mode">
+                <div class="cae-header">
+                    <h2><i class="fas fa-cube"></i> CAE 工作台</h2>
+                    <div class="cae-actions">
+                        <button class="btn-secondary" onclick="loadCaeDemo()">
+                            <i class="fas fa-play"></i> 运行示例
+                        </button>
+                        <button class="btn-primary" onclick="document.getElementById('cae-file-input').click()">
+                            <i class="fas fa-upload"></i> 加载模型
+                        </button>
+                    </div>
+                </div>
+
+                <div class="cae-workspace">
+                    <div class="cae-panel" id="cae-viewer">
+                        <div class="panel-header">
+                            <span>3D 视图</span>
+                            <div class="view-controls">
+                                <button title="重置视图"><i class="fas fa-sync"></i></button>
+                                <button title="切换线框"><i class="fas fa-border-all"></i></button>
+                            </div>
+                        </div>
+                        <div class="viewer-placeholder" id="viewer-placeholder">
+                            <i class="fas fa-cube"></i>
+                            <p>加载几何模型开始分析</p>
+                            <span>支持 .step .iges .stl 格式</span>
+                        </div>
+                    </div>
+
+                    <div class="cae-sidebar">
+                        <div class="panel-tabs">
+                            <button class="tab-btn active" data-tab="setup">设置</button>
+                            <button class="tab-btn" data-tab="mesh">网格</button>
+                            <button class="tab-btn" data-tab="bc">边界条件</button>
+                            <button class="tab-btn" data-tab="results">结果</button>
+                        </div>
+
+                        <div class="tab-content active" id="tab-setup">
+                            <div class="form-group">
+                                <label>分析类型</label>
+                                <select id="analysis-type">
+                                    <option value="static">静力分析</option>
+                                    <option value="modal">模态分析</option>
+                                    <option value="thermal">热分析</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>材料</label>
+                                <select id="cae-material">
+                                    <option value="steel">结构钢</option>
+                                    <option value="aluminum">铝合金</option>
+                                    <option value="titanium">钛合金</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-mesh">
+                            <div class="form-group">
+                                <label>网格尺寸 (mm)</label>
+                                <input type="number" id="mesh-size" value="5" min="0.1" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>单元类型</label>
+                                <select id="element-type">
+                                    <option value="tet">四面体 (Tet)</option>
+                                    <option value="hex">六面体 (Hex)</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary full-width" onclick="generateMesh()">
+                                <i class="fas fa-th"></i> 生成网格
+                            </button>
+                            <div class="mesh-info" id="mesh-info" style="display: none;">
+                                <div class="info-row">
+                                    <span>节点数:</span>
+                                    <span id="node-count">-</span>
+                                </div>
+                                <div class="info-row">
+                                    <span>单元数:</span>
+                                    <span id="element-count">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-bc">
+                            <div class="bc-list" id="bc-list">
+                                <div class="empty-state small">
+                                    <p>尚未添加边界条件</p>
+                                </div>
+                            </div>
+                            <button class="btn-secondary full-width" onclick="addBoundaryCondition()">
+                                <i class="fas fa-plus"></i> 添加边界条件
+                            </button>
+                        </div>
+
+                        <div class="tab-content" id="tab-results">
+                            <div class="results-placeholder" id="results-placeholder">
+                                <i class="fas fa-chart-bar"></i>
+                                <p>运行求解查看结果</p>
+                            </div>
+                            <div class="results-content" id="results-content" style="display: none;">
+                                <div class="result-item">
+                                    <span>最大位移:</span>
+                                    <span class="value" id="max-disp">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span>最大应力:</span>
+                                    <span class="value" id="max-stress">-</span>
+                                </div>
+                                <div class="result-actions">
+                                    <button class="btn-primary" onclick="showResults()">
+                                        <i class="fas fa-eye"></i> 可视化
+                                    </button>
+                                    <button class="btn-secondary" onclick="exportResults()">
+                                        <i class="fas fa-download"></i> 导出
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary full-width solve-btn" onclick="runSolver()">
+                            <i class="fas fa-play"></i> 运行求解
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="cae-file-input" hidden accept=".step,.stp,.iges,.igs,.stl">
+            </div>
+        </main>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>设置</h3>
+                <button class="close-btn" onclick="toggleSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>AI 提供商</h4>
+                    <div class="form-group">
+                        <label>默认模型</label>
+                        <select id="setting-model">
+                            <option value="ollama">Ollama (本地)</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ollama URL</label>
+                        <input type="text" id="setting-ollama-url" value="http://localhost:11434">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4>界面</h4>
+                    <div class="form-group">
+                        <label>主题</label>
+                        <select id="setting-theme">
+                            <option value="dark">深色</option>
+                            <option value="light">浅色</option>
+                            <option value="auto">自动</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="toggleSettings()">取消</button>
+                <button class="btn-primary" onclick="saveSettings()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <span id="loading-text">处理中...</span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

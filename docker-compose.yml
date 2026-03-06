@@ -1,0 +1,208 @@
+# MechForge AI - Docker Compose 配置
+#
+# 使用方法:
+#   1. 复制 .env.example 为 .env 并配置环境变量
+#   2. 运行: docker-compose up -d
+#   3. 查看日志: docker-compose logs -f
+#
+# 可用服务:
+#   - ollama:        本地 LLM 服务
+#   - mechforge-ai:  AI 对话模式
+#   - mechforge-k:   知识库 RAG 模式
+#   - mechforge-work: CAE 工作台模式
+#   - mechforge-web: Web 服务模式
+#   - mechforge-full: 完整版服务
+
+version: "3.8"
+
+# ==================== 共享配置 ====================
+x-shared-env: &shared-env
+  MECHFORGE_HOME: /app
+  MECHFORGE_DATA: /app/data
+  MECHFORGE_KNOWLEDGE: /app/knowledge
+  MECHFORGE_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+x-ollama-env: &ollama-env
+  OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
+
+services:
+  # ==================== Ollama 服务 ====================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mechforge-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+    # GPU 支持（取消注释以启用）
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ==================== AI 对话模式 ====================
+  mechforge-ai:
+    build:
+      context: .
+      target: ai
+    image: ${DOCKER_REGISTRY:-}mechforge-ai:${IMAGE_TAG:-latest}
+    container_name: mechforge-ai
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      <<: [*shared-env, *ollama-env]
+    volumes:
+      - ./knowledge:/app/knowledge:ro
+      - mechforge_history:/root/.mechforge
+      - mechforge_data:/app/data
+    stdin_open: true
+    tty: true
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "python", "-c", "from mechforge_ai.terminal import MechForgeTerminal; print('healthy')"]
+    profiles:
+      - ai
+      - full
+
+  # ==================== 知识库 RAG 模式 ====================
+  mechforge-k:
+    build:
+      context: .
+      target: rag
+    image: ${DOCKER_REGISTRY:-}mechforge-rag:${IMAGE_TAG:-latest}
+    container_name: mechforge-k
+    restart: unless-stopped
+    environment:
+      <<: *shared-env
+      MECHFORGE_RAG_ENABLED: "true"
+      MECHFORGE_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    volumes:
+      - ./knowledge:/app/knowledge:ro
+      - rag_cache:/app/.cache/rag
+      - mechforge_data:/app/data
+    stdin_open: true
+    tty: true
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "python", "-c", "from mechforge_knowledge.cli import main; print('healthy')"]
+    profiles:
+      - rag
+      - full
+
+  # ==================== CAE 工作台模式 ====================
+  mechforge-work:
+    build:
+      context: .
+      target: work
+    image: ${DOCKER_REGISTRY:-}mechforge-work:${IMAGE_TAG:-latest}
+    container_name: mechforge-work
+    restart: unless-stopped
+    environment:
+      <<: *shared-env
+      MECHFORGE_WORKDIR: /app/workdir
+    volumes:
+      - ./workdir:/app/workdir
+      - ./models:/app/models:ro
+      - mechforge_data:/app/data
+    working_dir: /app/workdir
+    stdin_open: true
+    tty: true
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "python", "-c", "import mechforge_work; print('healthy')"]
+    profiles:
+      - work
+      - full
+
+  # ==================== Web 服务模式 ====================
+  mechforge-web:
+    build:
+      context: .
+      target: web
+    image: ${DOCKER_REGISTRY:-}mechforge-web:${IMAGE_TAG:-latest}
+    container_name: mechforge-web
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      <<: [*shared-env, *ollama-env]
+      MECHFORGE_WEB_HOST: 0.0.0.0
+      MECHFORGE_WEB_PORT: 8080
+    volumes:
+      - ./knowledge:/app/knowledge:ro
+      - mechforge_data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    profiles:
+      - web
+      - full
+
+  # ==================== 完整版服务 ====================
+  mechforge-full:
+    build:
+      context: .
+      target: full
+    image: ${DOCKER_REGISTRY:-}mechforge-full:${IMAGE_TAG:-latest}
+    container_name: mechforge-full
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      <<: [*shared-env, *ollama-env]
+      MECHFORGE_WORKDIR: /app/workdir
+      MECHFORGE_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    volumes:
+      - ./knowledge:/app/knowledge:ro
+      - ./workdir:/app/workdir
+      - ./models:/app/models:ro
+      - mechforge_data:/app/data
+      - rag_cache:/app/.cache/rag
+      - ./logs:/app/logs
+    healthcheck:
+      <<: *healthcheck-defaults
+      start_period: 15s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    profiles:
+      - full
+
+# ==================== 数据卷 ====================
+volumes:
+  ollama_data:
+    name: mechforge_ollama_data
+  mechforge_history:
+    name: mechforge_history
+  mechforge_data:
+    name: mechforge_data
+  rag_cache:
+    name: mechforge_rag_cache
+
+# ==================== 网络配置 ====================
+networks:
+  default:
+    name: mechforge_network
