@@ -30,11 +30,78 @@ def _get_app_dir() -> Path:
 
 def _get_config_dir() -> Path:
     """获取配置目录"""
+    # 检查是否在便携模式下运行（配置目录与可执行文件同级）
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).parent
+        portable_config = exe_dir / "config"
+        if portable_config.exists():
+            return portable_config
+
+    # 标准用户配置目录
     if sys.platform == "win32":
         base = Path.home() / "AppData" / "Local"
     else:
         base = Path.home() / ".config"
     return base / "mechforge"
+
+
+def _get_bundled_config() -> Path | None:
+    """获取打包内嵌的默认配置文件路径"""
+    if getattr(sys, "frozen", False):
+        # PyInstaller 打包环境
+        bundled = Path(sys._MEIPASS) / "config" / "default_config.yaml"
+        if bundled.exists():
+            return bundled
+    else:
+        # 开发环境 - 检查构建目录
+        dev_bundled = Path(__file__).parent.parent.parent / "build_complete" / "config" / "default_config.yaml"
+        if dev_bundled.exists():
+            return dev_bundled
+    return None
+
+
+def _init_user_config() -> Path:
+    """初始化用户配置文件（首次运行）"""
+    config_dir = _get_config_dir()
+    config_file = config_dir / "config.yaml"
+
+    # 如果用户配置已存在，直接返回
+    if config_file.exists():
+        return config_file
+
+    # 创建配置目录
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    # 复制默认配置
+    bundled_config = _get_bundled_config()
+    if bundled_config and bundled_config.exists():
+        import shutil
+        shutil.copy2(bundled_config, config_file)
+        print(f"[MechForge] 首次运行，已创建默认配置: {config_file}")
+    else:
+        # 创建最小默认配置
+        default_content = """# MechForge AI 配置文件
+provider:
+  default: "ollama"
+  ollama:
+    url: "http://localhost:11434"
+    model: "qwen2.5:1.5b"
+    auto_start: true
+
+knowledge:
+  backend: "local"
+  path: "./knowledge"
+
+ui:
+  theme: "dark"
+
+logging:
+  level: "info"
+"""
+        config_file.write_text(default_content, encoding="utf-8")
+        print(f"[MechForge] 首次运行，已创建最小配置: {config_file}")
+
+    return config_file
 
 
 def _get_default_config_file() -> Path | None:
@@ -49,15 +116,18 @@ def _get_default_config_file() -> Path | None:
         if path.exists():
             return path
 
+    # 未找到配置文件，自动初始化
+    return _init_user_config()
+
 
 def find_knowledge_path() -> Path | None:
     """查找知识库路径（AI模式和知识库模式统一使用）
 
     按优先级搜索以下路径：
     1. 配置文件中的 knowledge.path
-    2. 项目根目录的 knowledge 文件夹
-    3. 项目根目录的 data/knowledge 文件夹
-    4. 用户主目录的 .mechforge/knowledge 文件夹
+    2. 可执行文件目录的 knowledge 文件夹（便携模式）
+    3. 项目根目录的 knowledge 文件夹
+    4. 用户配置目录的 knowledge 文件夹
     5. 当前工作目录的 knowledge 文件夹
     """
     # 首先检查配置文件
@@ -72,20 +142,29 @@ def find_knowledge_path() -> Path | None:
 
     # 搜索其他路径
     search_paths = [
+        # 便携模式：可执行文件同级目录
+        Path(sys.executable).parent / "knowledge" if getattr(sys, "frozen", False) else None,
+        # 应用目录
         _get_app_dir() / "knowledge",
         _get_app_dir() / "data" / "knowledge",
+        # 用户配置目录
         _get_config_dir() / "knowledge",
         Path.home() / ".mechforge" / "knowledge",
+        # 当前工作目录
         Path.cwd() / "knowledge",
     ]
 
     for path in search_paths:
-        if path.exists() and list(path.glob("*.md")):
+        if path is None:
+            continue
+        if path.exists():
+            # 只要有这个目录就返回（不强制要求有 .md 文件）
             return path
 
-    # 返回默认路径（即使不存在）
+    # 返回默认路径（即使不存在，便于后续创建）
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent / "knowledge"
     return Path.cwd() / "knowledge"
-    return None
 
 
 # ==================== Provider 配置 ====================

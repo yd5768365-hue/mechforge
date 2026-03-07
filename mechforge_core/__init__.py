@@ -46,6 +46,25 @@ from mechforge_core.security import (
     SecurityMiddleware,
     get_security_middleware,
 )
+from mechforge_core.reflection import (
+    ErrorType,
+    ExperienceDB,
+    InteractionLog,
+    Lesson,
+    ReflectionConfig,
+    ReflectionEngine,
+    ReflectionEntry,
+    ReflectionLogger,
+    ReflectionReporter,
+    TaskResult,
+)
+from mechforge_core.reflection.integration import (
+    ReflectionAwareLLM,
+    ReflectionContext,
+    ReflectionMixin,
+    get_reflection_summary,
+    with_reflection,
+)
 
 __all__ = [
     # Config
@@ -87,4 +106,20 @@ __all__ = [
     "APITokenManager",
     "SecurityMiddleware",
     "get_security_middleware",
+    # Reflection
+    "ErrorType",
+    "ExperienceDB",
+    "InteractionLog",
+    "Lesson",
+    "ReflectionConfig",
+    "ReflectionEngine",
+    "ReflectionEntry",
+    "ReflectionLogger",
+    "ReflectionReporter",
+    "TaskResult",
+    "ReflectionAwareLLM",
+    "ReflectionContext",
+    "ReflectionMixin",
+    "get_reflection_summary",
+    "with_reflection",
 ]

@@ -1,0 +1,58 @@
+# MechForge AI - 基础依赖
+# 安装命令: pip install -r requirements.txt
+# 或使用: pip install -e .
+
+# 核心依赖
+pyyaml>=6.0
+rich>=13.0
+requests>=2.28
+pydantic>=2.0
+pydantic-settings>=2.0
+typing-extensions>=4.0
+
+# 开发依赖
+pytest>=7.0
+pytest-cov>=4.0
+pytest-asyncio>=0.21.0
+black>=23.0
+ruff>=0.1.0
+mypy>=1.5
+pre-commit>=3.0
+
+# LLM支持
+llama-cpp-python>=0.2.0
+
+# RAG支持
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+rank-bm25>=0.2.2
+
+# CAE工作台
+typer>=0.9.0
+gmsh>=4.13.0
+pyvista>=0.44.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Web服务
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+jinja2>=3.1.0
+python-multipart>=0.0.6
+psutil>=5.9.0
+
+# GUI
+PySide6>=6.6.0
+
+# 打包
+pyinstaller>=6.0.0
+
+# 文档
+mkdocs>=1.5.3
+mkdocs-material>=9.4.0
+mkdocstrings[python]>=0.23.0
+mkdocs-minify-plugin>=0.7.0
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+pygments>=2.16.0
+pymdown-extensions>=10.3.0
