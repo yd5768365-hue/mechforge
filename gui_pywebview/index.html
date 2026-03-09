@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MechForge AI</title>
-  <link rel="stylesheet" href="styles.css">
+  <!-- 模块化 CSS -->
+  <link rel="stylesheet" href="styles-modular.css">
+  <link rel="stylesheet" href="experience.css">
+  <link rel="stylesheet" href="css/chat-markdown.css">
 </head>
 <body>
   <div class="app-container">
@@ -55,6 +58,12 @@
             <circle cx="12" cy="4" r="2"/>
           </svg>
           <span class="icon-label">CAE</span>
+        </div>
+        <div class="sidebar-icon" data-tab="experience" title="Experience Library">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span class="icon-label">EXP</span>
         </div>
       </div>
 
@@ -283,13 +292,77 @@
             </div>
           </div>
         </div>
+
+        <!-- Experience Library Panel -->
+        <div class="tab-panel" id="experience-panel">
+          <!-- 面板头部 -->
+          <div class="panel-header">
+            <h2>Experience Library</h2>
+            <p>机械工程故障案例与解决方案</p>
+          </div>
+
+          <!-- 搜索容器 -->
+          <div class="exp-search-section">
+            <div class="search-wrapper">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" id="exp-search-input" placeholder="Search by title, category or tag...">
+              <span id="exp-count-badge" class="exp-count-badge">12</span>
+            </div>
+          </div>
+
+          <!-- 标签过滤 -->
+          <div class="exp-tags-container" id="exp-tags-container"></div>
+
+          <!-- 经验卡片网格 -->
+          <div class="search-results" id="exp-results">
+            <div class="result-placeholder">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+              <p>Click a card to view details</p>
+            </div>
+          </div>
+
+          <!-- 详情弹窗 -->
+          <div class="exp-modal-overlay" id="exp-modal-overlay">
+            <div class="exp-modal-container" id="exp-modal">
+              <button class="exp-modal-close" id="exp-modal-close">&times;</button>
+              <div class="exp-modal-header">
+                <div class="exp-modal-tags" id="exp-modal-tags"></div>
+                <h2 class="exp-modal-title" id="exp-modal-title"></h2>
+                <div class="exp-modal-meta" id="exp-modal-meta"></div>
+              </div>
+              <div class="exp-modal-body">
+                <div class="exp-modal-section">
+                  <h3>Condition / 故障条件</h3>
+                  <p id="exp-modal-condition"></p>
+                </div>
+                <div class="exp-modal-section">
+                  <h3>Cause / 原因分析</h3>
+                  <p id="exp-modal-cause"></p>
+                </div>
+                <div class="exp-modal-section">
+                  <h3>Solution / 解决方案</h3>
+                  <pre id="exp-modal-solution"></pre>
+                </div>
+              </div>
+              <div class="exp-modal-footer">
+                <span class="exp-modal-source" id="exp-modal-source"></span>
+                <a href="#" class="exp-modal-link" id="exp-modal-link" target="_blank">View Source &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Status Bar -->
     <div class="status-bar">
       <span class="status-bar-brand">MechForge</span>
-      <span class="status-bar-item api-ollama" data-status="api">
+      <span class="status-bar-item api-ollama" data-status="api" id="api-trigger">
         API: Ollama
         <!-- API 选择弹出菜单 -->
         <div class="api-selector" id="api-selector">
@@ -318,6 +391,17 @@
               </svg>
             </div>
           </div>
+          <!-- GGUF 模型文件路径输入 -->
+          <div class="gguf-model-input">
+            <input type="text" id="gguf-model-path" placeholder="Enter GGUF model file path...">
+            <button id="gguf-browse-btn" title="Browse file">📁</button>
+            <button id="gguf-load-btn">Load</button>
+          </div>
+          <div class="gguf-model-info" id="gguf-model-info"></div>
+          <!-- 刷新按钮 -->
+          <div class="gguf-refresh-section">
+            <button id="gguf-refresh-btn">⟳ Switch to Selected API</button>
+          </div>
         </div>
       </span>
       <span class="status-bar-item" data-status="model">Model: qwen2.5:3b</span>
@@ -329,12 +413,36 @@
   <!-- Core Modules -->
   <script src="core/event-bus.js"></script>
   <script src="core/api-client.js"></script>
+  <script src="core/utils.js"></script>
+  <script src="core/logger.js"></script>
+  <script src="core/storage.js"></script>
+  <script src="core/error-handler.js"></script>
+  <script src="core/markdown.js"></script>
+  <script src="core/theme.js"></script>
 
   <!-- Services -->
   <script src="services/ai-service.js"></script>
   <script src="services/config-service.js"></script>
 
-  <!-- Main Application -->
-  <script src="app.js"></script>
+  <!-- UI Modules -->
+  <script src="app/ui/particles.js"></script>
+  <script src="app/ui/window-control.js"></script>
+  <script src="app/ui/mascot.js"></script>
+
+  <!-- Chat Modules -->
+  <script src="app/chat/chat-ui.js"></script>
+  <script src="app/chat/chat-handler.js"></script>
+  <script src="app/chat/chat-features.js"></script>
+
+  <!-- Feature Modules -->
+  <script src="app/knowledge/knowledge-ui.js"></script>
+  <script src="app/cae/cae-workbench.js"></script>
+  <script src="app/settings/status-bar.js"></script>
+
+  <!-- Experience Library -->
+  <script src="experience.js"></script>
+
+  <!-- Main Application Entry -->
+  <script src="app/main.js"></script>
 </body>
 </html>

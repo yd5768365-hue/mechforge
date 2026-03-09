@@ -1,0 +1,34 @@
+{
+  "name": "mechforge-gui",
+  "version": "0.5.0",
+  "description": "MechForge AI PyWebView Desktop Application",
+  "main": "desktop_app.py",
+  "scripts": {
+    "start": "python desktop_app.py",
+    "start:debug": "python desktop_app.py --debug",
+    "build": "python build.py --build",
+    "clean": "python build.py --clean",
+    "lint": "eslint app/**/*.js core/**/*.js services/**/*.js",
+    "lint:fix": "eslint app/**/*.js core/**/*.js services/**/*.js --fix"
+  },
+  "keywords": [
+    "mechforge",
+    "ai",
+    "desktop",
+    "pywebview",
+    "llm",
+    "chat"
+  ],
+  "author": "MechForge Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yd5768365-hue/mechforge"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

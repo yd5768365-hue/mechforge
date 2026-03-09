@@ -1,0 +1,50 @@
+# EditorConfig - 跨编辑器代码风格统一
+# https://editorconfig.org
+
+root = true
+
+# 默认设置
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+# Python
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# JavaScript / TypeScript
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+
+# CSS / SCSS
+[*.{css,scss,sass,less}]
+indent_size = 2
+
+# HTML
+[*.html]
+indent_size = 2
+
+# JSON / YAML
+[*.{json,yaml,yml}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# 配置文件
+[{package.json,.eslintrc.json,.prettierrc}]
+indent_size = 2
+
+# Shell 脚本
+[*.sh]
+end_of_line = lf
+
+# Windows 批处理
+[*.bat]
+end_of_line = crlf

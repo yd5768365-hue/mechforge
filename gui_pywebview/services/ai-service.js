@@ -11,6 +11,16 @@ class AIService {
     this.ragEnabled = false;
     this.isProcessing = false;
     this.useStreaming = true; // 默认使用流式
+    this.currentProvider = 'ollama'; // 当前使用的 API provider
+  }
+
+  /**
+   * 设置当前使用的 provider
+   * @param {string} provider - 'ollama' 或 'gguf'
+   */
+  setProvider(provider) {
+    this.currentProvider = provider === 'gguf' ? 'gguf' : 'ollama';
+    console.log('[AIService] Provider set to:', this.currentProvider);
   }
 
   /**
@@ -37,7 +47,9 @@ class AIService {
     this.eventBus.emit(Events.AI_MESSAGE_SENT, { message: userMessage });
 
     try {
-      const response = await this.apiClient.sendChat(text, {
+      // 统一使用 /api/chat，后端会根据 current_provider 自动选择后端
+      const response = await this.apiClient.post('/chat', {
+        message: text,
         rag: this.ragEnabled
       });
 
@@ -93,6 +105,8 @@ class AIService {
 
     let fullResponse = '';
     let ragUsed = false;
+
+    // 统一使用 /api/chat/stream，后端会根据 current_provider 自动选择后端
 
     try {
       const response = await fetch(`${this.apiClient.baseURL}/chat/stream`, {
