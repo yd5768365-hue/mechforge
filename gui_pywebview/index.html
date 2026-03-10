@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles-modular.css">
   <link rel="stylesheet" href="experience.css">
   <link rel="stylesheet" href="css/chat-markdown.css">
+  <link rel="stylesheet" href="css/industrial-theme.css">
 </head>
 <body>
   <div class="app-container">
@@ -188,27 +189,68 @@
 
         <!-- Knowledge Panel -->
         <div class="tab-panel" id="knowledge-panel">
+          <!-- 工业风背景 -->
+          <div class="industrial-background"></div>
+          
+          <!-- 工业网格 -->
+          <svg class="industrial-grid" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- 主网格 - 机加工线条 -->
+              <pattern id="ind-grid-main" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M0 30 Q30 28, 60 30" class="grid-main" fill="none"/>
+                <path d="M30 0 Q28 30, 30 60" class="grid-main" fill="none"/>
+              </pattern>
+              <!-- 副网格 - 烧蚀线条 -->
+              <pattern id="ind-grid-sub" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="15" x2="30" y2="15" class="grid-sub"/>
+                <line x1="15" y1="0" x2="15" y2="30" class="grid-sub"/>
+              </pattern>
+              <!-- 警示网格 -->
+              <pattern id="ind-grid-alert" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="120" height="2" class="grid-alert" fill="none"/>
+                <rect x="0" y="118" width="120" height="2" class="grid-alert" fill="none"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#ind-grid-main)" opacity="0.6"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-sub)" opacity="0.4"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-alert)" opacity="0.3"/>
+          </svg>
+          
           <div class="panel-header">
-            <h2>Knowledge Base</h2>
-            <p>Search and retrieve information from your knowledge base</p>
+            <h2>KNOWLEDGE FORGE</h2>
+            <p>Industrial Knowledge Retrieval System // v2.4.1</p>
           </div>
+          
+          <!-- 标签过滤器 -->
+          <div class="knowledge-tags" id="knowledge-tags">
+            <span class="knowledge-tag active" data-filter="all">ALL</span>
+            <span class="knowledge-tag" data-filter="manual">MANUAL</span>
+            <span class="knowledge-tag" data-filter="spec">SPEC</span>
+            <span class="knowledge-tag" data-filter="case">CASE</span>
+            <span class="knowledge-tag critical" data-filter="critical">CRITICAL</span>
+            <span class="knowledge-tag warning" data-filter="warning">WARNING</span>
+          </div>
+          
           <div class="search-container">
             <div class="search-wrapper">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/>
                 <path d="M21 21l-4.35-4.35"/>
               </svg>
-              <input type="text" id="knowledge-search" placeholder="Search knowledge base...">
-              <button id="search-btn">Search</button>
+              <input type="text" id="knowledge-search" placeholder="Enter search query...">
+              <button id="search-btn">SEARCH</button>
             </div>
           </div>
+          
           <div class="search-results" id="search-results">
             <div class="result-placeholder">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+              <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="0.8">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
               </svg>
-              <p>Enter a query to search the knowledge base</p>
+              <p>AWAITING QUERY INPUT</p>
+              <span style="font-size: 11px; color: var(--ind-text-dim);">Enter search terms to retrieve knowledge entries</span>
             </div>
           </div>
         </div>
