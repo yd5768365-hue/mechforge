@@ -77,6 +77,11 @@
     }
   ];
 
+  // ==================== 动态效果 ====================
+  let dustInterval = null;
+  let pulseInterval = null;
+  let isPanelVisible = false;
+
   /**
    * 初始化知识库模块
    * @param {Object} service - AIService 实例
@@ -91,6 +96,187 @@
 
     setupEventListeners();
     setupTagFilters();
+    setupIndustrialEffects();
+  }
+
+  /**
+   * 设置工业风动态效果
+   */
+  function setupIndustrialEffects() {
+    // 监听面板可见性变化
+    const knowledgePanel = $('knowledge-panel');
+    if (!knowledgePanel) return;
+
+    // 使用 MutationObserver 监听面板显示状态
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const isActive = knowledgePanel.classList.contains('active');
+          if (isActive && !isPanelVisible) {
+            isPanelVisible = true;
+            startIndustrialEffects();
+          } else if (!isActive && isPanelVisible) {
+            isPanelVisible = false;
+            stopIndustrialEffects();
+          }
+        }
+      });
+    });
+
+    observer.observe(knowledgePanel, { attributes: true });
+
+    // 初始检查
+    if (knowledgePanel.classList.contains('active')) {
+      isPanelVisible = true;
+      startIndustrialEffects();
+    }
+  }
+
+  /**
+   * 启动工业风效果
+   */
+  function startIndustrialEffects() {
+    createMetalDust();
+    startHeatPulse();
+  }
+
+  /**
+   * 停止工业风效果
+   */
+  function stopIndustrialEffects() {
+    if (dustInterval) {
+      clearInterval(dustInterval);
+      dustInterval = null;
+    }
+    if (pulseInterval) {
+      clearInterval(pulseInterval);
+      pulseInterval = null;
+    }
+    // 清理现有粒子
+    const dustContainer = $('metal-dust-container');
+    if (dustContainer) {
+      dustContainer.innerHTML = '';
+    }
+  }
+
+  /**
+   * 创建金属尘埃粒子 - 冷却金属粉尘沉降效果
+   */
+  function createMetalDust() {
+    const dustContainer = $('metal-dust-container');
+    if (!dustContainer) return;
+
+    // 初始创建 6-8 个粒子
+    const particleCount = 6 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < particleCount; i++) {
+      setTimeout(() => spawnMetalParticle(dustContainer), i * 800);
+    }
+
+    // 持续生成新粒子（间隔较长，保持稀疏感）
+    dustInterval = setInterval(() => {
+      if (dustContainer.childElementCount < 8) {
+        spawnMetalParticle(dustContainer);
+      }
+    }, 3000 + Math.random() * 2000);
+  }
+
+  /**
+   * 生成单个金属尘埃粒子
+   */
+  function spawnMetalParticle(container) {
+    const particle = document.createElement('div');
+    particle.className = 'metal-particle';
+    
+    // 随机选择粒子类型（暗青色为主，少量暗橙色）
+    const rand = Math.random();
+    if (rand > 0.92) {
+      particle.classList.add('orange-dust');
+    } else if (rand > 0.65) {
+      particle.classList.add('iron-dust');
+    } else {
+      particle.classList.add('cyan-dust');
+    }
+
+    // 随机大小（2-5px，极细小）
+    const size = 2 + Math.random() * 3;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+
+    // 随机水平位置
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = '-10px';
+
+    // 极慢的下沉速度（15-25秒）
+    const duration = 15 + Math.random() * 10;
+    particle.style.animationDuration = `${duration}s`;
+
+    // 随机水平漂移
+    const drift = (Math.random() - 0.5) * 60;
+    particle.style.setProperty('--drift', `${drift}px`);
+
+    container.appendChild(particle);
+
+    // 动画结束后移除
+    setTimeout(() => {
+      if (particle.parentNode) {
+        particle.remove();
+      }
+    }, duration * 1000);
+  }
+
+  /**
+   * 启动热应力波脉冲
+   */
+  function startHeatPulse() {
+    const pulseContainer = $('heat-pulse-container');
+    if (!pulseContainer) return;
+
+    // 立即创建第一个脉冲
+    setTimeout(() => spawnHeatPulse(pulseContainer), 2000);
+
+    // 每 10-15 秒随机生成脉冲
+    const scheduleNextPulse = () => {
+      const delay = 10000 + Math.random() * 5000;
+      pulseInterval = setTimeout(() => {
+        spawnHeatPulse(pulseContainer);
+        scheduleNextPulse();
+      }, delay);
+    };
+
+    scheduleNextPulse();
+  }
+
+  /**
+   * 生成热应力波脉冲
+   */
+  function spawnHeatPulse(container) {
+    const pulse = document.createElement('div');
+    pulse.className = 'heat-pulse';
+
+    // 随机选择脉冲颜色（青色为主，偶尔红色/橙色）
+    const rand = Math.random();
+    if (rand > 0.85) {
+      pulse.classList.add('red');
+    } else if (rand > 0.65) {
+      pulse.classList.add('orange');
+    } else {
+      pulse.classList.add('cyan');
+    }
+
+    // 随机位置（网格节点附近）
+    const x = 15 + Math.random() * 70;
+    const y = 20 + Math.random() * 60;
+    pulse.style.left = `${x}%`;
+    pulse.style.top = `${y}%`;
+
+    container.appendChild(pulse);
+
+    // 动画结束后移除
+    setTimeout(() => {
+      if (pulse.parentNode) {
+        pulse.remove();
+      }
+    }, 3000);
   }
 
   /**

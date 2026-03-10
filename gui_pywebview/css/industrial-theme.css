@@ -133,7 +133,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   工业网格 - 机加工金属表面效果
+   工业网格 - 机加工金属表面效果（粗细不均 + 烧蚀感 + 断裂）
    ═══════════════════════════════════════════════════════════════ */
 .industrial-grid {
   position: absolute;
@@ -142,30 +142,249 @@
   height: 100%;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.4;
+  opacity: 0.6;
 }
 
-/* 主网格 - 粗细不均的机加工线条 */
+/* 主网格 - 机加工线条（粗细不均） */
 .industrial-grid .grid-main {
   stroke: var(--ind-cyan);
-  stroke-width: 0.4;
-  stroke-opacity: 0.3;
+  stroke-opacity: 0.25;
   filter: drop-shadow(0 0 1px var(--ind-cyan));
+  stroke-linecap: round;
 }
 
-/* 副网格 - 更细的高温烧蚀线条 */
-.industrial-grid .grid-sub {
+/* 粗线条 - 主要应力线 */
+.industrial-grid .grid-thick {
+  stroke: var(--ind-cyan);
+  stroke-width: 1.2;
+  stroke-opacity: 0.35;
+  filter: drop-shadow(0 0 2px var(--ind-cyan));
+}
+
+/* 中等线条 - 普通加工线 */
+.industrial-grid .grid-medium {
   stroke: var(--ind-cyan-dim);
-  stroke-width: 0.15;
+  stroke-width: 0.6;
+  stroke-opacity: 0.18;
+}
+
+/* 细线条 - 细微划痕 */
+.industrial-grid .grid-thin {
+  stroke: var(--ind-cyan-dim);
+  stroke-width: 0.2;
+  stroke-opacity: 0.1;
+}
+
+/* 烧蚀线条 - 模糊断裂效果 */
+.industrial-grid .grid-burn {
+  stroke: var(--ind-cyan);
+  stroke-width: 0.8;
+  stroke-opacity: 0.12;
+  filter: blur(0.5px);
+  stroke-dasharray: 20 10 5 15;
+}
+
+/* 热影响区线条 - 暗橙色 */
+.industrial-grid .grid-heat {
+  stroke: var(--ind-warning);
+  stroke-width: 0.5;
+  stroke-opacity: 0.08;
+  filter: blur(1px);
+}
+
+/* 断裂线 - 不连续 */
+.industrial-grid .grid-broken {
+  stroke: var(--ind-steel);
+  stroke-width: 0.4;
   stroke-opacity: 0.15;
+  stroke-dasharray: 8 4 2 6;
 }
 
 /* 警示网格线 */
 .industrial-grid .grid-alert {
   stroke: var(--ind-warning);
-  stroke-width: 0.5;
-  stroke-opacity: 0.2;
-  filter: drop-shadow(0 0 2px var(--ind-warning));
+  stroke-width: 0.8;
+  stroke-opacity: 0.12;
+  filter: drop-shadow(0 0 3px var(--ind-warning));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   热应力波脉冲 - 锻造维护效果
+   ═══════════════════════════════════════════════════════════════ */
+.heat-pulse-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.heat-pulse {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* 青色应力波 */
+.heat-pulse.cyan {
+  border: 2px solid var(--ind-cyan);
+  box-shadow: 
+    0 0 10px var(--ind-cyan-glow),
+    inset 0 0 10px var(--ind-cyan-glow);
+  animation: heatPulseCyan 3s ease-out forwards;
+}
+
+/* 暗红应力波 */
+.heat-pulse.red {
+  border: 2px solid var(--ind-alert);
+  box-shadow: 
+    0 0 10px var(--ind-alert-glow),
+    inset 0 0 10px var(--ind-alert-glow);
+  animation: heatPulseRed 3s ease-out forwards;
+}
+
+/* 橙色应力波 */
+.heat-pulse.orange {
+  border: 2px solid var(--ind-warning);
+  box-shadow: 
+    0 0 10px var(--ind-warning-glow),
+    inset 0 0 10px var(--ind-warning-glow);
+  animation: heatPulseOrange 3s ease-out forwards;
+}
+
+@keyframes heatPulseCyan {
+  0% {
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    width: 400px;
+    height: 400px;
+    opacity: 0;
+  }
+}
+
+@keyframes heatPulseRed {
+  0% {
+    width: 30px;
+    height: 30px;
+    opacity: 0.45;
+  }
+  30% {
+    opacity: 0.35;
+  }
+  100% {
+    width: 350px;
+    height: 350px;
+    opacity: 0;
+  }
+}
+
+@keyframes heatPulseOrange {
+  0% {
+    width: 25px;
+    height: 25px;
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.3;
+  }
+  100% {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   金属尘埃粒子 - 冷却金属粉尘沉降效果
+   ═══════════════════════════════════════════════════════════════ */
+.metal-dust-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.metal-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: dustSettle linear infinite;
+}
+
+/* 暗青灰尘埃 */
+.metal-particle.cyan-dust {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(100, 120, 130, 0.8) 0%,
+    rgba(60, 80, 90, 0.4) 50%,
+    transparent 70%
+  );
+  box-shadow: 0 0 2px rgba(60, 80, 90, 0.3);
+}
+
+/* 暗橙色尘埃 - 高温余烬 */
+.metal-particle.orange-dust {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(180, 100, 60, 0.6) 0%,
+    rgba(120, 60, 40, 0.3) 50%,
+    transparent 70%
+  );
+  box-shadow: 0 0 3px rgba(180, 100, 60, 0.2);
+}
+
+/* 铁灰色尘埃 */
+.metal-particle.iron-dust {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(80, 90, 100, 0.7) 0%,
+    rgba(50, 60, 70, 0.35) 50%,
+    transparent 70%
+  );
+}
+
+@keyframes dustSettle {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(100vh) translateX(30px) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+/* 极短尾迹 */
+.metal-particle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    currentColor,
+    transparent
+  );
+  transform: translate(-50%, -50%) rotate(90deg);
+  opacity: 0.15;
 }
 
 /* ═══════════════════════════════════════════════════════════════

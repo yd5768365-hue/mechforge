@@ -192,29 +192,59 @@
           <!-- 工业风背景 -->
           <div class="industrial-background"></div>
           
-          <!-- 工业网格 -->
+          <!-- 工业网格 - 粗细不均 + 烧蚀感 -->
           <svg class="industrial-grid" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <!-- 主网格 - 机加工线条 -->
-              <pattern id="ind-grid-main" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M0 30 Q30 28, 60 30" class="grid-main" fill="none"/>
-                <path d="M30 0 Q28 30, 30 60" class="grid-main" fill="none"/>
+              <!-- 粗线条 - 主要应力线 -->
+              <pattern id="ind-grid-thick" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <path d="M0 60 Q60 55, 120 60" class="grid-thick" fill="none"/>
+                <path d="M60 0 Q55 60, 60 120" class="grid-thick" fill="none"/>
               </pattern>
-              <!-- 副网格 - 烧蚀线条 -->
-              <pattern id="ind-grid-sub" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="15" x2="30" y2="15" class="grid-sub"/>
-                <line x1="15" y1="0" x2="15" y2="30" class="grid-sub"/>
+              <!-- 中等线条 - 普通加工线 -->
+              <pattern id="ind-grid-medium" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="30" x2="60" y2="30" class="grid-medium"/>
+                <line x1="30" y1="0" x2="30" y2="60" class="grid-medium"/>
+              </pattern>
+              <!-- 细线条 - 细微划痕 -->
+              <pattern id="ind-grid-thin" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="15" x2="30" y2="15" class="grid-thin"/>
+                <line x1="15" y1="0" x2="15" y2="30" class="grid-thin"/>
+              </pattern>
+              <!-- 烧蚀线条 - 模糊断裂 -->
+              <pattern id="ind-grid-burn" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+                <path d="M0 40 Q20 35, 40 40 T80 40" class="grid-burn" fill="none"/>
+                <path d="M40 0 Q35 20, 40 40 T40 80" class="grid-burn" fill="none"/>
+              </pattern>
+              <!-- 热影响区线条 -->
+              <pattern id="ind-grid-heat" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="50" x2="100" y2="50" class="grid-heat"/>
+                <line x1="50" y1="0" x2="50" y2="100" class="grid-heat"/>
+              </pattern>
+              <!-- 断裂线 -->
+              <pattern id="ind-grid-broken" x="0" y="0" width="45" height="45" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="22" x2="45" y2="22" class="grid-broken"/>
+                <line x1="22" y1="0" x2="22" y2="45" class="grid-broken"/>
               </pattern>
               <!-- 警示网格 -->
-              <pattern id="ind-grid-alert" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="120" height="2" class="grid-alert" fill="none"/>
-                <rect x="0" y="118" width="120" height="2" class="grid-alert" fill="none"/>
+              <pattern id="ind-grid-alert" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="200" height="3" class="grid-alert" fill="none"/>
+                <rect x="0" y="197" width="200" height="3" class="grid-alert" fill="none"/>
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#ind-grid-main)" opacity="0.6"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-sub)" opacity="0.4"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-alert)" opacity="0.3"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-thick)" opacity="0.5"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-medium)" opacity="0.4"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-thin)" opacity="0.3"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-burn)" opacity="0.35"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-heat)" opacity="0.25"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-broken)" opacity="0.3"/>
+            <rect width="100%" height="100%" fill="url(#ind-grid-alert)" opacity="0.2"/>
           </svg>
+          
+          <!-- 金属尘埃粒子容器 -->
+          <div class="metal-dust-container" id="metal-dust-container"></div>
+          
+          <!-- 热应力波脉冲容器 -->
+          <div class="heat-pulse-container" id="heat-pulse-container"></div>
           
           <div class="panel-header">
             <h2>KNOWLEDGE FORGE</h2>
