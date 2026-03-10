@@ -388,7 +388,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   知识库面板 - 工业风样式
+   知识库面板 - 工业激光刻字风格
    ═══════════════════════════════════════════════════════════════ */
 #knowledge-panel {
   position: relative;
@@ -398,53 +398,142 @@
 /* 面板头部 - 锻造铭牌风格 */
 #knowledge-panel .panel-header {
   position: relative;
-  padding: 24px 28px;
+  padding: 32px 28px 24px;
   background: linear-gradient(
     180deg,
-    rgba(26, 37, 47, 0.9) 0%,
-    rgba(26, 37, 47, 0.6) 100%
+    rgba(26, 37, 47, 0.95) 0%,
+    rgba(15, 21, 28, 0.9) 50%,
+    rgba(5, 7, 15, 0.95) 100%
   );
-  border-bottom: var(--border-heavy);
-  border-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--ind-cyan) 20%,
-    var(--ind-cyan) 80%,
-    transparent 100%
-  ) 1;
+  border-bottom: none;
+  overflow: hidden;
 }
 
-#knowledge-panel .panel-header::before {
+/* 热影响区渐变线 */
+#knowledge-panel .panel-header::after {
   content: '';
+  position: absolute;
+  bottom: 0;
+  left: 28px;
+  right: 28px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 71, 87, 0.8) 5%,
+    rgba(255, 107, 53, 0.6) 25%,
+    rgba(138, 43, 226, 0.5) 50%,
+    rgba(0, 212, 255, 0.6) 75%,
+    rgba(0, 100, 150, 0.4) 95%,
+    transparent 100%
+  );
+  box-shadow: 
+    0 -2px 8px rgba(255, 71, 87, 0.3),
+    0 -1px 4px rgba(0, 212, 255, 0.2);
+}
+
+/* 主标题 - 粗壮工业字体 + 激光刻字效果 */
+#knowledge-panel .panel-header h2 {
+  font-family: 'Chakra Petch', 'DIN Next Pro Condensed', 'Impact', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: #e8f0f8;
+  /* 激光刻字效果：冷白带极淡青晕 */
+  text-shadow:
+    /* 内层锐利亮线 */
+    0 0 1px rgba(255, 255, 255, 0.8),
+    0 0 2px rgba(255, 255, 255, 0.6),
+    /* 中层淡青扩散 */
+    0 0 8px rgba(0, 212, 255, 0.3),
+    0 0 12px rgba(0, 212, 255, 0.2),
+    /* 外层极淡晕 */
+    0 0 20px rgba(0, 212, 255, 0.1);
+  position: relative;
+}
+
+/* 标题蚀刻纹理效果 */
+#knowledge-panel .panel-header h2::before {
+  content: 'KNOWLEDGE FORGE';
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 2px;
+  color: transparent;
   background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--ind-cyan) 10%,
-    var(--ind-cyan) 90%,
-    transparent 100%
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 100%
   );
-  box-shadow: var(--glow-mid);
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
 }
 
-#knowledge-panel .panel-header h2 {
-  color: var(--ind-text-primary);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  text-shadow: var(--glow-inner);
-}
-
+/* 中文副标题 - 激光刻字感，钛合金表面蚀刻 */
 #knowledge-panel .panel-header p {
-  color: var(--ind-text-secondary);
-  font-size: 12px;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: #8aa0b8;
+  margin-top: 12px;
+  /* 激光蚀刻效果 */
+  text-shadow:
+    /* 内陷阴影 */
+    0 1px 1px rgba(0, 0, 0, 0.8),
+    /* 顶部高光 */
+    0 -1px 1px rgba(255, 255, 255, 0.1),
+    /* 极淡青晕 */
+    0 0 6px rgba(0, 212, 255, 0.15);
+  opacity: 0.9;
+}
+
+/* 标题区装饰 - 烧蚀边角 */
+#knowledge-panel .panel-header::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 40px;
+  height: 40px;
+  border-left: 2px solid rgba(255, 107, 53, 0.4);
+  border-top: 2px solid rgba(255, 107, 53, 0.4);
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+/* 标题区右侧烧蚀标记 */
+#knowledge-panel .panel-header .header-mark {
+  position: absolute;
+  top: 16px;
+  right: 28px;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255, 107, 53, 0.6);
+  text-transform: uppercase;
+  transform: rotate(90deg);
+  transform-origin: right top;
+}
+
+/* 档案编号标记 */
+#knowledge-panel .panel-header .archive-id {
+  position: absolute;
+  bottom: 16px;
+  right: 28px;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 11px;
+  font-weight: 400;
   letter-spacing: 1px;
+  color: var(--ind-text-dim);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
