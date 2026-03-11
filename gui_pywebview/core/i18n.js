@@ -80,7 +80,6 @@
       'settings.language': '语言',
       'settings.theme': '主题',
       'settings.api': 'API 设置',
-      's.ettings': '必须
       'settings.model': '模型',
       'settings.version': '版本',
       'settings.saveSuccess': '设置已保存',

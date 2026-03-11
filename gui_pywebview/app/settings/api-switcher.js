@@ -103,7 +103,7 @@
 
     if (e.target.closest('#gguf-refresh-btn')) {
       switchToSelectedAPI();
-      return;
+      
     }
   }
 

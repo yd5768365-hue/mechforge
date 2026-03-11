@@ -121,11 +121,11 @@
    */
   function parseLists(text) {
     const lines = text.split('\n');
-    let result = [];
+    const result = [];
     let inList = false;
     let listType = '';
 
-    for (let line of lines) {
+    for (const line of lines) {
       const ulMatch = line.match(/^(\s*)[-*+]\s+(.+)$/);
       const olMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
 
@@ -224,15 +224,15 @@
     let html = text;
 
     // 按顺序解析（顺序很重要）
-    html = parseCodeBlocks(html);      // 先处理代码块
-    html = parseHeadings(html);        // 标题
+    html = parseCodeBlocks(html); // 先处理代码块
+    html = parseHeadings(html); // 标题
     html = parseHorizontalRules(html); // 水平线
-    html = parseBlockquotes(html);     // 引用
-    html = parseLists(html);           // 列表
-    html = parseBoldItalic(html);      // 粗体斜体
-    html = parseLinks(html);           // 链接
-    html = parseInlineCode(html);      // 行内代码
-    html = parseParagraphs(html);      // 段落
+    html = parseBlockquotes(html); // 引用
+    html = parseLists(html); // 列表
+    html = parseBoldItalic(html); // 粗体斜体
+    html = parseLinks(html); // 链接
+    html = parseInlineCode(html); // 行内代码
+    html = parseParagraphs(html); // 段落
 
     return html;
   }

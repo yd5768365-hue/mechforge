@@ -9,10 +9,10 @@
   // ==================== 配置 ====================
   const config = {
     enabled: true,
-    logInterval: 30000,      // 日志记录间隔
-    slowFrameThreshold: 33,  // 慢帧阈值 (30fps)
+    logInterval: 30000, // 日志记录间隔
+    slowFrameThreshold: 33, // 慢帧阈值 (30fps)
     memoryWarningThreshold: 0.8, // 内存警告阈值 (80%)
-    maxMetricsHistory: 100   // 最大历史记录数
+    maxMetricsHistory: 100 // 最大历史记录数
   };
 
   // ==================== 状态 ====================

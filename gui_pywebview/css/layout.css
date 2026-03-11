@@ -275,6 +275,8 @@
   display: none;
   flex-direction: column;
   z-index: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .tab-panel.active {

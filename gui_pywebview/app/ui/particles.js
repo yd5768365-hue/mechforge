@@ -25,7 +25,7 @@
   let container = null;
   let particles = [];
   let sparkPool = [];
-  let animationId = null;
+  const animationId = null;
 
   // ==================== 初始化 ====================
 

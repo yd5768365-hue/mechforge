@@ -9,13 +9,13 @@
   // ==================== 配置 ====================
   const config = {
     autoCleanupInterval: 30000, // 自动清理间隔
-    maxListenersPerType: 100,   // 每类事件最大监听器数
-    warnThreshold: 50           // 警告阈值
+    maxListenersPerType: 100, // 每类事件最大监听器数
+    warnThreshold: 50 // 警告阈值
   };
 
   // ==================== 状态 ====================
-  const listeners = new Map();           // 事件监听器
-  const delegatedListeners = new Map();  // 委托监听器
+  const listeners = new Map(); // 事件监听器
+  const delegatedListeners = new Map(); // 委托监听器
   const observerRegistry = new WeakMap(); // DOM观察器注册表
   let cleanupInterval = null;
 

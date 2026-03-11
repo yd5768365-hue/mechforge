@@ -9,7 +9,7 @@
   const { $, escapeHtml, debounce } = Utils;
 
   // ==================== 状态 ====================
-  let state = {
+  const state = {
     draft: '',
     isGenerating: false,
     abortController: null
@@ -128,7 +128,7 @@
       if (e.key === '/' && !isInputFocused) {
         e.preventDefault();
         chatInput?.focus();
-        return;
+        
       }
     });
   }

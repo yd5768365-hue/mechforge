@@ -21,7 +21,7 @@
     prefix: '[MechForge]',
     timestamp: true,
     colorize: true,
-    persist: false,  // 是否持久化到 localStorage
+    persist: false, // 是否持久化到 localStorage
     maxPersistLogs: 100
   };
 

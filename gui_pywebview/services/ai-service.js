@@ -104,7 +104,7 @@ class AIService {
     this.eventBus.emit(Events.AI_MESSAGE_SENT, { message: userMessage });
 
     let fullResponse = '';
-    let ragUsed = false;
+    const ragUsed = false;
 
     // 统一使用 /api/chat/stream，后端会根据 current_provider 自动选择后端
 

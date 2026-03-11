@@ -279,7 +279,7 @@
    * const color = randomColor(); // '#a7f3d0'
    */
   function randomColor() {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
   }
 
   // ==================== 数组/对象工具 ====================

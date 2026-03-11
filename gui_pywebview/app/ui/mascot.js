@@ -143,7 +143,7 @@
     whaleSpeech.classList.add('active');
 
     const display = text.length > WHALE_SPEECH_MAX_LEN
-      ? text.substring(0, WHALE_SPEECH_MAX_LEN) + '...'
+      ? `${text.substring(0, WHALE_SPEECH_MAX_LEN)}...`
       : text;
 
     whaleSpeech.innerHTML = `${escapeHtml(display)}<span class="typing-cursor"></span>`;

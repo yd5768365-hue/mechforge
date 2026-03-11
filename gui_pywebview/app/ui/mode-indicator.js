@@ -241,7 +241,7 @@
       updateUI(mode);
     } catch (error) {
       console.error('[ModeIndicator] Failed to switch mode:', error);
-      showError('模式切换失败: ' + error.message);
+      showError(`模式切换失败: ${error.message}`);
     }
   }
 

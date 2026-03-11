@@ -23,12 +23,12 @@
     } = options;
 
     // 内部状态
-    let _state = deepClone(state);
-    let _getters = {};
+    const _state = deepClone(state);
+    const _getters = {};
     let _mutations = { ...mutations };
     let _actions = { ...actions };
-    let _subscribers = [];
-    let _actionSubscribers = [];
+    const _subscribers = [];
+    const _actionSubscribers = [];
     let _isCommitting = false;
 
     // 初始化模块
@@ -176,13 +176,13 @@
 
       // 删除 mutations 和 actions
       Object.keys(_mutations).forEach(key => {
-        if (key.startsWith(namespace + '/')) {
+        if (key.startsWith(`${namespace}/`)) {
           delete _mutations[key];
         }
       });
 
       Object.keys(_actions).forEach(key => {
-        if (key.startsWith(namespace + '/')) {
+        if (key.startsWith(`${namespace}/`)) {
           delete _actions[key];
         }
       });

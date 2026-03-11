@@ -19,7 +19,7 @@
 
     function check() {
       const allLoaded = components.every(name => {
-        const componentName = name.charAt(0).toUpperCase() + name.slice(1) + 'Component';
+        const componentName = `${name.charAt(0).toUpperCase() + name.slice(1)}Component`;
         return window[componentName] !== undefined;
       });
 

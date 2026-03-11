@@ -23,13 +23,32 @@ from fastapi.staticfiles import StaticFiles
 
 # ── 路径设置 ──────────────────────────────────────────────────────────────────
 
-PROJECT_ROOT = Path(__file__).parent.parent
-GUI_DIR = Path(__file__).parent.resolve()
-
 import sys
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# 检测是否在 PyInstaller 打包环境中
+def get_gui_dir() -> Path:
+    """获取 GUI 目录，兼容 PyInstaller 打包环境"""
+    # PyInstaller 会在 sys 中设置 _MEIPASS
+    if hasattr(sys, '_MEIPASS'):
+        # 打包后的临时目录，所有资源都在这里
+        return Path(sys._MEIPASS).resolve()
+    else:
+        # 开发环境
+        return Path(__file__).parent.resolve()
+
+GUI_DIR = get_gui_dir()
+
+# 在打包环境中，GUI_DIR 就是根目录（包含 api/ 等子目录）
+# 在开发环境中，需要添加父目录到 Python 路径
+if hasattr(sys, '_MEIPASS'):
+    # 打包环境：所有资源在 _MEIPASS 目录下
+    if str(GUI_DIR) not in sys.path:
+        sys.path.insert(0, str(GUI_DIR))
+else:
+    # 开发环境：添加项目根目录
+    project_root = Path(__file__).parent.resolve()
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
 # ── 日志 ──────────────────────────────────────────────────────────────────────
 

@@ -1,15 +1,13 @@
 {
   "semi": true,
-  "trailingComma": "none",
+  "trailingComma": "es5",
   "singleQuote": true,
   "printWidth": 100,
   "tabWidth": 2,
   "useTabs": false,
   "bracketSpacing": true,
-  "arrowParens": "always",
+  "arrowParens": "avoid",
   "endOfLine": "lf",
-  "quoteProps": "as-needed",
-  "jsxSingleQuote": true,
   "overrides": [
     {
       "files": "*.css",

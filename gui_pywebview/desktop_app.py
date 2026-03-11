@@ -223,7 +223,14 @@ class BackendServer:
         try:
             import uvicorn
 
-            from gui_pywebview.server import app
+            # 动态导入 server 模块（兼容 PyInstaller 打包）
+            import sys
+            from pathlib import Path
+            gui_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+            if str(gui_dir) not in sys.path:
+                sys.path.insert(0, str(gui_dir))
+            
+            from server import app
 
             uvicorn.run(
                 app,
@@ -527,8 +534,60 @@ class MechForgeApp:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+def check_webview2() -> bool:
+    """Check if WebView2 runtime is installed"""
+    if sys.platform != "win32":
+        return True
+    try:
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+            r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}")
+        winreg.CloseKey(key)
+        return True
+    except FileNotFoundError:
+        return False
+
+def show_webview2_error():
+    """Show WebView2 error dialog"""
+    msg = ("MechForge AI requires Microsoft Edge WebView2 Runtime.\n\n"
+           "Please download and install it from:\n"
+           "https://go.microsoft.com/fwlink/p/?LinkId=2124703")
+    try:
+        import tkinter.messagebox as msgbox
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        msgbox.showerror("MechForge AI - Error", msg)
+    except Exception:
+        print(msg, file=sys.stderr)
+        input("\nPress Enter to exit...")
+
 def main(argv: list[str] | None = None) -> None:
     import argparse
+
+    # Check WebView2 runtime
+    if not check_webview2():
+        show_webview2_error()
+        sys.exit(1)
+
+    # Fix PyInstaller --windowed mode - 创建日志文件
+    log_file = None
+    if getattr(sys, 'frozen', False):
+        log_dir = Path.home() / ".mechforge" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / "mechforge.log"
+        # 追加模式打开日志文件
+        file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
+        file_handler.setFormatter(logging.Formatter(
+            "[%(asctime)s] %(levelname)s  %(name)s — %(message)s",
+            datefmt="%H:%M:%S"
+        ))
+        logger.addHandler(file_handler)
+        # 获取 GUI_DIR 用于日志
+        gui_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).parent))
+        logger.info(f"日志文件: {log_file}")
+        logger.info(f"GUI_DIR: {gui_dir}")
+        logger.info(f"_MEIPASS: {getattr(sys, '_MEIPASS', 'Not set')}")
 
     parser = argparse.ArgumentParser(description="MechForge AI Desktop")
     parser.add_argument("--port", type=int, default=5000, help="后端起始端口（默认 5000）")
@@ -538,15 +597,18 @@ def main(argv: list[str] | None = None) -> None:
     try:
         MechForgeApp(port=args.port, debug=args.debug).run()
     except ImportError as e:
-        print(f"\n[错误] 缺少依赖：{e}")
-        print("请运行：pip install pywebview fastapi uvicorn")
-        input("\n按回车退出…")
+        logger.error(f"缺少依赖：{e}")
+        logger.error("请运行：pip install pywebview fastapi uvicorn")
+        if log_file:
+            print(f"错误日志已保存到: {log_file}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:
         logger.info("用户中断，退出")
     except Exception:
         logger.exception("启动失败")
-        input("\n按回车退出…")
+        if log_file:
+            print(f"错误日志已保存到: {log_file}", file=sys.stderr)
+        input("\n按回车键退出...")  # 让用户看到错误信息
         sys.exit(1)
 
 

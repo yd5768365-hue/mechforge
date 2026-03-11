@@ -8,7 +8,7 @@
 
   // ==================== 配置 ====================
   const config = {
-    memoryCacheLimit: 50,      // 内存缓存最大条目数
+    memoryCacheLimit: 50, // 内存缓存最大条目数
     localStoragePrefix: 'mf_', // localStorage 键前缀
     defaultTTL: 5 * 60 * 1000, // 默认缓存时间 5分钟
     cleanupInterval: 60 * 1000 // 清理间隔 1分钟
