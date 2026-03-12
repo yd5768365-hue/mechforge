@@ -10,8 +10,9 @@ class AIService {
     this.history = [];
     this.ragEnabled = false;
     this.isProcessing = false;
-    this.useStreaming = true; // 默认使用流式
-    this.currentProvider = 'ollama'; // 当前使用的 API provider
+    this.useStreaming = true;
+    this.currentProvider = 'ollama';
+    this.customSystemPrompt = '';
   }
 
   /**
@@ -21,6 +22,15 @@ class AIService {
   setProvider(provider) {
     this.currentProvider = provider === 'gguf' ? 'gguf' : 'ollama';
     console.log('[AIService] Provider set to:', this.currentProvider);
+  }
+
+  /**
+   * 设置自定义系统提示词
+   * @param {string} prompt - 系统提示词，空字符串表示使用默认
+   */
+  setSystemPrompt(prompt) {
+    this.customSystemPrompt = prompt || '';
+    console.log('[AIService] System prompt:', prompt ? 'custom' : 'default');
   }
 
   /**
@@ -47,11 +57,14 @@ class AIService {
     this.eventBus.emit(Events.AI_MESSAGE_SENT, { message: userMessage });
 
     try {
-      // 统一使用 /api/chat，后端会根据 current_provider 自动选择后端
-      const response = await this.apiClient.post('/chat', {
+      const payload = {
         message: text,
         rag: this.ragEnabled
-      });
+      };
+      if (this.customSystemPrompt) {
+        payload.system_prompt = this.customSystemPrompt;
+      }
+      const response = await this.apiClient.post('/chat', payload);
 
       // 添加 AI 回复到历史
       const aiMessage = {
@@ -109,16 +122,20 @@ class AIService {
     // 统一使用 /api/chat/stream，后端会根据 current_provider 自动选择后端
 
     try {
+      const streamPayload = {
+        message: text,
+        rag: this.ragEnabled,
+        stream: true
+      };
+      if (this.customSystemPrompt) {
+        streamPayload.system_prompt = this.customSystemPrompt;
+      }
       const response = await fetch(`${this.apiClient.baseURL}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          message: text,
-          rag: this.ragEnabled,
-          stream: true
-        })
+        body: JSON.stringify(streamPayload)
       });
 
       if (!response.ok) {
@@ -147,29 +164,29 @@ class AIService {
                 rag_used: ragUsed
               };
               this.history.push(aiMessage);
-              
+
               this.eventBus.emit(Events.AI_RESPONSE_RECEIVED, {
                 message: aiMessage
               });
-              
+
               if (onChunk) {
                 onChunk(fullResponse, true);
               }
-              
+
               this.isProcessing = false;
               return fullResponse;
             }
 
             try {
               const data = JSON.parse(dataStr);
-              
+
               if (data.error) {
                 throw new Error(data.error);
               }
-              
+
               if (data.content) {
                 fullResponse += data.content;
-                
+
                 if (onChunk) {
                   onChunk(fullResponse, false);
                 }

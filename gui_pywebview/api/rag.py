@@ -3,7 +3,7 @@ RAG API 路由
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -29,7 +29,7 @@ class RAGSearchRequest(BaseModel):
 class RAGSearchResponse(BaseModel):
     """RAG 搜索响应"""
 
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
 
 
 # ── API 端点 ──────────────────────────────────────────────────────────────────
@@ -46,11 +46,11 @@ async def rag_search(request: RAGSearchRequest) -> RAGSearchResponse:
         context = rag.search(request.query)
     except Exception as e:
         logger.error(f"RAG 检索失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     if context:
-        current: Dict[str, Any] = {}
+        current: dict[str, Any] = {}
         for line in context.split("\n"):
             if line.startswith("【参考知识库】"):
                 continue
@@ -91,7 +91,7 @@ async def rag_status() -> dict:
 
 
 @router.post("/toggle")
-async def toggle_rag(body: Dict[str, Any]) -> dict:
+async def toggle_rag(body: dict[str, Any]) -> dict:
     """切换 RAG 开关"""
     enabled = bool(body.get("enabled", False))
     state.config.knowledge.rag.enabled = enabled

@@ -13,9 +13,13 @@
     currentAPI: 'ollama',
     currentModel: 'qwen2.5:3b',
     ragEnabled: true,
+    expEnabled: false,
     availableModels: [],
     ggufLoaded: false,
     ggufModelName: '',
+    ggufModelPath: '',
+    ggufScannedModels: [],
+    ggufDirectory: '',
     pendingAPI: 'ollama',
     initialized: false
   };
@@ -36,9 +40,18 @@
     }
     state.initialized = true;
 
-    cacheElements();
-    loadInitialState();
-    setupEventListeners();
+    try {
+      cacheElements();
+      setupEventListeners();
+      console.log('[StatusBar] Event listeners bound');
+    } catch (err) {
+      console.error('[StatusBar] Failed to setup listeners:', err);
+    }
+
+    // 网络请求不阻塞事件绑定
+    loadInitialState().catch(err => {
+      console.warn('[StatusBar] loadInitialState error (non-fatal):', err);
+    });
 
     console.log('[StatusBar] Initialized');
   }
@@ -53,9 +66,12 @@
       modelTrigger: document.querySelector('[data-status="model"]'),
       ragTrigger: document.querySelector('[data-status="rag"]'),
       memoryTrigger: document.querySelector('[data-status="memory"]'),
-      ggufPathInput: $('gguf-model-path'),
-      ggufLoadBtn: $('gguf-load-btn'),
+      expTrigger: document.querySelector('[data-status="exp"]'),
+      ggufSection: $('gguf-section'),
+      ggufModelList: $('gguf-model-list'),
+      ggufScanBtn: $('gguf-scan-btn'),
       ggufBrowseBtn: $('gguf-browse-btn'),
+      ggufBrowseDirBtn: $('gguf-browse-dir-btn'),
       ggufRefreshBtn: $('gguf-refresh-btn'),
       ggufModelInfo: $('gguf-model-info')
     };
@@ -83,12 +99,14 @@
       state.availableModels = Array.isArray(models) ? models : [];
       state.ggufLoaded = ggufInfo.loaded || false;
       state.ggufModelName = ggufInfo.model || '';
+      state.ggufModelPath = ggufInfo.model_path || '';
       state.pendingAPI = state.currentAPI;
 
       // 更新 UI
       updateAPIUI();
       updateModelUI();
       updateRAGUI();
+      updateExpUI();
       updateMemoryUI();
 
     } catch (error) {
@@ -128,8 +146,16 @@
     // Memory 按钮点击
     elements.memoryTrigger?.addEventListener('click', handleMemoryTriggerClick);
 
-    // 点击外部关闭选择器 - 使用捕获阶段
-    document.addEventListener('click', handleDocumentClick, true);
+    // 经验库按钮点击
+    elements.expTrigger?.addEventListener('click', handleExpTriggerClick);
+
+    // GGUF 按钮
+    elements.ggufScanBtn?.addEventListener('click', (e) => { e.stopPropagation(); scanGGUFModels(); });
+    elements.ggufBrowseBtn?.addEventListener('click', (e) => { e.stopPropagation(); browseGGUFFile(); });
+    elements.ggufBrowseDirBtn?.addEventListener('click', (e) => { e.stopPropagation(); browseGGUFDirectory(); });
+
+    // 点击外部关闭选择器
+    document.addEventListener('click', handleDocumentClick, false);
 
     // 定期更新内存
     setInterval(updateMemoryUI, 30000);
@@ -140,28 +166,19 @@
    */
   function handleDocumentClick(e) {
     const target = e.target;
-    
-    // 检查是否点击在 API 相关元素上
-    const isAPITriggerClick = elements.apiTrigger === target || 
-      (elements.apiTrigger && !elements.apiSelector?.contains(target) && elements.apiTrigger.contains(target));
-    const isAPISelectorClick = elements.apiSelector?.contains(target);
-    
-    // 如果点击的是 API 触发按钮，不关闭（toggleAPISelector 会处理）
-    if (elements.apiTrigger === target || elements.apiTrigger?.contains(target)) {
-      // 但如果点击的是选择器内部，不处理
-      if (isAPISelectorClick) return;
-      return;
-    }
-    
-    // 如果点击在选择器内部，不关闭
-    if (isAPISelectorClick) return;
 
-    const isModelClick = elements.modelTrigger?.contains(target) || $('model-selector-popup')?.contains(target);
-    const isMemoryClick = elements.memoryTrigger?.contains(target) || $('memory-popup')?.contains(target);
+    // 点击在任何弹窗/选择器内部时不关闭
+    if (elements.apiTrigger?.contains(target)) return;
+    if ($('model-selector-popup')?.contains(target)) return;
+    if ($('memory-popup')?.contains(target)) return;
 
-    if (!isModelClick && !isMemoryClick) {
-      closeAllSelectors();
-    }
+    // 点击在状态栏按钮上时不关闭（各自的handler会处理）
+    if (elements.modelTrigger?.contains(target)) return;
+    if (elements.memoryTrigger?.contains(target)) return;
+    if (elements.ragTrigger?.contains(target)) return;
+    if (elements.expTrigger?.contains(target)) return;
+
+    closeAllSelectors();
   }
 
   /**
@@ -231,19 +248,19 @@
       return;
     }
 
-    if (e.target.closest('#gguf-load-btn')) {
-      loadGGUFModel();
-      return;
-    }
-
-    if (e.target.closest('#gguf-browse-btn')) {
-      browseGGUFFile();
+    // GGUF 模型列表项点击
+    const ggufItem = e.target.closest('.gguf-model-item');
+    if (ggufItem) {
+      const modelPath = ggufItem.dataset.path;
+      const modelName = ggufItem.dataset.name;
+      if (modelPath) {
+        selectGGUFModel(modelPath, modelName);
+      }
       return;
     }
 
     if (e.target.closest('#gguf-refresh-btn')) {
       switchToSelectedAPI();
-      
     }
   }
 
@@ -257,12 +274,23 @@
       opt.classList.toggle('selected', opt.dataset.api === api);
     });
 
+    // 展开/收起 GGUF 区域
+    if (elements.ggufSection) {
+      elements.ggufSection.classList.toggle('visible', api === 'gguf');
+    }
+
+    if (api === 'gguf' && state.ggufScannedModels.length === 0) {
+      scanGGUFModels();
+    }
+
     if (elements.ggufModelInfo) {
       if (api === 'gguf') {
-        elements.ggufModelInfo.textContent = state.ggufLoaded ? `Ready: ${state.ggufModelName}` : 'Load a GGUF model first';
+        elements.ggufModelInfo.textContent = state.ggufLoaded
+          ? `已加载: ${state.ggufModelName}`
+          : '请选择一个 GGUF 模型';
         elements.ggufModelInfo.className = state.ggufLoaded ? 'gguf-model-info loaded' : 'gguf-model-info';
       } else {
-        elements.ggufModelInfo.textContent = 'Click Switch to apply';
+        elements.ggufModelInfo.textContent = '';
         elements.ggufModelInfo.className = 'gguf-model-info';
       }
     }
@@ -272,10 +300,10 @@
    * 切换到选中的 API
    */
   async function switchToSelectedAPI() {
-    const apiNames = { ollama: 'Ollama', gguf: 'Local GGUF' };
+    const apiNames = { ollama: 'Ollama', gguf: '本地 GGUF' };
 
     if (state.pendingAPI === 'gguf' && !state.ggufLoaded) {
-      showToast('Please load a GGUF model first', 'warning');
+      showToast('请先选择并加载一个 GGUF 模型', 'warning');
       return;
     }
 
@@ -289,100 +317,169 @@
     if (state.pendingAPI === 'gguf') {
       state.currentModel = state.ggufModelName;
     } else {
-      // 获取 Ollama 默认模型
       const ollamaModel = state.availableModels.find(m => m.provider === 'ollama');
       state.currentModel = ollamaModel?.name || 'qwen2.5:3b';
     }
     updateModelUI();
 
-    // 通知后端
     try {
       await apiClient.post('/config/provider', { provider: state.pendingAPI });
-      showToast(`Switched to ${apiNames[state.pendingAPI]}`, 'success');
+      showToast(`已切换到 ${apiNames[state.pendingAPI]}`, 'success');
     } catch (error) {
       console.error('[StatusBar] Switch failed:', error);
-      showToast('Switch failed', 'error');
+      showToast('切换失败', 'error');
     }
   }
 
   /**
-   * 加载 GGUF 模型
+   * 扫描 GGUF 模型目录
    */
-  async function loadGGUFModel() {
-    const modelPath = elements.ggufPathInput?.value.trim();
-    if (!modelPath) {
-      if (elements.ggufModelInfo) {
-        elements.ggufModelInfo.textContent = 'Please enter model path';
-        elements.ggufModelInfo.className = 'gguf-model-info error';
-      }
+  async function scanGGUFModels(directory = '') {
+    if (!elements.ggufModelList) return;
+
+    elements.ggufModelList.innerHTML = '<div class="gguf-model-list-loading">扫描中...</div>';
+
+    try {
+      const url = directory ? `/gguf/scan?directory=${encodeURIComponent(directory)}` : '/gguf/scan';
+      const result = await apiClient.get(url);
+
+      state.ggufScannedModels = result.models || [];
+      state.ggufDirectory = result.directory || '';
+
+      renderGGUFModelList();
+    } catch (error) {
+      console.error('[StatusBar] GGUF scan failed:', error);
+      elements.ggufModelList.innerHTML = '<div class="gguf-model-list-empty">扫描失败</div>';
+    }
+  }
+
+  /**
+   * 渲染 GGUF 模型列表
+   */
+  function renderGGUFModelList() {
+    if (!elements.ggufModelList) return;
+
+    if (state.ggufScannedModels.length === 0) {
+      elements.ggufModelList.innerHTML = `
+        <div class="gguf-model-list-empty">
+          未找到 .gguf 文件
+          ${state.ggufDirectory ? `<br><span class="gguf-dir-hint">${state.ggufDirectory}</span>` : ''}
+        </div>`;
       return;
     }
 
-    if (elements.ggufLoadBtn) elements.ggufLoadBtn.disabled = true;
+    const html = state.ggufScannedModels.map(m => {
+      const sizeMB = (m.size / 1024 / 1024).toFixed(1);
+      const isActive = m.loaded;
+      return `
+        <div class="gguf-model-item ${isActive ? 'active' : ''}"
+             data-path="${m.path}" data-name="${m.filename}" title="${m.path}">
+          <div class="gguf-model-item-info">
+            <span class="gguf-model-item-name">${m.name}</span>
+            <span class="gguf-model-item-size">${sizeMB} MB</span>
+          </div>
+          <span class="gguf-model-item-status">${isActive ? '● 已加载' : ''}</span>
+        </div>`;
+    }).join('');
+
+    elements.ggufModelList.innerHTML = html;
+
+    if (state.ggufDirectory) {
+      const dirLabel = document.createElement('div');
+      dirLabel.className = 'gguf-dir-label';
+      dirLabel.textContent = state.ggufDirectory;
+      elements.ggufModelList.prepend(dirLabel);
+    }
+  }
+
+  /**
+   * 选择并加载一个 GGUF 模型
+   */
+  async function selectGGUFModel(modelPath, modelName) {
     if (elements.ggufModelInfo) {
-      elements.ggufModelInfo.textContent = 'Loading...';
+      elements.ggufModelInfo.textContent = `正在加载 ${modelName}...`;
       elements.ggufModelInfo.className = 'gguf-model-info';
     }
+
+    // 高亮选中项
+    elements.ggufModelList?.querySelectorAll('.gguf-model-item').forEach(el => {
+      el.classList.toggle('selected', el.dataset.path === modelPath);
+    });
 
     try {
       const response = await apiClient.post('/gguf/load', { model_path: modelPath });
       if (response.success) {
         state.ggufLoaded = true;
         state.ggufModelName = response.model;
+        state.ggufModelPath = modelPath;
         state.pendingAPI = 'gguf';
 
         if (elements.ggufModelInfo) {
-          elements.ggufModelInfo.textContent = `Loaded: ${response.model}`;
+          elements.ggufModelInfo.textContent = `已加载: ${response.model}`;
           elements.ggufModelInfo.className = 'gguf-model-info loaded';
         }
-        if (elements.ggufLoadBtn) elements.ggufLoadBtn.textContent = 'Loaded';
 
-        showToast(`Model loaded: ${response.model}`, 'success');
+        // 更新列表中的加载状态
+        state.ggufScannedModels.forEach(m => {
+          m.loaded = (m.path === modelPath);
+        });
+        renderGGUFModelList();
+
+        showToast(`模型已加载: ${response.model}`, 'success');
       }
     } catch (error) {
       if (elements.ggufModelInfo) {
-        elements.ggufModelInfo.textContent = error.message || 'Load failed';
+        elements.ggufModelInfo.textContent = error.message || '加载失败';
         elements.ggufModelInfo.className = 'gguf-model-info error';
       }
-      if (elements.ggufLoadBtn) elements.ggufLoadBtn.disabled = false;
-      showToast('Failed to load model', 'error');
+      showToast('模型加载失败', 'error');
     }
   }
 
   /**
-   * 浏览 GGUF 文件
+   * 浏览并选择 GGUF 文件
    */
   async function browseGGUFFile() {
-    console.log('[StatusBar] browseGGUFFile called');
-
-    // 等待 pywebview 就绪
     if (!window.pywebview?.api) {
-      console.warn('[StatusBar] PyWebView API not ready');
-      showToast('File browser not available in dev mode', 'info');
-      if (elements.ggufPathInput) {
-        elements.ggufPathInput.focus();
-      }
+      showToast('开发模式下请使用目录扫描', 'info');
       return;
     }
 
     const api = window.pywebview.api;
-
-    if (api && api.select_gguf_file) {
+    if (api?.select_gguf_file) {
       try {
         const filePath = await api.select_gguf_file();
-        if (filePath && elements.ggufPathInput) {
-          elements.ggufPathInput.value = filePath;
-          await loadGGUFModel();
+        if (filePath) {
+          await selectGGUFModel(filePath, filePath.split(/[\\/]/).pop());
         }
       } catch (error) {
         console.error('[StatusBar] File dialog failed:', error);
-        showToast('File dialog failed', 'error');
+        showToast('文件选择失败', 'error');
       }
     } else {
-      console.warn('[StatusBar] select_gguf_file not available');
-      if (elements.ggufPathInput) {
-        elements.ggufPathInput.focus();
-        showToast('Please enter model path manually', 'info');
+      showToast('文件选择对话框不可用', 'info');
+    }
+  }
+
+  /**
+   * 浏览并设置 GGUF 模型目录
+   */
+  async function browseGGUFDirectory() {
+    if (window.pywebview?.api?.select_folder) {
+      try {
+        const dirPath = await window.pywebview.api.select_folder('选择 GGUF 模型目录');
+        if (dirPath) {
+          await scanGGUFModels(dirPath);
+          showToast(`已设置模型目录: ${dirPath}`, 'success');
+        }
+      } catch (error) {
+        console.error('[StatusBar] Folder dialog failed:', error);
+        showToast('目录选择失败', 'error');
+      }
+    } else {
+      const dir = prompt('请输入 GGUF 模型所在目录路径:');
+      if (dir) {
+        await scanGGUFModels(dir);
       }
     }
   }
@@ -393,12 +490,11 @@
   function updateAPIUI() {
     if (!elements.apiTrigger) return;
 
-    const apiNames = { ollama: 'Ollama', gguf: 'Local GGUF' };
+    const apiNames = { ollama: 'Ollama', gguf: '本地 GGUF' };
 
     elements.apiTrigger.classList.remove('api-ollama', 'api-gguf');
     elements.apiTrigger.classList.add(`api-${state.currentAPI}`);
 
-    // 更新文本（保留子元素）
     const textNode = Array.from(elements.apiTrigger.childNodes).find(n => n.nodeType === 3);
     if (textNode) {
       textNode.textContent = `API: ${apiNames[state.currentAPI]} `;
@@ -425,7 +521,7 @@
     selector.className = 'status-selector-popup';
     selector.innerHTML = `
       <div class="selector-header">
-        <span>Select Model</span>
+        <span>切换模型</span>
         <button class="selector-close">&times;</button>
       </div>
       <div class="selector-content">
@@ -461,7 +557,7 @@
    */
   function renderModelOptions() {
     if (state.availableModels.length === 0) {
-      return '<div class="selector-empty">No models available</div>';
+      return '<div class="selector-empty">暂无可用模型</div>';
     }
 
     // 按提供商分组
@@ -513,7 +609,7 @@
     // 通知后端
     try {
       await apiClient.post('/config', { ai: { model, provider } });
-      showToast(`Model: ${model}`, 'success');
+      showToast(`已切换模型: ${model}`, 'success');
     } catch (error) {
       console.error('[StatusBar] Failed to set model:', error);
     }
@@ -524,7 +620,7 @@
    */
   function updateModelUI() {
     if (elements.modelTrigger) {
-      elements.modelTrigger.textContent = `Model: ${state.currentModel}`;
+      elements.modelTrigger.textContent = `模型: ${state.currentModel}`;
     }
   }
 
@@ -540,7 +636,7 @@
     // 通知后端
     try {
       await apiClient.post('/rag/toggle', { enabled: state.ragEnabled });
-      showToast(`RAG: ${state.ragEnabled ? 'ON' : 'OFF'}`, 'info');
+      showToast(`RAG 已${state.ragEnabled ? '开启' : '关闭'}`, 'info');
 
       // 触发事件
       if (window.eventBus) {
@@ -577,8 +673,75 @@
    */
   function updateRAGUI() {
     if (elements.ragTrigger) {
-      elements.ragTrigger.textContent = state.ragEnabled ? 'RAG: ON' : 'RAG: OFF';
+      elements.ragTrigger.textContent = state.ragEnabled ? 'RAG: 开启' : 'RAG: 关闭';
       elements.ragTrigger.classList.toggle('status-on', state.ragEnabled);
+    }
+  }
+
+  // ==================== 经验库模式 ====================
+
+  /**
+   * 处理经验库按钮点击
+   */
+  function handleExpTriggerClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleExp();
+  }
+
+  /**
+   * 切换经验库模式
+   */
+  function toggleExp() {
+    state.expEnabled = !state.expEnabled;
+    updateExpUI();
+
+    if (state.expEnabled) {
+      showToast('已开启经验库模式 — AI 将完全按照经验库内容回答您的问题', 'success');
+
+      // 通知 AI Service 使用经验库模式
+      if (window.AppState?.aiService) {
+        window.AppState.aiService.setSystemPrompt?.(
+          '你是一个严格基于经验库的工程助手。你只能使用经验库中已有的知识回答用户问题。' +
+          '如果经验库中没有相关内容，请明确告知用户"经验库中暂无相关记录"，不要自行推测或编造答案。' +
+          '回答时务必引用经验库条目的标题和来源标准。'
+        );
+      }
+
+      // 触发事件
+      if (window.eventBus && typeof Events !== 'undefined') {
+        eventBus.emit('exp:enabled');
+      }
+
+      // 在聊天区显示系统提示
+      if (window.ChatUI?.addSystemMessage) {
+        ChatUI.addSystemMessage('已切换到经验库模式 — AI 将完全按照经验库内容回答您的问题');
+      }
+    } else {
+      showToast('已关闭经验库模式 — AI 恢复正常对话', 'info');
+
+      // 恢复默认 system prompt
+      if (window.AppState?.aiService) {
+        window.AppState.aiService.setSystemPrompt?.('');
+      }
+
+      if (window.eventBus && typeof Events !== 'undefined') {
+        eventBus.emit('exp:disabled');
+      }
+
+      if (window.ChatUI?.addSystemMessage) {
+        ChatUI.addSystemMessage('已恢复正常 AI 对话模式');
+      }
+    }
+  }
+
+  /**
+   * 更新经验库 UI
+   */
+  function updateExpUI() {
+    if (elements.expTrigger) {
+      elements.expTrigger.textContent = state.expEnabled ? '经验库: 开启' : '经验库: 关闭';
+      elements.expTrigger.classList.toggle('status-on', state.expEnabled);
     }
   }
 
@@ -604,20 +767,20 @@
     popup.className = 'status-selector-popup memory-popup';
     popup.innerHTML = `
       <div class="selector-header">
-        <span>Memory Usage</span>
+        <span>内存占用</span>
         <button class="selector-close">&times;</button>
       </div>
       <div class="selector-content">
         <div class="memory-item">
-          <span class="memory-label">Conversation History</span>
+          <span class="memory-label">对话历史</span>
           <span class="memory-value">${memoryInfo.history}</span>
         </div>
         <div class="memory-item">
-          <span class="memory-label">Messages</span>
+          <span class="memory-label">消息条数</span>
           <span class="memory-value">${memoryInfo.messageCount}</span>
         </div>
         <div class="memory-item">
-          <span class="memory-label">LocalStorage</span>
+          <span class="memory-label">本地存储</span>
           <span class="memory-value">${memoryInfo.localStorage}</span>
         </div>
         <div class="memory-actions">
@@ -625,7 +788,7 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
             </svg>
-            Clear History
+            清空历史
           </button>
         </div>
       </div>
@@ -690,7 +853,7 @@
   function updateMemoryUI() {
     const memoryInfo = calculateMemoryUsage();
     if (elements.memoryTrigger) {
-      elements.memoryTrigger.textContent = `Memory: ${memoryInfo.history}`;
+      elements.memoryTrigger.textContent = `内存: ${memoryInfo.history}`;
     }
   }
 
@@ -704,10 +867,10 @@
       }
       await apiClient.clearHistory();
       updateMemoryUI();
-      showToast('History cleared', 'success');
+      showToast('对话历史已清空', 'success');
     } catch (error) {
       console.error('[StatusBar] Failed to clear history:', error);
-      showToast('Failed to clear history', 'error');
+      showToast('清空历史失败', 'error');
     }
   }
 
@@ -749,10 +912,12 @@
     updateAPIUI,
     updateModelUI,
     updateRAGUI,
+    updateExpUI,
     updateMemoryUI,
     getCurrentAPI: () => state.currentAPI,
     getCurrentModel: () => state.currentModel,
-    isRAGEnabled: () => state.ragEnabled
+    isRAGEnabled: () => state.ragEnabled,
+    isExpEnabled: () => state.expEnabled
   };
 
 })();

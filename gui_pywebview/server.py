@@ -11,9 +11,9 @@ MechForge AI GUI 后端服务器
 """
 
 import logging
+import os
 import socket
 from pathlib import Path
-from typing import Union
 
 import uvicorn
 from fastapi import FastAPI
@@ -21,26 +21,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+# ── 配置 ──────────────────────────────────────────────────────────────────────
+
+# 从环境变量读取配置，提供默认值
+SERVER_HOST = os.getenv("MECHFORGE_HOST", "127.0.0.1")
+SERVER_PORT = int(os.getenv("MECHFORGE_PORT", "5000"))
+CORS_ORIGINS = os.getenv("MECHFORGE_CORS_ORIGINS", "*").split(",")
+
 # ── 路径设置 ──────────────────────────────────────────────────────────────────
 
 import sys
+
 
 # 检测是否在 PyInstaller 打包环境中
 def get_gui_dir() -> Path:
     """获取 GUI 目录，兼容 PyInstaller 打包环境"""
     # PyInstaller 会在 sys 中设置 _MEIPASS
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, "_MEIPASS"):
         # 打包后的临时目录，所有资源都在这里
         return Path(sys._MEIPASS).resolve()
     else:
         # 开发环境
         return Path(__file__).parent.resolve()
 
+
 GUI_DIR = get_gui_dir()
 
 # 在打包环境中，GUI_DIR 就是根目录（包含 api/ 等子目录）
 # 在开发环境中，需要添加父目录到 Python 路径
-if hasattr(sys, '_MEIPASS'):
+if hasattr(sys, "_MEIPASS"):
     # 打包环境：所有资源在 _MEIPASS 目录下
     if str(GUI_DIR) not in sys.path:
         sys.path.insert(0, str(GUI_DIR))
@@ -70,10 +79,10 @@ app = FastAPI(
 
 # ── CORS 中间件 ───────────────────────────────────────────────────────────────
 
-# 注意：在生产环境中应该限制具体的 origin
+# 从环境变量读取 CORS 配置，默认为允许所有来源（开发环境）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源（开发环境）
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,13 +90,7 @@ app.add_middleware(
 
 # ── 注册 API 路由 ─────────────────────────────────────────────────────────────
 
-from api import (
-    chat_router,
-    config_router,
-    gguf_router,
-    health_router,
-    rag_router,
-)
+from api import cae_router, chat_router, config_router, gguf_router, health_router, rag_router
 from api.errors import setup_error_handlers
 
 app.include_router(health_router)
@@ -95,6 +98,48 @@ app.include_router(chat_router)
 app.include_router(rag_router)
 app.include_router(config_router)
 app.include_router(gguf_router)
+app.include_router(cae_router)
+
+# ── Daily Agent 接入 ──────────────────────────────────────────────────────────
+
+from daily_agent import DailyAgent, set_daily_agent
+from daily_agent import router as daily_router
+
+app.include_router(daily_router)
+
+_daily_agent: DailyAgent | None = None
+
+
+@app.on_event("startup")
+async def _start_daily_agent():
+    """启动 Daily Agent（手动模式，不自动触发）"""
+    global _daily_agent
+    try:
+        _daily_agent = DailyAgent(
+            {
+                "provider": "openai",  # 使用在线 API: openai / anthropic
+                "model": "gpt-4o-mini",  # OpenAI 模型
+                "api_key": "",  # 填写你的 API Key
+                "items_per_day": 3,  # 每次生成 3 条
+                "manual_mode": True,  # 手动触发模式
+            }
+        )
+        # 注入实例到路由模块，使刷新端点可用
+        set_daily_agent(_daily_agent)
+        await _daily_agent.start()
+        logger.info("Daily Agent 已启动（手动模式）")
+    except Exception as e:
+        logger.warning(f"Daily Agent 启动失败: {e}")
+
+
+@app.on_event("shutdown")
+async def _stop_daily_agent():
+    """停止 Daily Agent"""
+    global _daily_agent
+    if _daily_agent:
+        await _daily_agent.stop()
+        logger.info("Daily Agent 已停止")
+
 
 # 配置错误处理器
 setup_error_handlers(app)
@@ -103,7 +148,7 @@ setup_error_handlers(app)
 
 
 @app.get("/", tags=["静态"], response_model=None)
-async def serve_index() -> Union[FileResponse, HTMLResponse]:
+async def serve_index() -> FileResponse | HTMLResponse:
     """提供主页面"""
     index_file = GUI_DIR / "index.html"
     if index_file.exists():
@@ -115,7 +160,7 @@ async def serve_index() -> Union[FileResponse, HTMLResponse]:
 
 
 @app.get("/styles.css", tags=["静态"], response_model=None)
-async def serve_styles() -> Union[FileResponse, HTMLResponse]:
+async def serve_styles() -> FileResponse | HTMLResponse:
     """提供主样式文件"""
     styles_file = GUI_DIR / "styles.css"
     if styles_file.exists():
@@ -124,7 +169,7 @@ async def serve_styles() -> Union[FileResponse, HTMLResponse]:
 
 
 @app.get("/styles-modular.css", tags=["静态"], response_model=None)
-async def serve_styles_modular() -> Union[FileResponse, HTMLResponse]:
+async def serve_styles_modular() -> FileResponse | HTMLResponse:
     """提供模块化样式入口"""
     styles_file = GUI_DIR / "styles-modular.css"
     if styles_file.exists():
@@ -133,7 +178,7 @@ async def serve_styles_modular() -> Union[FileResponse, HTMLResponse]:
 
 
 @app.get("/experience.css", tags=["静态"], response_model=None)
-async def serve_experience_styles() -> Union[FileResponse, HTMLResponse]:
+async def serve_experience_styles() -> FileResponse | HTMLResponse:
     """提供 Experience Library 样式"""
     styles_file = GUI_DIR / "experience.css"
     if styles_file.exists():
@@ -142,7 +187,7 @@ async def serve_experience_styles() -> Union[FileResponse, HTMLResponse]:
 
 
 @app.get("/dj-whale.png", tags=["静态"], response_model=None)
-async def serve_whale() -> Union[FileResponse, HTMLResponse]:
+async def serve_whale() -> FileResponse | HTMLResponse:
     """提供应用图标"""
     icon_file = GUI_DIR / "dj-whale.png"
     if icon_file.exists():
@@ -151,12 +196,21 @@ async def serve_whale() -> Union[FileResponse, HTMLResponse]:
 
 
 @app.get("/experience.js", tags=["静态"], response_model=None)
-async def serve_experience_js() -> Union[FileResponse, HTMLResponse]:
+async def serve_experience_js() -> FileResponse | HTMLResponse:
     """提供 Experience Library 脚本"""
     js_file = GUI_DIR / "experience.js"
     if js_file.exists():
         return FileResponse(str(js_file), media_type="application/javascript")
     return HTMLResponse("experience.js not found", status_code=404)
+
+
+@app.get("/daily_feed_ui.js", tags=["静态"], response_model=None)
+async def serve_daily_feed_js() -> FileResponse | HTMLResponse:
+    """提供 Daily Feed UI 脚本"""
+    js_file = GUI_DIR / "daily_feed_ui.js"
+    if js_file.exists():
+        return FileResponse(str(js_file), media_type="application/javascript")
+    return HTMLResponse("daily_feed_ui.js not found", status_code=404)
 
 
 # ── 静态目录挂载 ──────────────────────────────────────────────────────────────
@@ -179,34 +233,61 @@ for mount_path, dir_path in STATIC_DIRS:
 # ── 启动入口 ──────────────────────────────────────────────────────────────────
 
 
-def find_free_port(start_port: int = 5000, max_attempts: int = 100) -> int:
-    """从 start_port 开始查找第一个可用端口"""
+def find_free_port(start_port: int = None, max_attempts: int = 100) -> int:
+    """从 start_port 开始查找第一个可用端口
+
+    Args:
+        start_port: 起始端口，默认从环境变量 MECHFORGE_PORT 读取，否则使用 5000
+        max_attempts: 最大尝试次数
+    """
+    if start_port is None:
+        start_port = SERVER_PORT
+
     for port in range(start_port, start_port + max_attempts):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(("127.0.0.1", port))
+                s.bind((SERVER_HOST, port))
                 return port
         except OSError:
             continue
     raise RuntimeError(f"在 {start_port}~{start_port + max_attempts} 范围内找不到可用端口")
 
 
-def run_server(host: str = "127.0.0.1", port: int = 5000, reload: bool = False) -> None:
-    """启动服务器"""
+def run_server(host: str = None, port: int = None, reload: bool = False) -> None:
+    """启动服务器
+
+    Args:
+        host: 服务器主机，默认从环境变量 MECHFORGE_HOST 读取
+        port: 服务器端口，默认从环境变量 MECHFORGE_PORT 读取
+        reload: 是否启用热重载
+    """
     from api.state import state
 
+    # 使用配置值或默认值
+    host = host or SERVER_HOST
     port = find_free_port(port)
+
     logger.info(f"MechForge AI GUI 后端启动: http://{host}:{port}")
     logger.info(f"GUI 目录: {GUI_DIR}")
     logger.info(f"RAG 启用: {state.config.knowledge.rag.enabled}")
 
-    uvicorn.run(
-        "gui_pywebview.server:app",
-        host=host,
-        port=port,
-        reload=reload,
-        log_level="warning",
-    )
+    # 打包环境下直接传入 app 对象，开发环境使用字符串导入
+    if hasattr(sys, "_MEIPASS"):
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            reload=reload,
+            log_level="warning",
+        )
+    else:
+        uvicorn.run(
+            "gui_pywebview.server:app",
+            host=host,
+            port=port,
+            reload=reload,
+            log_level="warning",
+        )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,146 @@
 # MechForge AI GUI 开发日志
 
+## 2026-03-12
+
+### 优化：代码质量提升
+
+**发现者**: Claude
+
+**问题描述**:
+- Ruff 检查发现大量 Python 代码风格问题（类型注解、异常链、导入等）
+- 缺少项目级 Ruff 配置
+- 部分 JS 文件存在尾随空格
+
+**解决方法**:
+1. **添加 `ruff.toml` 配置**:
+   - 目标 Python 3.10，行宽 100
+   - 排除 dist_frontend、__pycache__
+   - 忽略 E402（server.py 延迟导入）、E501（提示词长行）
+
+2. **Python 修复**:
+   - `ruff check --fix` + `ruff format` 自动修复
+   - 异常链：`raise HTTPException(...) from e`
+   - 类型注解：`Dict`→`dict`，`Optional[X]`→`X | None`
+   - `api/errors.py`: `setup_error_handlers(app: FastAPI)`
+   - `build.py`: 依赖检查导入添加 `# noqa: F401`
+
+3. **JS 修复**:
+   - 移除 `services/ai-service.js`、`app/ui/particles.js`、`app/settings/status-bar.js` 中的尾随空格
+
+**解决效果**:
+- `ruff check .` 全部通过
+- 代码风格统一，符合 PEP 8 和 pyupgrade 规范
+- 异常链便于调试
+
+---
+
+### 功能接入：Daily Agent 每日知识推送系统（经验库内嵌版）
+
+**发现者**: Qwen Code
+
+**功能描述**:
+- 从 `time/` 文件夹接入 Daily Agent 系统到主项目
+- 每天自动生成机械工程领域的知识内容
+- 支持 6 种内容类型：失效案例、标准速览、计算技巧、工具技巧、材料洞察、行业动态
+- **仅在经验库界面显示**，不自动弹出，需用户手动点击加载
+
+**接入步骤**:
+1. **复制核心文件**:
+   - `daily_agent.py` → 项目根目录（Agent核心，APScheduler定时任务）
+   - `daily_feed_ui.js` → 项目根目录（前端UI，经验库内嵌版）
+
+2. **修改 `server.py`**:
+   - 导入 DailyAgent 和路由
+   - 添加 `/api/daily` 路由（获取今日推送）
+   - 添加 `/api/daily/refresh` 路由（手动刷新）
+   - 添加 startup/shutdown 事件启动/停止 Agent
+   - 注入 DailyAgent 实例使刷新端点可用
+   - 添加 `/daily_feed_ui.js` 静态文件路由
+
+3. **修改 `index.html`**:
+   - 在 `experience.js` 后引入 `daily_feed_ui.js`
+
+4. **修改 `daily_agent.py`**:
+   - 添加全局 `_daily_agent_instance` 变量
+   - 添加 `set_daily_agent()` 函数用于注入实例
+   - 修改 `manual_refresh()` 端点真正触发内容生成
+
+5. **重写 `daily_feed_ui.js`**:
+   - 移除全局 Toast 通知
+   - 移除侧边栏 FEED 图标
+   - 改为在经验库面板内注入 Daily Feed 区域
+   - 添加"加载今日推送"按钮（手动触发）
+   - 添加"刷新"按钮（手动生成新内容）
+
+**配置说明**:
+```python
+{
+    "provider": "openai",          # 使用在线 API: openai / anthropic
+    "model": "gpt-4o-mini",       # OpenAI 模型
+    "api_key": "sk-...",          # 填写你的 API Key
+    "items_per_day": 3,           # 每次生成 3 条
+    "manual_mode": True,          # 手动模式（不自动触发）
+}
+```
+
+**依赖安装**:
+```bash
+pip install apscheduler httpx
+```
+
+**功能效果**:
+- **手动触发**：用户点击"⚡ 生成今日推送"按钮才执行
+- **在线 API**：使用 OpenAI/Anthropic，无需本地 Ollama
+- **仅在经验库界面显示**：Daily Feed 区域嵌入经验库
+- **轮询等待**：点击后自动轮询等待生成完成（约 10-30 秒）
+- **重新生成**：生成后可点击"⟳ 重新生成"获取新内容
+- **卡片展开**：点击卡片查看详细内容
+
+**界面流程**:
+1. 打开经验库界面
+2. 看到 "⚡ 生成今日推送" 大按钮
+3. 点击按钮 → 显示"AI 正在生成内容..."
+4. 等待 10-30 秒，自动显示 3 条知识卡片
+5. 点击卡片展开查看详情
+
+---
+
+## 2026-03-12
+
+### 功能添加：设置界面（支持滑动）
+
+**发现者**: Qwen Code
+
+**功能描述**:
+- 新增设置面板，支持触摸滑动和鼠标滚轮
+- 包含 API 配置、界面设置、Daily Feed 设置、知识库设置等模块
+- 配置自动保存到 localStorage
+
+**添加文件**:
+- `app/settings/settings-panel.js` - 设置面板控制器
+
+**修改文件**:
+- `index.html` - 添加设置图标和设置面板 HTML
+- `styles.css` - 添加设置面板样式（含滑动优化）
+- `app/main.js` - 添加设置标签切换支持
+
+**设置项**:
+| 分类 | 设置项 |
+|------|--------|
+| API 配置 | 服务提供商、API Key、模型名称 |
+| 界面设置 | 主题、语言、字体大小 |
+| Daily Feed | 启用开关、推送数量、推送时间 |
+| 知识库 | 路径选择、RAG 开关 |
+| 关于 | 版本信息、链接 |
+
+**滑动优化**:
+- `overflow-y: auto` 支持鼠标滚轮
+- `-webkit-overflow-scrolling: touch` iOS 触摸滑动
+- 自定义滚动条样式
+- 触摸设备增大点击区域
+
+---
+
 ## 2026-03-10
 
 ### 优化：知识库标题区 - 工业激光刻字风格

@@ -7,9 +7,8 @@ import json
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger("mechforge.database")
 
@@ -104,33 +103,30 @@ class ConversationDB:
     """对话数据库操作"""
 
     @staticmethod
-    def create(title: str, metadata: Optional[Dict] = None) -> int:
+    def create(title: str, metadata: dict | None = None) -> int:
         """创建新对话"""
         with get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO conversations (title, metadata) VALUES (?, ?)",
-                (title, json.dumps(metadata) if metadata else None)
+                (title, json.dumps(metadata) if metadata else None),
             )
             conn.commit()
             return cursor.lastrowid
 
     @staticmethod
-    def get(conversation_id: int) -> Optional[Dict]:
+    def get(conversation_id: int) -> dict | None:
         """获取对话"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM conversations WHERE id = ?",
-                (conversation_id,)
-            )
+            cursor.execute("SELECT * FROM conversations WHERE id = ?", (conversation_id,))
             row = cursor.fetchone()
             if row:
                 return dict(row)
             return None
 
     @staticmethod
-    def list_all(limit: int = 100, offset: int = 0) -> List[Dict]:
+    def list_all(limit: int = 100, offset: int = 0) -> list[dict]:
         """列出所有对话"""
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -140,12 +136,12 @@ class ConversationDB:
                 ORDER BY updated_at DESC
                 LIMIT ? OFFSET ?
                 """,
-                (limit, offset)
+                (limit, offset),
             )
             return [dict(row) for row in cursor.fetchall()]
 
     @staticmethod
-    def update(conversation_id: int, title: Optional[str] = None) -> bool:
+    def update(conversation_id: int, title: str | None = None) -> bool:
         """更新对话"""
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -156,7 +152,7 @@ class ConversationDB:
                     SET title = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                     """,
-                    (title, conversation_id)
+                    (title, conversation_id),
                 )
             conn.commit()
             return cursor.rowcount > 0
@@ -166,10 +162,7 @@ class ConversationDB:
         """删除对话"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "DELETE FROM conversations WHERE id = ?",
-                (conversation_id,)
-            )
+            cursor.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
             conn.commit()
             return cursor.rowcount > 0
 
@@ -182,8 +175,8 @@ class MessageDB:
         conversation_id: int,
         role: str,
         content: str,
-        model: Optional[str] = None,
-        rag_used: bool = False
+        model: str | None = None,
+        rag_used: bool = False,
     ) -> int:
         """创建新消息"""
         with get_connection() as conn:
@@ -194,7 +187,7 @@ class MessageDB:
                 (conversation_id, role, content, model, rag_used)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (conversation_id, role, content, model, rag_used)
+                (conversation_id, role, content, model, rag_used),
             )
 
             # 更新对话消息数
@@ -205,14 +198,14 @@ class MessageDB:
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                 """,
-                (conversation_id,)
+                (conversation_id,),
             )
 
             conn.commit()
             return cursor.lastrowid
 
     @staticmethod
-    def get_by_conversation(conversation_id: int) -> List[Dict]:
+    def get_by_conversation(conversation_id: int) -> list[dict]:
         """获取对话的所有消息"""
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -222,7 +215,7 @@ class MessageDB:
                 WHERE conversation_id = ?
                 ORDER BY created_at ASC
                 """,
-                (conversation_id,)
+                (conversation_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
 
@@ -231,10 +224,7 @@ class MessageDB:
         """删除对话的所有消息"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "DELETE FROM messages WHERE conversation_id = ?",
-                (conversation_id,)
-            )
+            cursor.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
             conn.commit()
             return cursor.rowcount
 
@@ -247,10 +237,7 @@ class SettingsDB:
         """获取设置"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT value FROM settings WHERE key = ?",
-                (key,)
-            )
+            cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
             row = cursor.fetchone()
             if row:
                 try:
@@ -269,7 +256,7 @@ class SettingsDB:
                 INSERT OR REPLACE INTO settings (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
                 """,
-                (key, json.dumps(value))
+                (key, json.dumps(value)),
             )
             conn.commit()
 
@@ -283,7 +270,7 @@ class SettingsDB:
             return cursor.rowcount > 0
 
     @staticmethod
-    def get_all() -> Dict[str, Any]:
+    def get_all() -> dict[str, Any]:
         """获取所有设置"""
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -301,12 +288,7 @@ class KnowledgeDocDB:
     """知识库文档数据库操作"""
 
     @staticmethod
-    def create(
-        filename: str,
-        filepath: str,
-        file_size: int,
-        doc_hash: str
-    ) -> int:
+    def create(filename: str, filepath: str, file_size: int, doc_hash: str) -> int:
         """创建文档记录"""
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -317,7 +299,7 @@ class KnowledgeDocDB:
                     (filename, filepath, file_size, doc_hash)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (filename, filepath, file_size, doc_hash)
+                    (filename, filepath, file_size, doc_hash),
                 )
                 conn.commit()
                 return cursor.lastrowid
@@ -326,26 +308,21 @@ class KnowledgeDocDB:
                 return -1
 
     @staticmethod
-    def get_by_hash(doc_hash: str) -> Optional[Dict]:
+    def get_by_hash(doc_hash: str) -> dict | None:
         """通过哈希获取文档"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM knowledge_docs WHERE doc_hash = ?",
-                (doc_hash,)
-            )
+            cursor.execute("SELECT * FROM knowledge_docs WHERE doc_hash = ?", (doc_hash,))
             row = cursor.fetchone()
             return dict(row) if row else None
 
     @staticmethod
-    def list_all(processed_only: bool = False) -> List[Dict]:
+    def list_all(processed_only: bool = False) -> list[dict]:
         """列出所有文档"""
         with get_connection() as conn:
             cursor = conn.cursor()
             if processed_only:
-                cursor.execute(
-                    "SELECT * FROM knowledge_docs WHERE processed = 1"
-                )
+                cursor.execute("SELECT * FROM knowledge_docs WHERE processed = 1")
             else:
                 cursor.execute("SELECT * FROM knowledge_docs")
             return [dict(row) for row in cursor.fetchall()]
@@ -361,7 +338,7 @@ class KnowledgeDocDB:
                 SET processed = TRUE, chunk_count = ?
                 WHERE id = ?
                 """,
-                (chunk_count, doc_id)
+                (chunk_count, doc_id),
             )
             conn.commit()
             return cursor.rowcount > 0
@@ -371,10 +348,7 @@ class KnowledgeDocDB:
         """删除文档"""
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "DELETE FROM knowledge_docs WHERE id = ?",
-                (doc_id,)
-            )
+            cursor.execute("DELETE FROM knowledge_docs WHERE id = ?", (doc_id,))
             conn.commit()
             return cursor.rowcount > 0
 

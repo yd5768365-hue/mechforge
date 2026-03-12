@@ -5,7 +5,6 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -28,6 +27,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, description="用户消息")
     rag: bool = Field(False, description="是否启用 RAG 检索")
     stream: bool = Field(False, description="是否使用流式响应")
+    system_prompt: str | None = Field(None, description="自定义系统提示词（覆盖默认）")
 
 
 class ChatResponse(BaseModel):
@@ -36,7 +36,7 @@ class ChatResponse(BaseModel):
     response: str
     model: str
     rag_used: bool = False
-    context: Optional[str] = None
+    context: str | None = None
 
 
 # ── API 端点 ──────────────────────────────────────────────────────────────────
@@ -51,20 +51,20 @@ async def chat(request: ChatRequest) -> ChatResponse:
     context, rag_used = "", False
     if should_use_rag(request.rag):
         context, rag_used = retrieve_context(user_message)
-        # 如果启用了RAG，自动切换到知识库模式
         if rag_used and state.mode != "knowledge":
             state.set_mode("knowledge")
             logger.info("Auto-switched to knowledge mode (RAG enabled)")
 
-    # 根据当前 provider 决定使用哪个后端
+    custom_prompt = request.system_prompt
+
     if state.current_provider == "gguf":
-        return await _chat_with_gguf(user_message, context, rag_used)
+        return await _chat_with_gguf(user_message, context, rag_used, custom_prompt)
     else:
-        return await _chat_with_ollama(user_message, context, rag_used)
+        return await _chat_with_ollama(user_message, context, rag_used, custom_prompt)
 
 
 async def _chat_with_gguf(
-    user_message: str, context: str, rag_used: bool
+    user_message: str, context: str, rag_used: bool, custom_prompt: str | None = None
 ) -> ChatResponse:
     """使用 GGUF 后端进行聊天"""
     if state.gguf_llm is None:
@@ -74,29 +74,24 @@ async def _chat_with_gguf(
         )
 
     try:
-        # 构建消息列表，包含系统提示词
-        system_prompt = state.get_system_prompt()
+        system_prompt = custom_prompt or state.get_system_prompt()
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(state.conversation_history[-10:])
-        
+
         # 如果有上下文，添加到用户消息中
         if context:
             messages[-1]["content"] = f"{user_message}\n\n相关上下文:\n{context}"
-        
+
         output = state.gguf_llm.create_chat_completion(
             messages=messages,
             temperature=0.7,
             max_tokens=2048,
         )
         response_text = output["choices"][0]["message"]["content"]
-        model_name = (
-            Path(state.gguf_model_path).name
-            if state.gguf_model_path
-            else "gguf-local"
-        )
+        model_name = Path(state.gguf_model_path).name if state.gguf_model_path else "gguf-local"
     except Exception as e:
         logger.error(f"GGUF 调用失败: {e}")
-        raise HTTPException(status_code=500, detail=f"GGUF 调用失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"GGUF 调用失败: {str(e)}") from e
 
     state.conversation_history.append({"role": "assistant", "content": response_text})
 
@@ -109,32 +104,29 @@ async def _chat_with_gguf(
 
 
 async def _chat_with_ollama(
-    user_message: str, context: str, rag_used: bool
+    user_message: str, context: str, rag_used: bool, custom_prompt: str | None = None
 ) -> ChatResponse:
     """使用 Ollama 后端进行聊天"""
     llm = get_llm_client()
     try:
-        # 构建消息列表，包含系统提示词
-        system_prompt = state.get_system_prompt()
+        system_prompt = custom_prompt or state.get_system_prompt()
         messages = [{"role": "system", "content": system_prompt}]
-        
+
         # 添加历史记录
         messages.extend(state.conversation_history[-10:])
-        
+
         # 如果有上下文，添加到用户消息中
         if context:
             messages[-1]["content"] = f"{user_message}\n\n相关上下文:\n{context}"
-        
+
         # 使用 chat 方法调用
         response_text = llm.provider.chat(messages)
     except Exception as e:
         logger.error(f"LLM 调用失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"LLM 调用失败: {e}")
+        raise HTTPException(status_code=500, detail=f"LLM 调用失败: {e}") from e
 
     model_name = (
-        llm.get_current_model_name()
-        if hasattr(llm, "get_current_model_name")
-        else "unknown"
+        llm.get_current_model_name() if hasattr(llm, "get_current_model_name") else "unknown"
     )
 
     state.conversation_history.append({"role": "assistant", "content": response_text})
@@ -156,13 +148,11 @@ async def chat_stream(request: ChatRequest):
     context, rag_used = "", False
     if should_use_rag(request.rag):
         context, rag_used = retrieve_context(user_message)
-        # 如果启用了RAG，自动切换到知识库模式
         if rag_used and state.mode != "knowledge":
             state.set_mode("knowledge")
             logger.info("Auto-switched to knowledge mode (RAG enabled)")
 
-    # 构建消息列表（最近 10 条历史），使用当前模式的系统提示词
-    system_prompt = state.get_system_prompt()
+    system_prompt = request.system_prompt or state.get_system_prompt()
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(state.conversation_history[-10:])
     if context:
@@ -222,9 +212,7 @@ async def _stream_with_ollama(messages: list):
                     full_response += chunk
                     yield f"data: {json.dumps({'content': chunk})}\n\n"
             yield "data: [DONE]\n\n"
-            state.conversation_history.append(
-                {"role": "assistant", "content": full_response}
-            )
+            state.conversation_history.append({"role": "assistant", "content": full_response})
         except Exception as e:
             logger.error(f"流式生成失败: {e}", exc_info=True)
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -255,11 +243,13 @@ async def clear_history() -> dict:
 
 class ModeRequest(BaseModel):
     """模式切换请求"""
+
     mode: str = Field(..., description="模式: 'chat' 或 'knowledge'")
 
 
 class ModeResponse(BaseModel):
     """模式响应"""
+
     mode: str
     is_knowledge_mode: bool
     system_prompt_preview: str
@@ -275,7 +265,7 @@ async def get_mode() -> ModeResponse:
     return ModeResponse(
         mode=current_mode,
         is_knowledge_mode=state.is_knowledge_mode(),
-        system_prompt_preview=preview
+        system_prompt_preview=preview,
     )
 
 
@@ -284,26 +274,24 @@ async def set_mode(request: ModeRequest) -> ModeResponse:
     """设置当前模式"""
     if request.mode not in ["chat", "knowledge"]:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid mode: {request.mode}. Must be 'chat' or 'knowledge'"
+            status_code=400, detail=f"Invalid mode: {request.mode}. Must be 'chat' or 'knowledge'"
         )
-    
+
     success = state.set_mode(request.mode)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to set mode")
-    
+
     logger.info(f"Mode switched to: {request.mode}")
-    
+
     current_mode = state.get_mode()
     system_prompt = state.get_system_prompt()
     preview = system_prompt[:100] + "..." if len(system_prompt) > 100 else system_prompt
-    
+
     return ModeResponse(
         mode=current_mode,
         is_knowledge_mode=state.is_knowledge_mode(),
-        system_prompt_preview=preview
+        system_prompt_preview=preview,
     )
-
 
 
 @router.post("/mode/reset")

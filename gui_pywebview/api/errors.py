@@ -4,13 +4,12 @@
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
-from fastapi import Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
 
 logger = logging.getLogger("mechforge.errors")
 
@@ -22,7 +21,7 @@ class APIError(Exception):
         self,
         message: str,
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-        details: Dict[str, Any] | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         self.message = message
         self.status_code = status_code
@@ -37,10 +36,14 @@ class NotFoundError(APIError):
         super().__init__(message, status.HTTP_404_NOT_FOUND)
 
 
-class ValidationError(APIError):
-    """验证错误"""
+class APIValidationError(APIError):
+    """API 验证错误（与 Pydantic ValidationError 区分）"""
 
-    def __init__(self, message: str = "Validation failed", details: Dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str = "Validation failed",
+        details: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(message, status.HTTP_422_UNPROCESSABLE_ENTITY, details)
 
 
@@ -54,10 +57,10 @@ class ServiceUnavailableError(APIError):
 def create_error_response(
     message: str,
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-    details: Dict[str, Any] | None = None,
+    details: dict[str, Any] | None = None,
 ) -> JSONResponse:
     """创建统一的错误响应"""
-    content: Dict[str, Any] = {
+    content: dict[str, Any] = {
         "success": False,
         "error": {
             "message": message,
@@ -99,10 +102,8 @@ async def generic_error_handler(request: Request, exc: Exception) -> JSONRespons
     )
 
 
-def setup_error_handlers(app) -> None:
+def setup_error_handlers(app: FastAPI) -> None:
     """配置错误处理器"""
-    from fastapi.exceptions import RequestValidationError
-
     app.add_exception_handler(APIError, api_error_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(Exception, generic_error_handler)

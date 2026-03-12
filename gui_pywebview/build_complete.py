@@ -5,11 +5,17 @@ MechForge AI 完整打包脚本
 """
 
 import argparse
+import io
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+# Fix Windows console encoding for Chinese characters
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 配置
@@ -21,6 +27,9 @@ VERSION = "0.5.0"
 SCRIPT_DIR = Path(__file__).parent.resolve()
 DIST_DIR = SCRIPT_DIR / "dist"
 BUILD_DIR = SCRIPT_DIR / "build"
+
+# 项目根目录（gui_pywebview 的父目录）
+PROJECT_ROOT = SCRIPT_DIR.parent.resolve()
 
 # 需要打包的资源
 RESOURCES = {
@@ -35,6 +44,13 @@ RESOURCES = {
         "core",
         "services",
         "api",
+    ],
+    # 父项目的模块（mechforge_core, mechforge_ai 等）
+    "project_modules": [
+        "mechforge_core",
+        "mechforge_ai",
+        "mechforge_knowledge",
+        "mechforge_theme",
     ],
 }
 
@@ -59,9 +75,9 @@ def run(cmd: list, cwd: Path = None, check: bool = True):
 
 
 def print_step(msg):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"▶ {msg}")
-    print('='*60)
+    print("=" * 60)
 
 
 def print_success(msg):
@@ -89,6 +105,7 @@ def check_pyinstaller():
     print_step("检查 PyInstaller")
     try:
         import PyInstaller
+
         print_success(f"PyInstaller {PyInstaller.__version__} 已安装")
     except ImportError:
         print_error("PyInstaller 未安装，正在安装...")
@@ -131,11 +148,15 @@ def build_windows():
             print(f"添加目录: {src} -> {d}")
 
     cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", PROJECT_NAME,
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--name",
+        PROJECT_NAME,
         "--onefile",
         "--windowed",
-        "--icon", "dj-whale.png",
+        "--icon",
+        "dj-whale.png",
         "--noconfirm",
     ]
 
@@ -143,18 +164,57 @@ def build_windows():
     for src, dst in datas:
         cmd.extend(["--add-data", f"{src}{os.pathsep}{dst}"])
 
+    # 使用 --collect-all 确保所有子模块被正确收集
+    for d in RESOURCES["dirs"]:
+        src = SCRIPT_DIR / d
+        if src.exists() and src.is_dir():
+            # 收集整个目录的所有模块
+            cmd.extend(["--collect-all", str(src)])
+
+    # 添加父项目的模块（mechforge_core, mechforge_ai 等）
+    for module_name in RESOURCES.get("project_modules", []):
+        src = PROJECT_ROOT / module_name
+        if src.exists() and src.is_dir():
+            # 使用 --add-data 将模块目录添加到打包
+            datas.append((str(src), module_name))
+            cmd.extend(["--add-data", f"{src}{os.pathsep}{module_name}"])
+            # 也使用 --collect-all 收集模块
+            cmd.extend(["--collect-all", str(src)])
+            print(f"添加项目模块: {src} -> {module_name}")
+
     # 排除不需要的模块
     excludes = [
-        "pytest", "tests", "test", "testing",
-        "sphinx", "docs", "docutils",
+        "pytest",
+        "tests",
+        "test",
+        "testing",
+        "sphinx",
+        "docs",
+        "docutils",
     ]
     for ex in excludes:
         cmd.extend(["--exclude-module", ex])
 
+    # 添加隐藏导入，确保 Python 内置模块被包含
+    hidden_imports = [
+        "sqlite3",
+        "xml.etree.ElementTree",
+        "xml.dom.minidom",
+        "html.parser",
+        "http.cookies",
+        "http.cookiejar",
+        "urllib.parse",
+        "urllib.request",
+        "dataclasses",
+        "typing_extensions",
+    ]
+    for imp in hidden_imports:
+        cmd.extend(["--hidden-import", imp])
+
     # 添加入口
     cmd.append("desktop_app.py")
 
-    print(f"执行: {' '.join(cmd[:8])}...")
+    print(f"\n执行命令: {' '.join(cmd)}\n")
     run(cmd)
 
     # 输出结果
@@ -171,8 +231,11 @@ def build_macos():
     print_step("开始 macOS 打包")
 
     cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", PROJECT_NAME,
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--name",
+        PROJECT_NAME,
         "--onefile",
         "--windowed",
         "--noconfirm",
@@ -203,8 +266,11 @@ def build_linux():
     print_step("开始 Linux 打包")
 
     cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", PROJECT_NAME,
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--name",
+        PROJECT_NAME,
         "--onefile",
         "--noconfirm",
     ]
@@ -238,8 +304,9 @@ def main():
     parser = argparse.ArgumentParser(description="MechForge AI 打包工具")
     parser.add_argument("--clean", action="store_true", help="清理构建目录")
     parser.add_argument("--deps", action="store_true", help="安装依赖")
-    parser.add_argument("--platform", choices=["win", "mac", "linux", "auto"],
-                        default="auto", help="目标平台")
+    parser.add_argument(
+        "--platform", choices=["win", "mac", "linux", "auto"], default="auto", help="目标平台"
+    )
     parser.add_argument("--check", action="store_true", help="仅检查依赖")
 
     args = parser.parse_args()

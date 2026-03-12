@@ -13,6 +13,7 @@
   let aiService = null;
   let isGenerating = false;
   let currentReader = null;
+  let lastFailedMessage = null; // 用于重试
 
   /**
    * 初始化聊天处理器
@@ -21,11 +22,6 @@
   function init(service) {
     aiService = service;
     setupEventListeners();
-    
-    // 初始化聊天增强功能
-    if (window.ChatFeatures) {
-      ChatFeatures.init();
-    }
   }
 
   /**
@@ -55,13 +51,88 @@
   }
 
   /**
+   * 分类聊天错误
+   * @param {Error} error - 错误对象
+   * @returns {Object} 错误信息对象
+   */
+  function classifyChatError(error) {
+    const message = error.message || String(error);
+    let type = 'unknown';
+    let friendlyMessage = '发生未知错误';
+    let retryable = false;
+    let suggestion = '';
+
+    // 网络错误
+    if (message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')) {
+      type = 'network';
+      friendlyMessage = '网络连接失败';
+      retryable = true;
+      suggestion = '请检查网络连接后重试';
+    }
+    // HTTP 错误
+    else if (message.includes('HTTP') || message.includes('status')) {
+      const statusMatch = message.match(/HTTP (\d+)/);
+      const status = statusMatch ? parseInt(statusMatch[1]) : 0;
+      type = 'api';
+      retryable = status >= 500 || status === 429; // 服务器错误或限流可重试
+      
+      if (status === 503) {
+        friendlyMessage = '服务暂时不可用';
+        suggestion = '模型可能未加载，请检查模型状态';
+      } else if (status === 429) {
+        friendlyMessage = '请求过于频繁';
+        suggestion = '请稍后再试';
+      } else if (status === 401 || status === 403) {
+        friendlyMessage = '认证失败';
+        suggestion = '请检查 API Key 配置';
+      } else {
+        friendlyMessage = `服务器错误 (${status})`;
+        suggestion = '请稍后重试';
+      }
+    }
+    // 超时错误
+    else if (message.includes('timeout') || message.includes('超时')) {
+      type = 'timeout';
+      friendlyMessage = '响应超时';
+      retryable = true;
+      suggestion = '生成时间过长，可以重试或使用更小的模型';
+    }
+    // 模型错误
+    else if (message.includes('model') || message.includes('GGUF') || message.includes('not loaded')) {
+      type = 'model';
+      friendlyMessage = '模型未就绪';
+      retryable = false;
+      suggestion = '请先加载模型或切换到其他模型';
+    }
+    // 其他错误
+    else {
+      type = 'unknown';
+      friendlyMessage = '生成失败';
+      retryable = true;
+      suggestion = '请稍后重试';
+    }
+
+    return {
+      type,
+      message: friendlyMessage,
+      detail: message,
+      retryable,
+      suggestion,
+      originalError: error
+    };
+  }
+
+  /**
    * 发送消息
    */
-  async function sendMessage() {
+  async function sendMessage(textToSend = null) {
     const chatInput = ChatUI.getInput();
-    const text = chatInput?.value.trim();
+    const text = textToSend || chatInput?.value.trim();
 
     if (!text || !booted || !aiService || isGenerating) return;
+
+    // 保存最后发送的消息用于重试
+    lastFailedMessage = null;
 
     // 设置生成状态
     isGenerating = true;
@@ -90,6 +161,11 @@
     ChatUI.addUserMessage(text, time);
     ChatUI.clearInput();
 
+    // 隐藏命令面板
+    if (window.ChatFeatures && window.ChatFeatures.hideCommandPalette) {
+      window.ChatFeatures.hideCommandPalette();
+    }
+
     // 清除草稿
     if (window.ChatFeatures) {
       ChatFeatures.clearDraft();
@@ -112,10 +188,8 @@
         }
 
         if (isDone) {
-          // 流式完成，渲染最终内容
-          if (window.Markdown) {
-            aiMessageEl.innerHTML = Markdown.render(content);
-          }
+          // 流式完成，渲染最终内容（保留 meta 区）
+          ChatUI.renderAIMessageBody(aiMessageEl, content);
           
           // 添加操作按钮
           if (window.ChatFeatures) {
@@ -131,8 +205,11 @@
             // 更新鲸鱼语音
             Mascot.updateWhaleSpeech(content);
 
-            // 更新进度
-            ChatUI.showPulseResponding(fullContent.length / 100);
+            // 更新进度（基于内容长度估算，假设平均每个字符约0.3个token，目标约500-1000 tokens）
+            const estimatedTokens = fullContent.length * 0.3;
+            const targetTokens = 800; // 假设目标响应长度
+            const progress = Math.min(0.95, estimatedTokens / targetTokens);
+            ChatUI.showPulseResponding(progress);
           }
         }
       });
@@ -141,7 +218,16 @@
       if (error.name === 'AbortError') {
         ChatUI.addSystemMessage('⏹️ 生成已停止');
       } else {
-        ChatUI.addSystemMessage(`Error: ${error.message}`);
+        // 保存失败的消息用于重试
+        lastFailedMessage = text;
+        // 分类错误并显示友好提示
+        const errorInfo = classifyChatError(error);
+        ChatUI.addErrorMessage(errorInfo, () => {
+          // 重试回调
+          if (lastFailedMessage) {
+            sendMessage(lastFailedMessage);
+          }
+        });
       }
     } finally {
       // 重置状态
@@ -182,13 +268,23 @@
     return isGenerating;
   }
 
+  /**
+   * 重试最后失败的消息
+   */
+  function retryLastMessage() {
+    if (lastFailedMessage && !isGenerating) {
+      sendMessage(lastFailedMessage);
+    }
+  }
+
   // ==================== 导出 ====================
   window.ChatHandler = {
     init,
     setBooted,
     sendMessage,
     stopGeneration,
-    isCurrentlyGenerating
+    isCurrentlyGenerating,
+    retryLastMessage
   };
 
 })();

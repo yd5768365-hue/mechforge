@@ -1,0 +1,30 @@
+# Ruff 配置 - MechForge AI GUI
+# 参考: https://docs.astral.sh/ruff/configuration/
+
+target-version = "py310"
+line-length = 100
+
+# 排除构建产物和缓存
+exclude = [
+    "dist_frontend",
+    "__pycache__",
+    ".git",
+    "*.egg-info",
+]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E402",  # 模块导入不在文件顶部 - server.py 因 PyInstaller 路径需延迟导入
+    "E501",  # 行过长 - 提示词/文档字符串保持可读性
+]
+
+[format]
+quote-style = "double"

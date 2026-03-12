@@ -72,6 +72,13 @@
           </svg>
           <span class="icon-label">EXP</span>
         </div>
+        <div class="sidebar-icon" data-tab="settings" title="设置">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+          <span class="icon-label">设置</span>
+        </div>
       </div>
 
       <!-- Tab Panels -->
@@ -255,24 +262,22 @@
           <div class="panel-header">
             <span class="header-mark">锻造</span>
             <h2>知识库</h2>
-            <p>工业知识检索系统</p>
-            <span class="archive-id">档案-2024-KB-V2.4</span>
+            <p>机械工程专业书籍库</p>
+            <span class="archive-id">MECHFORGE-KB-V3.0</span>
           </div>
           
-          <!-- 标签过滤器 - 钛合金分类铭牌 -->
+          <!-- 分类标签 -->
           <div class="knowledge-tags" id="knowledge-tags">
             <span class="knowledge-tag active" data-filter="all">全部</span>
-            <span class="knowledge-tag" data-filter="manual">手册</span>
-            <span class="knowledge-tag" data-filter="spec">规格</span>
-            <span class="knowledge-tag" data-filter="case">案例</span>
-            <span class="knowledge-tag" data-filter="procedure">程序</span>
-            <span class="knowledge-tag" data-filter="drawing">图纸</span>
-            <span class="knowledge-tag" data-filter="standard">标准</span>
-            <span class="knowledge-tag critical" data-filter="critical">紧急</span>
-            <span class="knowledge-tag warning" data-filter="warning">警告</span>
-            <span class="knowledge-tag info" data-filter="info">信息</span>
-            <span class="knowledge-tag" data-filter="maintenance">维护</span>
-            <span class="knowledge-tag" data-filter="safety">安全</span>
+            <span class="knowledge-tag" data-filter="mechanics">力学</span>
+            <span class="knowledge-tag" data-filter="materials">材料</span>
+            <span class="knowledge-tag" data-filter="design">设计</span>
+            <span class="knowledge-tag" data-filter="manufacturing">制造</span>
+            <span class="knowledge-tag" data-filter="thermo">热力学</span>
+            <span class="knowledge-tag" data-filter="control">控制</span>
+            <span class="knowledge-tag" data-filter="fea">有限元</span>
+            <span class="knowledge-tag" data-filter="fluid">流体</span>
+            <span class="knowledge-tag" data-filter="tribology">摩擦学</span>
           </div>
           
           <div class="search-container">
@@ -281,22 +286,25 @@
                 <circle cx="11" cy="11" r="8"/>
                 <path d="M21 21l-4.35-4.35"/>
               </svg>
-              <input type="text" id="knowledge-search" placeholder="输入搜索关键词...">
+              <input type="text" id="knowledge-search" placeholder="搜索书籍名称、作者或关键词...">
               <button id="search-btn">搜索</button>
             </div>
           </div>
-          
-          <div class="search-results" id="search-results">
-            <div class="result-placeholder">
-              <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="0.8">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-              <p>等待查询输入</p>
-              <span style="font-size: 11px; color: var(--ind-text-dim);">输入搜索词以检索知识条目</span>
+
+          <!-- 书籍轮播区域 -->
+          <div class="book-carousel-section" id="book-carousel-section">
+            <div class="book-carousel-header">
+              <h3>推荐书籍</h3>
+              <div class="carousel-nav">
+                <button class="carousel-nav-btn" id="carousel-prev" title="上一页">‹</button>
+                <button class="carousel-nav-btn" id="carousel-next" title="下一页">›</button>
+              </div>
             </div>
+            <div class="book-carousel" id="book-carousel"></div>
           </div>
+
+          <!-- 搜索结果 / 全部书籍列表 -->
+          <div class="search-results" id="search-results"></div>
 
           <!-- 详情抽屉 - 全息投影机密板 -->
           <div class="detail-overlay" id="detail-overlay"></div>
@@ -325,7 +333,7 @@
             <div class="drawer-content" id="drawer-content">
               <!-- 头部 -->
               <div class="drawer-header">
-                <div class="drawer-classification">机密 // 等级 3</div>
+                <div class="drawer-classification">MechForge 知识库 // 书籍详情</div>
                 <div class="drawer-title" id="drawer-title"></div>
                 <div class="drawer-badges" id="drawer-badges"></div>
               </div>
@@ -364,6 +372,12 @@
             <p>模型加载、网格划分、求解和可视化</p>
           </div>
           <div class="cae-toolbar">
+            <button class="cae-btn" id="demo-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              示例悬臂梁
+            </button>
             <button class="cae-btn" id="load-model-btn">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -462,6 +476,31 @@
             </div>
           </div>
 
+          <!-- Daily Feed 区域 -->
+          <div id="daily-feed-section" style="margin:16px 20px;padding:16px;background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.15);border-radius:8px;">
+            <div class="df-embedded-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(0,229,255,0.1);">
+              <div>
+                <div class="df-embedded-title" style="font-family:Orbitron,monospace;font-size:12px;color:#00e5ff;letter-spacing:2px;">◈ DAILY KNOWLEDGE FEED</div>
+                <div class="df-embedded-date" id="df-embedded-date" style="font-family:monospace;font-size:10px;color:rgba(200,216,224,0.4);margin-top:4px;">── 未生成 ──</div>
+              </div>
+            </div>
+            <div class="df-embedded-content" id="df-embedded-content">
+              <div class="df-embedded-empty" id="df-embedded-empty" style="text-align:center;padding:24px;color:rgba(200,216,224,0.5);">
+                <div class="df-embedded-empty-icon" style="font-size:32px;margin-bottom:8px;opacity:0.6;">📡</div>
+                <div class="df-embedded-empty-text" style="font-family:Orbitron,monospace;font-size:11px;letter-spacing:1px;margin-bottom:16px;">每日机械工程知识推送</div>
+                <button class="df-generate-btn" id="df-generate-btn" style="display:flex !important;align-items:center;justify-content:center;gap:10px;margin:16px auto;padding:14px 28px;font-family:Orbitron,monospace;font-size:13px;letter-spacing:2px;color:#0d1117;background:linear-gradient(135deg,#00e5ff,#00a8ff);border:none;border-radius:6px;cursor:pointer;box-shadow:0 4px 15px rgba(0,229,255,0.3);transition:all 0.3s;visibility:visible !important;opacity:1 !important;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,229,255,0.4)';" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 15px rgba(0,229,255,0.3)';">
+                  <span class="btn-icon" style="font-size:16px;">⚡</span>
+                  <span class="btn-text">生成今日推送</span>
+                </button>
+                <div class="df-generate-hint" style="font-size:11px;color:rgba(200,216,224,0.4);text-align:center;">使用 AI 生成 3 条机械工程知识</div>
+              </div>
+              <div class="df-embedded-list" id="df-embedded-list" style="display:none;"></div>
+              <div class="df-embedded-actions" id="df-actions-bar" style="display:none;">
+                <button class="df-embedded-btn primary" id="df-refresh-btn">⟳ 重新生成</button>
+              </div>
+            </div>
+          </div>
+
           <!-- 标签过滤 -->
           <div class="exp-tags-container" id="exp-tags-container"></div>
 
@@ -505,6 +544,192 @@
             </div>
           </div>
         </div>
+
+        <!-- Settings Panel -->
+        <div class="tab-panel" id="settings-panel">
+          <!-- 工业风背景 -->
+          <div class="industrial-background"></div>
+
+          <!-- 面板头部 -->
+          <div class="panel-header">
+            <span class="header-mark">系统</span>
+            <h2>设置</h2>
+            <p>应用配置与个性化选项</p>
+            <span class="archive-id">CFG-2024-SET-V1</span>
+          </div>
+
+          <!-- 可滑动设置内容区 -->
+          <div class="settings-scroll-container" id="settings-scroll">
+            <!-- API 配置 -->
+            <div class="settings-section">
+              <div class="settings-section-title">
+                <span class="section-icon">🔌</span>
+                <span>API 配置</span>
+              </div>
+              <div class="settings-card">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">AI 服务提供商</div>
+                    <div class="setting-desc">选择使用的 AI 后端服务</div>
+                  </div>
+                  <select class="setting-select" id="setting-provider">
+                    <option value="ollama">Ollama (本地)</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                  </select>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">API Key</div>
+                    <div class="setting-desc">在线服务所需的 API 密钥</div>
+                  </div>
+                  <input type="password" class="setting-input" id="setting-apikey" placeholder="sk-...">
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">模型名称</div>
+                    <div class="setting-desc">使用的 AI 模型</div>
+                  </div>
+                  <input type="text" class="setting-input" id="setting-model" placeholder="gpt-4o-mini">
+                </div>
+              </div>
+            </div>
+
+            <!-- 界面设置 -->
+            <div class="settings-section">
+              <div class="settings-section-title">
+                <span class="section-icon">🎨</span>
+                <span>界面设置</span>
+              </div>
+              <div class="settings-card">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">主题</div>
+                    <div class="setting-desc">选择界面主题风格</div>
+                  </div>
+                  <select class="setting-select" id="setting-theme">
+                    <option value="dark">深色 (默认)</option>
+                    <option value="light">浅色</option>
+                    <option value="industrial">工业风</option>
+                  </select>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">语言</div>
+                    <div class="setting-desc">界面显示语言</div>
+                  </div>
+                  <select class="setting-select" id="setting-language">
+                    <option value="zh-CN">简体中文</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">字体大小</div>
+                    <div class="setting-desc">调整界面字体大小</div>
+                  </div>
+                  <input type="range" class="setting-slider" id="setting-fontsize" min="12" max="20" value="14">
+                </div>
+              </div>
+            </div>
+
+            <!-- Daily Feed 设置 -->
+            <div class="settings-section">
+              <div class="settings-section-title">
+                <span class="section-icon">📡</span>
+                <span>Daily Feed 设置</span>
+              </div>
+              <div class="settings-card">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">启用 Daily Feed</div>
+                    <div class="setting-desc">在经验库显示每日知识推送</div>
+                  </div>
+                  <button type="button" class="setting-btn" id="setting-daily-enabled-btn" style="min-width:80px;padding:8px 16px;background:linear-gradient(135deg,#00e5ff,#00a8ff);color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-family:Orbitron,monospace;font-size:11px;letter-spacing:1px;font-weight:600;">
+                    开启
+                  </button>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">每日推送数量</div>
+                    <div class="setting-desc">每次生成的知识条目数</div>
+                  </div>
+                  <input type="range" class="setting-slider" id="setting-daily-count" min="1" max="5" value="3">
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">推送时间</div>
+                    <div class="setting-desc">自动生成时间 (自动模式)</div>
+                  </div>
+                  <input type="time" class="setting-input" id="setting-daily-time" value="07:00">
+                </div>
+              </div>
+            </div>
+
+            <!-- 知识库设置 -->
+            <div class="settings-section">
+              <div class="settings-section-title">
+                <span class="section-icon">📚</span>
+                <span>知识库设置</span>
+              </div>
+              <div class="settings-card">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">知识库路径</div>
+                    <div class="setting-desc">本地知识库文件夹位置</div>
+                  </div>
+                  <div class="setting-path">
+                    <input type="text" class="setting-input" id="setting-kb-path" readonly value="./knowledge">
+                    <button class="setting-btn" id="btn-select-kb">选择</button>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-name">启用 RAG</div>
+                    <div class="setting-desc">检索增强生成功能</div>
+                  </div>
+                  <label class="setting-toggle">
+                    <input type="checkbox" id="setting-rag-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 关于 -->
+            <div class="settings-section">
+              <div class="settings-section-title">
+                <span class="section-icon">ℹ️</span>
+                <span>关于</span>
+              </div>
+              <div class="settings-card about-card">
+                <div class="about-logo">
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#00e5ff" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="about-info">
+                  <div class="about-name">MechForge AI</div>
+                  <div class="about-version">版本 0.5.0</div>
+                  <div class="about-desc">机械工程智能助手</div>
+                </div>
+                <div class="about-links">
+                  <a href="#" class="about-link">文档</a>
+                  <a href="#" class="about-link">GitHub</a>
+                  <a href="#" class="about-link">反馈</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- 保存按钮 -->
+            <div class="settings-actions">
+              <button class="settings-btn secondary" id="btn-reset">重置</button>
+              <button class="settings-btn primary" id="btn-save">保存设置</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -540,14 +765,33 @@
               </svg>
             </div>
           </div>
-          <!-- GGUF 模型文件路径输入 -->
-          <div class="gguf-model-input">
-            <input type="text" id="gguf-model-path" placeholder="输入 GGUF 模型文件路径...">
-            <button id="gguf-browse-btn" title="浏览文件">📁</button>
-            <button id="gguf-load-btn">加载</button>
+          <!-- GGUF 本地模型区域 -->
+          <div class="gguf-section" id="gguf-section">
+            <div class="gguf-section-header">
+              <span>本地 GGUF 模型</span>
+              <button class="gguf-scan-btn" id="gguf-scan-btn" title="刷新模型列表">⟳</button>
+            </div>
+            <div class="gguf-model-list" id="gguf-model-list">
+              <div class="gguf-model-list-empty">点击刷新扫描模型</div>
+            </div>
+            <div class="gguf-actions">
+              <button class="gguf-action-btn" id="gguf-browse-btn" title="选择 GGUF 文件">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <path d="M14 2v6h6M12 18v-6M9 15h6"/>
+                </svg>
+                选择文件
+              </button>
+              <button class="gguf-action-btn" id="gguf-browse-dir-btn" title="设置模型目录">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+                设置目录
+              </button>
+            </div>
+            <div class="gguf-model-info" id="gguf-model-info"></div>
           </div>
-          <div class="gguf-model-info" id="gguf-model-info"></div>
-          <!-- 刷新按钮 -->
+          <!-- 切换按钮 -->
           <div class="gguf-refresh-section">
             <button id="gguf-refresh-btn">⟳ 切换到选定的 API</button>
           </div>
@@ -555,6 +799,7 @@
       </span>
       <span class="status-bar-item" data-status="model">模型: qwen2.5:3b</span>
       <span class="status-bar-item status-on" data-status="rag">RAG: 开启</span>
+      <span class="status-bar-item" data-status="exp">经验库: 关闭</span>
       <span class="status-bar-item" data-status="memory">内存: 42 KB</span>
     </div>
   </div>
@@ -624,9 +869,13 @@
   <script src="app/knowledge/knowledge-ui.js"></script>
   <script src="app/cae/cae-workbench.js"></script>
   <script src="app/settings/status-bar.js"></script>
+  <script src="app/settings/settings-panel.js"></script>
 
   <!-- Experience Library -->
   <script src="experience.js"></script>
+
+  <!-- Daily Feed -->
+  <script src="daily_feed_ui.js"></script>
 
   <!-- Main Application Entry -->
   <script src="app/main.js"></script>

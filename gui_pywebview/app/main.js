@@ -109,6 +109,10 @@
 
     state.aiService = new AIService(apiClient, eventBus);
     state.configService = new ConfigService(apiClient, eventBus);
+    
+    // 将 AIService 暴露到全局，供其他模块使用
+    if (!window.AppState) window.AppState = {};
+    window.AppState.aiService = state.aiService;
 
     try {
       const { config } = await state.configService.init();
@@ -130,6 +134,7 @@
       { name: 'Mascot', required: false },
       { name: 'ModeIndicator', required: false },
       { name: 'ChatHandler', required: true, deps: ['aiService'] },
+      { name: 'ChatFeatures', required: false },
       { name: 'KnowledgeUI', required: false, deps: ['aiService'] },
       { name: 'StatusBarManager', required: true }
     ];
@@ -239,6 +244,12 @@
     if (!eventBus) return;
 
     const handlers = {
+      [Events.CONFIG_UPDATED]: ({ ai }) => {
+        // 配置更新时，更新 AIService 的 provider
+        if (ai && state.aiService) {
+          state.aiService.setProvider(ai.provider || 'ollama');
+        }
+      },
       [Events.AI_MESSAGE_SENT]: ({ message }) => {
         console.log('Sent:', message);
       },
@@ -303,7 +314,41 @@
       window.ExpLib?.pause();
     }
 
+    // Settings Panel 控制
+    if (tab === 'settings') {
+      window.SettingsPanel?.init();
+    }
+
+    // 确保当前面板可以滚动
+    enablePanelScrolling(tab);
+
     eventBus?.emit(Events.UI_TAB_CHANGED, { tab, oldTab });
+  }
+
+  /**
+   * 启用面板滚动
+   */
+  function enablePanelScrolling(tab) {
+    // 获取当前面板
+    const panel = document.getElementById(`${tab}-panel`);
+    if (!panel) return;
+
+    // 查找可滚动容器 (使用 ID 选择器)
+    const scrollableIds = ['chat-output', 'search-results', 'exp-results', 'cae-viewport', 'settings-scroll'];
+    scrollableIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        // 确保滚动容器可以接收触摸事件
+        el.style.touchAction = 'pan-y';
+        el.style.webkitOverflowScrolling = 'touch';
+        
+        // 调试信息
+        const rect = el.getBoundingClientRect();
+        console.log(`[Main] ${id}: height=${rect.height}, overflow=${getComputedStyle(el).overflowY}`);
+      }
+    });
+
+    console.log(`[Main] 已启用 ${tab} 面板的滚动支持`);
   }
 
   // ==================== 状态栏更新 ====================

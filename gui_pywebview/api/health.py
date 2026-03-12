@@ -28,9 +28,7 @@ async def get_status() -> dict:
         "version": "0.5.0",
         "api_type": llm.get_api_type() if hasattr(llm, "get_api_type") else "unknown",
         "model": (
-            llm.get_current_model_name()
-            if hasattr(llm, "get_current_model_name")
-            else "unknown"
+            llm.get_current_model_name() if hasattr(llm, "get_current_model_name") else "unknown"
         ),
         "rag_enabled": state.config.knowledge.rag.enabled,
         "rag_available": getattr(rag, "is_available", False),

@@ -166,7 +166,7 @@ body {
 .main-content {
   flex: 1;
   display: flex;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Sidebar - Energy Core Column */
@@ -360,7 +360,7 @@ body {
   flex: 1;
   position: relative;
   background: var(--bg-secondary);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .hex-grid,
@@ -543,6 +543,8 @@ body {
   display: none;
   flex-direction: column;
   z-index: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .tab-panel.active {

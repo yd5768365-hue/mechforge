@@ -2,14 +2,13 @@
 GGUF 模型管理 API 路由
 """
 
-import json
 import logging
+import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from .state import state
@@ -17,6 +16,10 @@ from .state import state
 logger = logging.getLogger("mechforge.api.gguf")
 
 router = APIRouter(prefix="/api/gguf", tags=["GGUF"])
+
+# ── 配置 ──────────────────────────────────────────────────────────────────────
+
+GGUF_SERVER_URL = os.getenv("GGUF_SERVER_URL", "http://127.0.0.1:11435")
 
 
 # ── 数据模型 ──────────────────────────────────────────────────────────────────
@@ -32,7 +35,7 @@ class GGUFLoadRequest(BaseModel):
 
 
 @router.post("/start")
-async def start_gguf_server(body: Dict[str, Any]) -> dict:
+async def start_gguf_server(body: dict[str, Any]) -> dict:
     """启动 GGUF 模型服务器"""
     model_name = body.get("model_name", "")
 
@@ -51,7 +54,7 @@ async def start_gguf_server(body: Dict[str, Any]) -> dict:
             raise HTTPException(status_code=500, detail="Failed to start GGUF server")
     except Exception as e:
         logger.error(f"启动 GGUF 服务器失败: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/stop")
@@ -75,8 +78,7 @@ async def stop_gguf_server() -> dict:
 async def get_gguf_status() -> dict:
     """获取 GGUF 服务器状态"""
     try:
-        gguf_url = "http://127.0.0.1:11435"
-        resp = requests.get(f"{gguf_url}/health", timeout=2)
+        resp = requests.get(f"{GGUF_SERVER_URL}/health", timeout=2)
         if resp.status_code == 200:
             data = resp.json()
             return {
@@ -91,7 +93,7 @@ async def get_gguf_status() -> dict:
 
 
 @router.post("/load")
-async def load_gguf_model(body: Dict[str, Any]) -> dict:
+async def load_gguf_model(body: dict[str, Any]) -> dict:
     """加载本地 GGUF 模型文件（使用 llama-cpp-python）"""
     model_path = body.get("model_path", "")
 
@@ -132,14 +134,14 @@ async def load_gguf_model(body: Dict[str, Any]) -> dict:
             "message": f"Model {model_name} loaded successfully",
         }
 
-    except ImportError:
+    except ImportError as e:
         raise HTTPException(
             status_code=500,
             detail="llama-cpp-python not installed. Run: pip install llama-cpp-python",
-        )
+        ) from e
     except Exception as e:
         logger.error(f"Failed to load GGUF model: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}") from e
 
 
 @router.post("/unload")
@@ -168,4 +170,53 @@ async def get_gguf_info() -> dict:
         "loaded": True,
         "model": Path(state.gguf_model_path).name if state.gguf_model_path else None,
         "model_path": state.gguf_model_path,
+    }
+
+
+@router.get("/scan")
+async def scan_gguf_models(directory: str = "") -> dict:
+    """扫描指定目录（或默认模型目录）中的 .gguf 文件"""
+    scan_dir: Path | None = None
+
+    if directory:
+        scan_dir = Path(directory)
+    else:
+        try:
+            from mechforge_core.config import get_config
+
+            cfg = get_config()
+            scan_dir = Path(cfg.provider.local.model_dir)
+        except Exception:
+            scan_dir = Path("./models")
+
+    if not scan_dir or not scan_dir.exists():
+        return {
+            "success": True,
+            "directory": str(scan_dir) if scan_dir else "",
+            "models": [],
+        }
+
+    models = []
+    for f in sorted(scan_dir.glob("*.gguf")):
+        try:
+            stat = f.stat()
+            models.append(
+                {
+                    "name": f.stem,
+                    "filename": f.name,
+                    "path": str(f.resolve()),
+                    "size": stat.st_size,
+                    "loaded": (
+                        state.gguf_model_path is not None
+                        and Path(state.gguf_model_path).resolve() == f.resolve()
+                    ),
+                }
+            )
+        except OSError:
+            continue
+
+    return {
+        "success": True,
+        "directory": str(scan_dir.resolve()),
+        "models": models,
     }

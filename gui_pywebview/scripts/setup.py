@@ -4,7 +4,6 @@
 设置开发环境
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -12,21 +11,15 @@ from pathlib import Path
 
 def print_step(step: str, message: str) -> None:
     """打印步骤"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"[{step}] {message}")
-    print('='*60)
+    print("=" * 60)
 
 
 def run_command(cmd: list, cwd: Path = None) -> bool:
     """运行命令"""
     try:
-        result = subprocess.run(
-            cmd,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=True)
         if result.stdout:
             print(result.stdout)
         return True
@@ -76,12 +69,7 @@ def setup_node() -> bool:
     print_step("Node.js", "Checking Node.js")
 
     try:
-        result = subprocess.run(
-            ["node", "--version"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(["node", "--version"], capture_output=True, text=True, check=True)
         print(f"✅ Node.js {result.stdout.strip()}")
     except FileNotFoundError:
         print("❌ Node.js not found, please install Node.js 18+")
@@ -101,13 +89,7 @@ def create_directories() -> None:
     print_step("Setup", "Creating directories")
 
     root = Path(__file__).parent.parent
-    dirs = [
-        root / "dist",
-        root / "build",
-        root / ".cache",
-        root / "logs",
-        root / "temp"
-    ]
+    dirs = [root / "dist", root / "build", root / ".cache", root / "logs", root / "temp"]
 
     for d in dirs:
         d.mkdir(exist_ok=True)

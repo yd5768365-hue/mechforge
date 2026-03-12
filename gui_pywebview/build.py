@@ -14,27 +14,30 @@ MechForge AI PyWebView 桌面应用打包脚本
 from __future__ import annotations
 
 import argparse
-import json
-import os
+import io
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
+# Windows 控制台 UTF-8 编码（避免 emoji 输出错误）
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 路径配置
 # ═══════════════════════════════════════════════════════════════════════════════
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parent.resolve()
 DIST_DIR = SCRIPT_DIR / "dist"
 BUILD_DIR = SCRIPT_DIR / "build"
 CACHE_DIR = SCRIPT_DIR / ".cache"
 
 # 需要打包的数据文件和目录
-DATA_FILES: List[str] = [
+DATA_FILES: list[str] = [
     # HTML 和 CSS
     "index.html",
     "styles.css",
@@ -51,7 +54,12 @@ DATA_FILES: List[str] = [
     "app",
     # Experience Library
     "experience.js",
+    # Daily Feed UI
+    "daily_feed_ui.js",
 ]
+
+# 父项目模块（api/deps 等会导入）
+PROJECT_MODULES = ["mechforge_core", "mechforge_ai", "mechforge_knowledge", "mechforge_theme"]
 
 # 需要排除的文件模式
 EXCLUDE_PATTERNS = [
@@ -75,9 +83,9 @@ EXCLUDE_PATTERNS = [
 
 def print_step(step: str, message: str) -> None:
     """打印步骤信息"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"[{step}] {message}")
-    print('='*60)
+    print("=" * 60)
 
 
 def print_success(message: str) -> None:
@@ -103,14 +111,16 @@ def print_info(message: str) -> None:
 def get_file_size(path: Path) -> str:
     """获取文件大小（人类可读）"""
     size = path.stat().st_size
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if size < 1024:
             return f"{size:.1f} {unit}"
         size /= 1024
     return f"{size:.1f} TB"
 
 
-def run_command(cmd: List[str], cwd: Optional[Path] = None, check: bool = True) -> Tuple[int, str, str]:
+def run_command(
+    cmd: list[str], cwd: Path | None = None, check: bool = True
+) -> tuple[int, str, str]:
     """运行命令并返回结果"""
     try:
         result = subprocess.run(
@@ -118,8 +128,8 @@ def run_command(cmd: List[str], cwd: Optional[Path] = None, check: bool = True) 
             cwd=cwd or SCRIPT_DIR,
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            errors='ignore'
+            encoding="utf-8",
+            errors="ignore",
         )
         if check and result.returncode != 0:
             print_error(f"Command failed: {' '.join(cmd)}")
@@ -173,7 +183,7 @@ def clean() -> None:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def optimize_js() -> Dict[str, int]:
+def optimize_js() -> dict[str, int]:
     """优化 JavaScript 文件"""
     print_step("OPTIMIZE", "优化 JavaScript 文件")
 
@@ -194,13 +204,10 @@ def optimize_js() -> Dict[str, int]:
         output_file = CACHE_DIR / "optimized" / js_file.relative_to(SCRIPT_DIR)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        returncode, stdout, stderr = run_command([
-            "npx", "terser",
-            str(js_file),
-            "--compress",
-            "--mangle",
-            "--output", str(output_file)
-        ], check=False)
+        returncode, stdout, stderr = run_command(
+            ["npx", "terser", str(js_file), "--compress", "--mangle", "--output", str(output_file)],
+            check=False,
+        )
 
         if returncode == 0:
             original_size = js_file.stat().st_size
@@ -208,13 +215,15 @@ def optimize_js() -> Dict[str, int]:
             saved = original_size - optimized_size
             stats["optimized"] += 1
             stats["saved"] += saved
-            print_info(f"优化 {js_file.name}: {original_size} -> {optimized_size} bytes (节省 {saved} bytes)")
+            print_info(
+                f"优化 {js_file.name}: {original_size} -> {optimized_size} bytes (节省 {saved} bytes)"
+            )
 
     print_success(f"JS 优化完成: {stats['optimized']} 个文件，共节省 {stats['saved']} bytes")
     return stats
 
 
-def optimize_css() -> Dict[str, int]:
+def optimize_css() -> dict[str, int]:
     """优化 CSS 文件"""
     print_step("OPTIMIZE", "优化 CSS 文件")
 
@@ -234,11 +243,9 @@ def optimize_css() -> Dict[str, int]:
         output_file = CACHE_DIR / "optimized" / css_file.relative_to(SCRIPT_DIR)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        returncode, stdout, stderr = run_command([
-            "npx", "cleancss",
-            "-o", str(output_file),
-            str(css_file)
-        ], check=False)
+        returncode, stdout, stderr = run_command(
+            ["npx", "cleancss", "-o", str(output_file), str(css_file)], check=False
+        )
 
         if returncode == 0:
             original_size = css_file.stat().st_size
@@ -246,13 +253,15 @@ def optimize_css() -> Dict[str, int]:
             saved = original_size - optimized_size
             stats["optimized"] += 1
             stats["saved"] += saved
-            print_info(f"优化 {css_file.name}: {original_size} -> {optimized_size} bytes (节省 {saved} bytes)")
+            print_info(
+                f"优化 {css_file.name}: {original_size} -> {optimized_size} bytes (节省 {saved} bytes)"
+            )
 
     print_success(f"CSS 优化完成: {stats['optimized']} 个文件，共节省 {stats['saved']} bytes")
     return stats
 
 
-def optimize_images() -> Dict[str, int]:
+def optimize_images() -> dict[str, int]:
     """优化图片文件"""
     print_step("OPTIMIZE", "优化图片文件")
 
@@ -266,7 +275,7 @@ def optimize_images() -> Dict[str, int]:
         print_info(f"发现图片: {img_file.name} ({get_file_size(img_file)})")
         stats["optimized"] += 1
 
-    print_info(f"图片优化需要安装额外工具，跳过")
+    print_info("图片优化需要安装额外工具，跳过")
     return stats
 
 
@@ -281,7 +290,9 @@ def optimize_resources() -> bool:
     img_stats = optimize_images()
 
     total_saved = js_stats.get("saved", 0) + css_stats.get("saved", 0)
-    total_files = js_stats.get("optimized", 0) + css_stats.get("optimized", 0) + img_stats.get("optimized", 0)
+    total_files = (
+        js_stats.get("optimized", 0) + css_stats.get("optimized", 0) + img_stats.get("optimized", 0)
+    )
 
     print_success(f"资源优化完成: {total_files} 个文件，共节省 {total_saved} bytes")
     return True
@@ -296,12 +307,13 @@ def check_dependencies() -> bool:
     """检查依赖"""
     print_step("CHECK", "检查依赖")
 
-    # 检查 Python 依赖
+    # 检查 Python 依赖（导入即验证可用性）
     try:
-        import webview
-        import fastapi
-        import uvicorn
-        import pydantic
+        import fastapi  # noqa: F401
+        import pydantic  # noqa: F401
+        import uvicorn  # noqa: F401
+        import webview  # noqa: F401
+
         print_success("Python 依赖检查通过")
     except ImportError as e:
         print_error(f"缺少 Python 依赖: {e}")
@@ -319,9 +331,9 @@ def check_dependencies() -> bool:
     return True
 
 
-def collect_data_files(use_optimized: bool = False) -> List[str]:
+def collect_data_files(use_optimized: bool = False) -> list[str]:
     """收集数据文件参数"""
-    datas: List[str] = []
+    datas: list[str] = []
     source_dir = CACHE_DIR / "optimized" if use_optimized else SCRIPT_DIR
 
     for item in DATA_FILES:
@@ -356,9 +368,10 @@ def build(onefile: bool = True, windowed: bool = True, optimize: bool = False) -
         return False
 
     # PyInstaller 命令
-    cmd: List[str] = [
+    cmd: list[str] = [
         sys.executable,
-        "-m", "PyInstaller",
+        "-m",
+        "PyInstaller",
         "--name=MechForgeAI",
         "--icon=dj-whale.png",
         "--noconfirm",
@@ -371,6 +384,16 @@ def build(onefile: bool = True, windowed: bool = True, optimize: bool = False) -
 
     if windowed:
         cmd.append("--windowed")
+
+    # 添加项目根路径，使 PyInstaller 能解析 mechforge_core 等
+    cmd.extend(["--paths", str(PROJECT_ROOT)])
+
+    # 添加父项目模块（mechforge_core, mechforge_ai 等）
+    for mod in PROJECT_MODULES:
+        src = PROJECT_ROOT / mod
+        if src.exists() and src.is_dir():
+            cmd.extend(["--collect-all", str(src)])
+            print_info(f"添加项目模块: {mod}")
 
     # 添加排除项
     for pattern in EXCLUDE_PATTERNS:
@@ -418,11 +441,7 @@ def dev_mode() -> bool:
     print_info("按 Ctrl+C 停止")
 
     try:
-        subprocess.run(
-            [sys.executable, "desktop_app.py", "--debug"],
-            cwd=SCRIPT_DIR,
-            check=True
-        )
+        subprocess.run([sys.executable, "desktop_app.py", "--debug"], cwd=SCRIPT_DIR, check=True)
     except KeyboardInterrupt:
         print_info("\n开发服务器已停止")
     except Exception as e:
@@ -442,10 +461,7 @@ def run_tests() -> bool:
         print_warning("pytest 未安装，跳过测试")
         return True
 
-    returncode, stdout, stderr = run_command(
-        [sys.executable, "-m", "pytest", "-v"],
-        check=False
-    )
+    returncode, stdout, stderr = run_command([sys.executable, "-m", "pytest", "-v"], check=False)
 
     if returncode == 0:
         print_success("测试通过")
@@ -474,43 +490,15 @@ def main() -> int:
     python build.py --optimize        # 优化资源后构建
     python build.py --test            # 运行测试
     python build.py                   # 清理 + 构建
-        """
+        """,
     )
-    parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="清理构建目录"
-    )
-    parser.add_argument(
-        "--build",
-        action="store_true",
-        help="构建可执行文件"
-    )
-    parser.add_argument(
-        "--dev",
-        action="store_true",
-        help="开发模式"
-    )
-    parser.add_argument(
-        "--optimize",
-        action="store_true",
-        help="优化资源后构建"
-    )
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="运行测试"
-    )
-    parser.add_argument(
-        "--onedir",
-        action="store_true",
-        help="构建为目录（而非单文件）"
-    )
-    parser.add_argument(
-        "--console",
-        action="store_true",
-        help="保留控制台窗口"
-    )
+    parser.add_argument("--clean", action="store_true", help="清理构建目录")
+    parser.add_argument("--build", action="store_true", help="构建可执行文件")
+    parser.add_argument("--dev", action="store_true", help="开发模式")
+    parser.add_argument("--optimize", action="store_true", help="优化资源后构建")
+    parser.add_argument("--test", action="store_true", help="运行测试")
+    parser.add_argument("--onedir", action="store_true", help="构建为目录（而非单文件）")
+    parser.add_argument("--console", action="store_true", help="保留控制台窗口")
 
     args = parser.parse_args()
 
@@ -531,11 +519,10 @@ def main() -> int:
         success = run_tests() and success
 
     if args.build:
-        success = build(
-            onefile=not args.onedir,
-            windowed=not args.console,
-            optimize=args.optimize
-        ) and success
+        success = (
+            build(onefile=not args.onedir, windowed=not args.console, optimize=args.optimize)
+            and success
+        )
 
     if args.dev:
         success = dev_mode() and success

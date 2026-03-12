@@ -47,6 +47,7 @@
   function init() {
     // 缓存 DOM 元素
     elements = {
+      demoBtn: $('demo-btn'),
       loadModelBtn: $('load-model-btn'),
       meshBtn: $('mesh-btn'),
       solveBtn: $('solve-btn'),
@@ -63,6 +64,7 @@
     initCanvas();
     setupEventListeners();
     addViewControls();
+    refreshBackendStatus();
     
     log.info('CAE Workbench initialized');
   }
@@ -147,6 +149,7 @@
    * 设置事件监听器
    */
   function setupEventListeners() {
+    elements.demoBtn?.addEventListener('click', runDemo);
     elements.loadModelBtn?.addEventListener('click', loadModel);
     elements.meshBtn?.addEventListener('click', generateMesh);
     elements.solveBtn?.addEventListener('click', runSolve);
@@ -254,6 +257,109 @@
   }
 
   // ==================== 功能函数 ====================
+
+  /**
+   * 从后端获取 CAE 状态，用于首屏提示依赖情况
+   */
+  async function refreshBackendStatus() {
+    if (typeof apiClient === 'undefined') {
+      return;
+    }
+    try {
+      const status = await apiClient.get('/cae/status');
+      const deps = status.dependencies || {};
+      const summary = Object.entries(deps)
+        .map(([name, info]) => `${name}:${info.ok ? '✓' : '✗'}`)
+        .join('  ');
+      updateStatus(summary || '就绪', '系统检查', 0, 0);
+    } catch (error) {
+      log.warn('Failed to fetch CAE status from backend:', error);
+    }
+  }
+
+  /**
+   * 一键运行悬臂梁 Demo（后端真实求解）
+   */
+  async function runDemo() {
+    if (state.isProcessing) return;
+    if (typeof apiClient === 'undefined') {
+      log.error('API client not available for CAE demo');
+      updateStatus('API 未就绪', 'Demo', 0, 0);
+      return;
+    }
+
+    log.info('Running cantilever beam demo via backend...');
+    state.isProcessing = true;
+    updateStatus('运行示例...', 'Cantilever 100x10x10 / 1000N', 0, 0);
+
+    try {
+      const result = await apiClient.post('/cae/demo', {});
+
+      if (!result.success) {
+        const deps = result.dependencies || {};
+        const missing = Object.entries(deps)
+          .filter(([, info]) => !info)
+          .map(([name]) => name)
+          .join(', ');
+        const msg = result.message || 'CAE Demo 运行失败';
+        const detail = missing ? `${msg}（缺少: ${missing}）` : msg;
+        updateStatus(detail, 'Cantilever Demo', 0, 0);
+        log.warn('CAE demo failed:', detail);
+        return;
+      }
+
+      // 使用后端返回的数据构造前端状态（仅用于展示）
+      const numElements = result.num_elements || 0;
+      const numNodes = result.num_nodes || 0;
+      state.model = {
+        name: 'Cantilever 100x10x10 / 1000N'
+      };
+      state.mesh = {
+        nodes: new Array(numNodes),
+        elements: new Array(numElements)
+      };
+      state.results = {
+        displacement: null,
+        stress: null
+      };
+
+      const disp = typeof result.max_displacement === 'number'
+        ? result.max_displacement.toFixed(4)
+        : 'N/A';
+      const theory = result.theoretical_displacement?.toFixed
+        ? result.theoretical_displacement.toFixed(4)
+        : Number(result.theoretical_displacement || 0).toFixed(4);
+      const errRatio = typeof result.error_ratio === 'number'
+        ? `${(result.error_ratio * 100).toFixed(1)}%`
+        : 'N/A';
+
+      let statusLabel = '校核通过';
+      if (result.status === 'warn') {
+        statusLabel = '建议检查网格/边界条件';
+      } else if (result.status === 'error') {
+        statusLabel = '求解失败';
+      }
+
+      const statusText = `${statusLabel} | δ_calc=${disp}mm, δ_theory=${theory}mm, err=${errRatio}`;
+      elements.viewportOverlay?.classList.add('hidden');
+      updateStatus(statusText, state.model.name, numElements, numNodes);
+
+      // 运行结束后切换到云图视图，强调“结果解释”
+      state.viewMode = 'contour';
+      redraw();
+
+      log.info('CAE demo completed:', {
+        max_displacement: result.max_displacement,
+        theoretical: result.theoretical_displacement,
+        error_ratio: result.error_ratio
+      });
+    } catch (error) {
+      log.error('CAE demo error:', error);
+      updateStatus('Demo 运行异常，请查看日志', 'Cantilever Demo', 0, 0);
+    } finally {
+      state.isProcessing = false;
+    }
+  }
 
   /**
    * 加载模型

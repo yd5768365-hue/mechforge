@@ -46,6 +46,57 @@
   // ==================== 解析器 ====================
 
   /**
+   * 简单的代码高亮（基于关键字匹配）
+   * @param {string} code - 代码文本
+   * @param {string} lang - 语言
+   * @returns {string} 高亮后的 HTML
+   */
+  function highlightCode(code, lang) {
+    if (!config.codeHighlight || lang === 'plaintext') {
+      return escapeHtml(code);
+    }
+
+    let highlighted = escapeHtml(code);
+
+    // Python 关键字
+    if (lang === 'python' || lang === 'py') {
+      const keywords = ['def', 'class', 'import', 'from', 'if', 'else', 'elif', 'for', 'while', 'return', 'try', 'except', 'finally', 'with', 'as', 'pass', 'break', 'continue', 'yield', 'async', 'await', 'True', 'False', 'None'];
+      keywords.forEach(kw => {
+        highlighted = highlighted.replace(new RegExp(`\\b${kw}\\b`, 'g'), `<span class="keyword">${kw}</span>`);
+      });
+      // 字符串
+      highlighted = highlighted.replace(/(['"])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>');
+      // 注释
+      highlighted = highlighted.replace(/#.*$/gm, '<span class="comment">$&</span>');
+      // 数字
+      highlighted = highlighted.replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    }
+    // JavaScript/TypeScript
+    else if (lang === 'javascript' || lang === 'js' || lang === 'typescript' || lang === 'ts') {
+      const keywords = ['function', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'return', 'class', 'extends', 'import', 'export', 'async', 'await', 'try', 'catch', 'finally', 'throw', 'new', 'this', 'super', 'true', 'false', 'null', 'undefined'];
+      keywords.forEach(kw => {
+        highlighted = highlighted.replace(new RegExp(`\\b${kw}\\b`, 'g'), `<span class="keyword">${kw}</span>`);
+      });
+      // 字符串
+      highlighted = highlighted.replace(/(['"])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>');
+      // 注释
+      highlighted = highlighted.replace(/\/\/.*$/gm, '<span class="comment">$&</span>');
+      highlighted = highlighted.replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>');
+      // 数字
+      highlighted = highlighted.replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    }
+    // 其他语言的基础高亮
+    else {
+      // 字符串
+      highlighted = highlighted.replace(/(['"])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>');
+      // 数字
+      highlighted = highlighted.replace(/\b\d+\.?\d*\b/g, '<span class="number">$&</span>');
+    }
+
+    return highlighted;
+  }
+
+  /**
    * 解析代码块
    * @param {string} text - 文本
    * @returns {string}
@@ -54,13 +105,13 @@
     // 匹配 ```language\ncode\n```
     return text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
       const language = lang || 'plaintext';
-      const escapedCode = escapeHtml(code.trim());
+      const highlightedCode = highlightCode(code.trim(), language);
       return `<div class="code-block" data-language="${language}">
         <div class="code-header">
           <span class="code-language">${language}</span>
           <button class="code-copy-btn" title="复制代码">复制</button>
         </div>
-        <pre class="code-content"><code class="language-${language}">${escapedCode}</code></pre>
+        <pre class="code-content"><code class="language-${language}">${highlightedCode}</code></pre>
       </div>`;
     });
   }
@@ -180,6 +231,61 @@
   }
 
   /**
+   * 解析表格
+   * @param {string} text - 文本
+   * @returns {string}
+   */
+  function parseTables(text) {
+    // 匹配 Markdown 表格：| col1 | col2 | col3 |
+    //                    |------|------|------|
+    //                    | val1 | val2 | val3 |
+    const tableRegex = /(\|.+\|\n\|[-\s|:]+\|\n(?:\|.+\|\n?)+)/g;
+    
+    return text.replace(tableRegex, (match) => {
+      const lines = match.trim().split('\n');
+      if (lines.length < 2) return match; // 至少需要表头和分隔线
+      
+      const headerLine = lines[0];
+      const separatorLine = lines[1];
+      const dataLines = lines.slice(2);
+      
+      // 解析表头
+      const headers = headerLine.split('|').map(h => h.trim()).filter(h => h);
+      
+      // 解析数据行
+      const rows = dataLines.map(line => {
+        const cells = line.split('|').map(c => c.trim()).filter((c, i) => i > 0 && i <= headers.length);
+        return cells;
+      });
+      
+      // 生成 HTML 表格
+      let html = '<div class="md-table-wrapper"><table class="md-table">';
+      
+      // 表头
+      html += '<thead><tr>';
+      headers.forEach(header => {
+        html += `<th>${escapeHtml(header)}</th>`;
+      });
+      html += '</tr></thead>';
+      
+      // 表体
+      html += '<tbody>';
+      rows.forEach(row => {
+        html += '<tr>';
+        headers.forEach((_, i) => {
+          const cell = row[i] || '';
+          html += `<td>${escapeHtml(cell)}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</tbody>';
+      
+      html += '</table></div>';
+      return html;
+    });
+  }
+
+  /**
    * 解析段落
    * @param {string} text - 文本
    * @returns {string}
@@ -225,6 +331,7 @@
 
     // 按顺序解析（顺序很重要）
     html = parseCodeBlocks(html); // 先处理代码块
+    html = parseTables(html); // 表格（在段落之前）
     html = parseHeadings(html); // 标题
     html = parseHorizontalRules(html); // 水平线
     html = parseBlockquotes(html); // 引用

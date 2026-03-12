@@ -5,7 +5,7 @@
 
 import logging
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -30,10 +30,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         client_ip = request.client.host if request.client else "unknown"
 
         # 记录请求
-        logger.info(
-            f"→ {request.method} {request.url.path} "
-            f"[IP: {client_ip}]"
-        )
+        logger.info(f"→ {request.method} {request.url.path} [IP: {client_ip}]")
 
         try:
             response = await call_next(request)
@@ -51,10 +48,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         except Exception as e:
             process_time = time.time() - start_time
-            logger.error(
-                f"✗ {request.method} {request.url.path} "
-                f"[ERROR] {process_time:.3f}s: {e}"
-            )
+            logger.error(f"✗ {request.method} {request.url.path} [ERROR] {process_time:.3f}s: {e}")
             raise
 
 
@@ -62,10 +56,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
 
     def __init__(
-        self,
-        app: ASGIApp,
-        slow_threshold: float = 1.0,
-        warning_threshold: float = 0.5
+        self, app: ASGIApp, slow_threshold: float = 1.0, warning_threshold: float = 0.5
     ) -> None:
         super().__init__(app)
         self.slow_threshold = slow_threshold
@@ -87,13 +78,11 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         if process_time > self.slow_threshold:
             self.slow_requests += 1
             logger.warning(
-                f"Slow request: {request.method} {request.url.path} "
-                f"took {process_time:.3f}s"
+                f"Slow request: {request.method} {request.url.path} took {process_time:.3f}s"
             )
         elif process_time > self.warning_threshold:
             logger.info(
-                f"Moderate request: {request.method} {request.url.path} "
-                f"took {process_time:.3f}s"
+                f"Moderate request: {request.method} {request.url.path} took {process_time:.3f}s"
             )
 
         # 添加性能头
@@ -108,7 +97,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             "total_time": self.total_time,
             "avg_time": avg_time,
             "slow_requests": self.slow_requests,
-            "slow_rate": self.slow_requests / self.request_count if self.request_count > 0 else 0
+            "slow_rate": self.slow_requests / self.request_count if self.request_count > 0 else 0,
         }
 
 
@@ -140,12 +129,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """速率限制中间件（简单实现）"""
 
-    def __init__(
-        self,
-        app: ASGIApp,
-        requests_per_minute: int = 60,
-        burst_size: int = 10
-    ) -> None:
+    def __init__(self, app: ASGIApp, requests_per_minute: int = 60, burst_size: int = 10) -> None:
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst_size = burst_size
@@ -157,10 +141,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # 清理旧请求
         if client_ip in self.requests:
-            self.requests[client_ip] = [
-                t for t in self.requests[client_ip]
-                if now - t < 60
-            ]
+            self.requests[client_ip] = [t for t in self.requests[client_ip] if now - t < 60]
         else:
             self.requests[client_ip] = []
 
@@ -168,9 +149,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if len(self.requests[client_ip]) >= self.requests_per_minute:
             logger.warning(f"Rate limit exceeded for {client_ip}")
             from fastapi.responses import JSONResponse
+
             return JSONResponse(
-                status_code=429,
-                content={"error": "Too many requests", "retry_after": 60}
+                status_code=429, content={"error": "Too many requests", "retry_after": 60}
             )
 
         # 记录请求
@@ -188,11 +169,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 class CacheControlMiddleware(BaseHTTPMiddleware):
     """缓存控制中间件"""
 
-    def __init__(
-        self,
-        app: ASGIApp,
-        cache_paths: dict[str, int] = None
-    ) -> None:
+    def __init__(self, app: ASGIApp, cache_paths: dict[str, int] = None) -> None:
         super().__init__(app)
         self.cache_paths = cache_paths or {
             "/static": 3600,
