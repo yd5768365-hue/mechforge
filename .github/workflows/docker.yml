@@ -171,7 +171,7 @@ jobs:
       # 提取版本标签
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}
@@ -239,7 +239,7 @@ jobs:
 
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME }}
