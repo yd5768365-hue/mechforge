@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="experience.css">
   <link rel="stylesheet" href="css/chat-markdown.css">
   <link rel="stylesheet" href="css/industrial-theme.css">
+  <link rel="stylesheet" href="css/settings.css">
 </head>
 <body>
   <div class="app-container">
@@ -181,6 +182,29 @@
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="rgba(0, 229, 255, 0.4)"/>
               <path d="M12 6a6 6 0 00-6 6 6 6 0 006 6 6 6 0 006-6 6 6 0 00-6-6z" stroke="rgba(0, 229, 255, 0.2)"/>
             </svg>
+          </div>
+
+          <!-- 内置模型下载提示 -->
+          <div class="model-download-banner" id="model-download-banner" style="display: none;">
+            <div class="mdb-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="mdb-content">
+              <div class="mdb-title">下载内置 AI 模型</div>
+              <div class="mdb-desc" id="mdb-desc">下载 Qwen2.5-1.5B 模型 (~1 GB)，即可离线使用 AI 对话</div>
+              <div class="mdb-progress-wrap" id="mdb-progress-wrap" style="display: none;">
+                <div class="mdb-progress-bar"><div class="mdb-progress-fill" id="mdb-progress-fill"></div></div>
+                <div class="mdb-progress-text" id="mdb-progress-text">0%</div>
+              </div>
+            </div>
+            <div class="mdb-actions" id="mdb-actions">
+              <button class="mdb-btn primary" id="mdb-download-btn">开始下载</button>
+              <button class="mdb-btn secondary" id="mdb-dismiss-btn">稍后</button>
+            </div>
           </div>
 
           <div class="boot-sequence" id="boot-sequence">
@@ -455,13 +479,13 @@
         <div class="tab-panel" id="experience-panel">
           <!-- 工业风背景 -->
           <div class="industrial-background"></div>
-          
-          <!-- 面板头部 - 锻造铭牌风格 -->
+
+          <!-- 面板头部 -->
           <div class="panel-header">
             <span class="header-mark">锻造</span>
             <h2>经验库</h2>
             <p>机械工程故障案例与解决方案</p>
-            <span class="archive-id">档案-2024-EXP-V2</span>
+            <span class="archive-id">MECHFORGE-EXP-V3.0</span>
           </div>
 
           <!-- 搜索容器 -->
@@ -471,32 +495,34 @@
                 <circle cx="11" cy="11" r="8"/>
                 <path d="M21 21l-4.35-4.35"/>
               </svg>
-              <input type="text" id="exp-search-input" placeholder="按标题、类别或标签搜索...">
+              <input type="text" id="exp-search-input" placeholder="搜索故障案例、标签或关键词...">
               <span id="exp-count-badge" class="exp-count-badge">12</span>
             </div>
           </div>
 
           <!-- Daily Feed 区域 -->
-          <div id="daily-feed-section" style="margin:16px 20px;padding:16px;background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.15);border-radius:8px;">
-            <div class="df-embedded-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(0,229,255,0.1);">
+          <div id="daily-feed-section">
+            <div class="df-embedded-header">
               <div>
-                <div class="df-embedded-title" style="font-family:Orbitron,monospace;font-size:12px;color:#00e5ff;letter-spacing:2px;">◈ DAILY KNOWLEDGE FEED</div>
-                <div class="df-embedded-date" id="df-embedded-date" style="font-family:monospace;font-size:10px;color:rgba(200,216,224,0.4);margin-top:4px;">── 未生成 ──</div>
+                <div class="df-embedded-title">◈ DAILY KNOWLEDGE FEED</div>
+                <div class="df-embedded-date" id="df-embedded-date">── 未生成 ──</div>
               </div>
             </div>
+            <div id="df-history-selector" class="df-history-selector"></div>
             <div class="df-embedded-content" id="df-embedded-content">
-              <div class="df-embedded-empty" id="df-embedded-empty" style="text-align:center;padding:24px;color:rgba(200,216,224,0.5);">
-                <div class="df-embedded-empty-icon" style="font-size:32px;margin-bottom:8px;opacity:0.6;">📡</div>
-                <div class="df-embedded-empty-text" style="font-family:Orbitron,monospace;font-size:11px;letter-spacing:1px;margin-bottom:16px;">每日机械工程知识推送</div>
-                <button class="df-generate-btn" id="df-generate-btn" style="display:flex !important;align-items:center;justify-content:center;gap:10px;margin:16px auto;padding:14px 28px;font-family:Orbitron,monospace;font-size:13px;letter-spacing:2px;color:#0d1117;background:linear-gradient(135deg,#00e5ff,#00a8ff);border:none;border-radius:6px;cursor:pointer;box-shadow:0 4px 15px rgba(0,229,255,0.3);transition:all 0.3s;visibility:visible !important;opacity:1 !important;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,229,255,0.4)';" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 15px rgba(0,229,255,0.3)';">
-                  <span class="btn-icon" style="font-size:16px;">⚡</span>
+              <div class="df-embedded-empty" id="df-embedded-empty">
+                <div class="df-embedded-empty-icon">📡</div>
+                <div class="df-embedded-empty-text">每日机械工程知识推送</div>
+                <button class="df-generate-btn" id="df-generate-btn">
+                  <span class="btn-icon">⚡</span>
                   <span class="btn-text">生成今日推送</span>
                 </button>
-                <div class="df-generate-hint" style="font-size:11px;color:rgba(200,216,224,0.4);text-align:center;">使用 AI 生成 3 条机械工程知识</div>
+                <div class="df-generate-hint">自动使用当前 AI 模型生成 3 条机械工程知识</div>
               </div>
               <div class="df-embedded-list" id="df-embedded-list" style="display:none;"></div>
               <div class="df-embedded-actions" id="df-actions-bar" style="display:none;">
                 <button class="df-embedded-btn primary" id="df-refresh-btn">⟳ 重新生成</button>
+                <button class="df-embedded-btn history" id="df-history-btn">📅 历史</button>
               </div>
             </div>
           </div>
@@ -510,7 +536,7 @@
               <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
-              <p>点击卡片查看详情</p>
+              <p>加载中...</p>
             </div>
           </div>
 
@@ -539,7 +565,7 @@
               </div>
               <div class="exp-modal-footer">
                 <span class="exp-modal-source" id="exp-modal-source"></span>
-                <a href="#" class="exp-modal-link" id="exp-modal-link" target="_blank">查看来源 &rarr;</a>
+                <a href="#" class="exp-modal-link" id="exp-modal-link" target="_blank">查看来源 →</a>
               </div>
             </div>
           </div>
@@ -555,7 +581,7 @@
             <span class="header-mark">系统</span>
             <h2>设置</h2>
             <p>应用配置与个性化选项</p>
-            <span class="archive-id">CFG-2024-SET-V1</span>
+            <span class="archive-id">MECHFORGE-CFG-V3.0</span>
           </div>
 
           <!-- 可滑动设置内容区 -->
@@ -574,6 +600,7 @@
                   </div>
                   <select class="setting-select" id="setting-provider">
                     <option value="ollama">Ollama (本地)</option>
+                    <option value="gguf">GGUF (本地模型)</option>
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
                   </select>
@@ -645,7 +672,7 @@
                     <div class="setting-name">启用 Daily Feed</div>
                     <div class="setting-desc">在经验库显示每日知识推送</div>
                   </div>
-                  <button type="button" class="setting-btn" id="setting-daily-enabled-btn" style="min-width:80px;padding:8px 16px;background:linear-gradient(135deg,#00e5ff,#00a8ff);color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-family:Orbitron,monospace;font-size:11px;letter-spacing:1px;font-weight:600;">
+                  <button type="button" class="setting-btn setting-btn-daily" id="setting-daily-enabled-btn">
                     开启
                   </button>
                 </div>
@@ -736,67 +763,7 @@
     <!-- Status Bar -->
     <div class="status-bar">
       <span class="status-bar-brand">MechForge</span>
-      <span class="status-bar-item api-ollama" data-status="api" id="api-trigger">
-        API: Ollama
-        <!-- API 选择弹出菜单 -->
-        <div class="api-selector" id="api-selector">
-          <div class="api-selector-header">选择 AI 后端</div>
-          <div class="api-option ollama selected" data-api="ollama">
-            <div class="api-option-icon">🦙</div>
-            <div class="api-option-info">
-              <div class="api-option-name">Ollama</div>
-              <div class="api-option-desc">本地 LLM 服务器</div>
-            </div>
-            <div class="api-option-check">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-          </div>
-          <div class="api-option gguf" data-api="gguf">
-            <div class="api-option-icon">📦</div>
-            <div class="api-option-info">
-              <div class="api-option-name">本地 GGUF</div>
-              <div class="api-option-desc">离线模型文件</div>
-            </div>
-            <div class="api-option-check">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-          </div>
-          <!-- GGUF 本地模型区域 -->
-          <div class="gguf-section" id="gguf-section">
-            <div class="gguf-section-header">
-              <span>本地 GGUF 模型</span>
-              <button class="gguf-scan-btn" id="gguf-scan-btn" title="刷新模型列表">⟳</button>
-            </div>
-            <div class="gguf-model-list" id="gguf-model-list">
-              <div class="gguf-model-list-empty">点击刷新扫描模型</div>
-            </div>
-            <div class="gguf-actions">
-              <button class="gguf-action-btn" id="gguf-browse-btn" title="选择 GGUF 文件">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <path d="M14 2v6h6M12 18v-6M9 15h6"/>
-                </svg>
-                选择文件
-              </button>
-              <button class="gguf-action-btn" id="gguf-browse-dir-btn" title="设置模型目录">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-                </svg>
-                设置目录
-              </button>
-            </div>
-            <div class="gguf-model-info" id="gguf-model-info"></div>
-          </div>
-          <!-- 切换按钮 -->
-          <div class="gguf-refresh-section">
-            <button id="gguf-refresh-btn">⟳ 切换到选定的 API</button>
-          </div>
-        </div>
-      </span>
+      <span class="status-bar-item api-ollama" data-status="api" id="api-trigger" title="点击切换 Ollama / 本地模型">🦙 Ollama</span>
       <span class="status-bar-item" data-status="model">模型: qwen2.5:3b</span>
       <span class="status-bar-item status-on" data-status="rag">RAG: 开启</span>
       <span class="status-bar-item" data-status="exp">经验库: 关闭</span>
@@ -868,6 +835,7 @@
   <!-- Feature Modules -->
   <script src="app/knowledge/knowledge-ui.js"></script>
   <script src="app/cae/cae-workbench.js"></script>
+  <script src="app/settings/model-download.js"></script>
   <script src="app/settings/status-bar.js"></script>
   <script src="app/settings/settings-panel.js"></script>
 

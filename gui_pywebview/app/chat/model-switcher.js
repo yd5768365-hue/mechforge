@@ -460,8 +460,8 @@
         updateTriggerText(model);
         
         // 显示成功提示
-        if (window.ChatFeatures && window.ChatFeatures.showToast) {
-          ChatFeatures.showToast(`已切换到 ${model}`, 'success');
+        if (window.showToast) {
+          window.showToast(`已切换到 ${model}`, 'success');
         }
         
         // 触发配置更新事件
@@ -480,8 +480,8 @@
       console.error('[ModelSwitcher] 切换模型失败:', error);
       updateTriggerText(state.currentModel || '切换失败');
       
-      if (window.ChatFeatures && window.ChatFeatures.showToast) {
-        ChatFeatures.showToast(`切换失败: ${error.message}`, 'error');
+      if (window.showToast) {
+        window.showToast(`切换失败: ${error.message}`, 'error');
       }
     } finally {
       state.isLoading = false;

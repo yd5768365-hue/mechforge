@@ -26,22 +26,39 @@ class ConfigResponse(BaseModel):
     ai: dict[str, Any]
     rag: dict[str, Any]
     ui: dict[str, Any]
+    knowledge: dict[str, Any] | None = None
 
 
 # ── API 端点 ──────────────────────────────────────────────────────────────────
 
 
-@router.get("/config", response_model=ConfigResponse)
-async def get_config_api() -> ConfigResponse:
-    """获取当前配置"""
-    provider_name, provider_config = get_active_provider_config()
-    base_url = getattr(provider_config, "url", None) or getattr(provider_config, "base_url", "")
-    model = getattr(provider_config, "model", "unknown")
+def _build_config_response() -> ConfigResponse:
+    """构建配置响应（供 GET 复用）"""
+    # Provider 与 model（前端用 gguf 表示 local）
+    if state.current_provider == "gguf" and state.gguf_llm is not None:
+        from pathlib import Path
+        model_name = Path(state.gguf_model_path).stem if state.gguf_model_path else "gguf-local"
+        provider_name = "gguf"
+        base_url = "local"
+    else:
+        provider_name, provider_config = get_active_provider_config()
+        if provider_name == "local":
+            provider_name = "gguf"  # 前端统一用 gguf
+        base_url = getattr(provider_config, "url", None) or getattr(provider_config, "base_url", "")
+        model_name = getattr(provider_config, "model", "unknown")
+
+    # UI 从 state.config 读取
+    ui = state.config.ui
+    theme = getattr(ui, "theme", "dark")
+    language = getattr(ui, "language", "zh-CN")
+
+    # 知识库路径
+    kb_path = str(state.config.knowledge.path) if state.config.knowledge.path else "./knowledge"
 
     return ConfigResponse(
         ai={
             "provider": provider_name,
-            "model": model,
+            "model": model_name,
             "base_url": base_url,
         },
         rag={
@@ -50,15 +67,86 @@ async def get_config_api() -> ConfigResponse:
             "top_k": state.config.knowledge.rag.top_k,
             "embedding_model": state.config.knowledge.rag.embedding_model,
         },
-        ui={"theme": "dark", "language": "zh-CN"},
+        ui={"theme": theme, "language": language},
+        knowledge={"path": kb_path},
     )
+
+
+@router.get("/config", response_model=ConfigResponse)
+async def get_config_api() -> ConfigResponse:
+    """获取当前配置"""
+    return _build_config_response()
 
 
 @router.post("/config")
 async def update_config(config: dict[str, Any]) -> dict:
-    """更新配置"""
-    # TODO: 实现配置持久化
-    return {"success": True}
+    """更新配置并持久化到 config.yaml"""
+    from pathlib import Path
+
+    from mechforge_core.config import save_config
+
+    try:
+        # 1. Provider
+        provider = config.get("provider", "ollama")
+        provider_map = {"ollama": "ollama", "openai": "openai", "anthropic": "anthropic", "gguf": "local"}
+        backend_provider = provider_map.get(provider, "ollama")
+        state.config.provider.default = backend_provider
+
+        # 若从 gguf 切走，清空 gguf 状态
+        if provider != "gguf" and state.current_provider == "gguf":
+            state.current_provider = "ollama"
+            state.gguf_llm = None
+            state.gguf_model_path = None
+
+        # 2. API Key 与 model（按 provider 更新）
+        api_key = config.get("apiKey", "")
+        model = config.get("model", "")
+
+        if provider == "openai":
+            if api_key:
+                state.config.provider.openai.api_key = api_key
+            if model:
+                state.config.provider.openai.model = model
+        elif provider == "anthropic":
+            if api_key:
+                state.config.provider.anthropic.api_key = api_key
+            if model:
+                state.config.provider.anthropic.model = model
+        elif provider == "ollama":
+            if model:
+                state.config.provider.ollama.model = model
+
+        # 3. RAG
+        if "ragEnabled" in config:
+            state.config.knowledge.rag.enabled = bool(config["ragEnabled"])
+
+        # 4. 知识库路径
+        kb_path = config.get("kbPath")
+        if kb_path:
+            state.config.knowledge.path = Path(kb_path)
+
+        # 5. UI（industrial 为前端扩展，持久化为 dark）
+        theme = config.get("theme")
+        if theme:
+            if theme == "industrial":
+                theme = "dark"
+            if theme in ("dark", "light", "auto"):
+                state.config.ui.theme = theme
+        language = config.get("language")
+        if language:
+            state.config.ui.language = language
+
+        # 6. 持久化
+        save_config(state.config)
+        logger.info("配置已保存到 config.yaml")
+
+        # 7. 重置 LLM 客户端以应用新配置
+        state.llm_client = None
+
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"保存配置失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/config/provider")
@@ -146,42 +234,47 @@ async def switch_model(body: dict[str, Any]) -> dict:
             }
         
         elif provider == "gguf":
-            # 对于 GGUF，需要加载模型
-            from mechforge_core.local_model_manager import LocalModelManager
-            
-            manager = LocalModelManager()
-            gguf_models = manager.scan_models()
-            
-            # 查找匹配的模型
-            target_model = None
-            for m in gguf_models:
-                if m.name == model_name and m.provider == "gguf":
-                    target_model = m
-                    break
-            
-            if not target_model:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"GGUF model not found: {model_name}"
-                )
-            
-            # 启动或加载模型
-            if not target_model.loaded:
-                success = manager.start_gguf_server(model_name)
-                if not success:
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Failed to load GGUF model: {model_name}"
-                    )
-            
-            # 更新状态
-            state.gguf_model_path = target_model.path
+            import os
+            from pathlib import Path
+
+            model_path = body.get("model_path", "")
+
+            if not model_path:
+                try:
+                    from mechforge_core.local_model_manager import LocalModelManager
+                    manager = LocalModelManager()
+                    for m in manager.scan_models():
+                        if m.name == model_name and m.provider == "gguf":
+                            model_path = m.path
+                            break
+                except Exception:
+                    pass
+
+            if not model_path or not Path(model_path).exists():
+                raise HTTPException(status_code=404, detail=f"GGUF 模型文件未找到: {model_name}")
+
+            try:
+                from llama_cpp import Llama
+            except ImportError as exc:
+                raise HTTPException(status_code=500, detail="llama-cpp-python 未安装") from exc
+
+            if state.gguf_llm is not None:
+                del state.gguf_llm
+                state.gguf_llm = None
+
+            state.gguf_llm = Llama(
+                model_path=model_path,
+                n_ctx=2048,
+                n_threads=max(2, os.cpu_count() // 2 if os.cpu_count() else 2),
+                verbose=False,
+            )
+            state.gguf_model_path = model_path
             state.current_provider = "gguf"
             state.config.provider.default = "local"
             state.llm_client = None
-            
-            logger.info(f"GGUF model switched to: {model_name}")
-            
+
+            logger.info(f"GGUF model loaded in-process: {model_name}")
+
             return {
                 "success": True,
                 "provider": provider,

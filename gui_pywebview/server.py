@@ -90,7 +90,7 @@ app.add_middleware(
 
 # ── 注册 API 路由 ─────────────────────────────────────────────────────────────
 
-from api import cae_router, chat_router, config_router, gguf_router, health_router, rag_router
+from api import chat_router, config_router, gguf_router, health_router, rag_router
 from api.errors import setup_error_handlers
 
 app.include_router(health_router)
@@ -98,7 +98,12 @@ app.include_router(chat_router)
 app.include_router(rag_router)
 app.include_router(config_router)
 app.include_router(gguf_router)
-app.include_router(cae_router)
+
+try:
+    from api import cae_router
+    app.include_router(cae_router)
+except Exception as _cae_err:
+    logger.warning(f"CAE 路由加载跳过（可选依赖缺失）: {_cae_err}")
 
 # ── Daily Agent 接入 ──────────────────────────────────────────────────────────
 
@@ -111,23 +116,43 @@ _daily_agent: DailyAgent | None = None
 
 
 @app.on_event("startup")
-async def _start_daily_agent():
-    """启动 Daily Agent（手动模式，不自动触发）"""
+async def _startup():
+    """应用启动时初始化"""
     global _daily_agent
+
+    # 1. 尝试自动加载内置模型
     try:
-        _daily_agent = DailyAgent(
-            {
-                "provider": "openai",  # 使用在线 API: openai / anthropic
-                "model": "gpt-4o-mini",  # OpenAI 模型
-                "api_key": "",  # 填写你的 API Key
-                "items_per_day": 3,  # 每次生成 3 条
-                "manual_mode": True,  # 手动触发模式
-            }
+        from api.model_downloader import auto_load_bundled_model, is_bundled_model_ready
+        if is_bundled_model_ready():
+            success = auto_load_bundled_model()
+            if success:
+                logger.info("内置模型已自动加载")
+            else:
+                logger.info("内置模型存在但加载失败（可能缺少 llama-cpp-python）")
+        else:
+            logger.info("内置模型未下载，用户可在界面中下载")
+    except Exception as e:
+        logger.warning(f"内置模型检查失败: {e}")
+
+    # 2. 初始化知识库向量引擎并索引文档
+    try:
+        from api.knowledge_engine import get_knowledge_engine
+        engine = get_knowledge_engine()
+        engine._ensure_ready()
+        result = engine.index_directory()
+        logger.info(
+            "知识库索引完成: %d 个文件, %d 个文档块 (总计 %d)",
+            result.get("files", 0), result.get("chunks", 0), result.get("total_in_db", 0),
         )
-        # 注入实例到路由模块，使刷新端点可用
+    except Exception as e:
+        logger.warning("知识库初始化跳过: %s", e)
+
+    # 3. 启动 Daily Agent（自动复用应用 LLM 配置）
+    try:
+        _daily_agent = DailyAgent({"items_per_day": 3, "manual_mode": True})
         set_daily_agent(_daily_agent)
         await _daily_agent.start()
-        logger.info("Daily Agent 已启动（手动模式）")
+        logger.info("Daily Agent 已启动（手动模式，复用应用 LLM 配置）")
     except Exception as e:
         logger.warning(f"Daily Agent 启动失败: {e}")
 

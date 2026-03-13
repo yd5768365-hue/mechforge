@@ -70,7 +70,7 @@ async def _chat_with_gguf(
     if state.gguf_llm is None:
         raise HTTPException(
             status_code=503,
-            detail="GGUF model not loaded. Please enter model path and click Load in API selector.",
+            detail="本地模型未加载。请在聊天界面顶部点击「开始下载」获取内置模型，或在状态栏切换到 Ollama。",
         )
 
     try:
@@ -171,10 +171,11 @@ async def _stream_with_gguf(messages: list):
     if state.gguf_llm is None:
         raise HTTPException(
             status_code=503,
-            detail="GGUF model not loaded. Please enter model path and click Load in API selector.",
+            detail="本地模型未加载。请先下载内置模型或在状态栏切换到 Ollama。",
         )
 
     async def generate():
+        full_response = ""
         try:
             for chunk in state.gguf_llm.create_chat_completion(
                 messages=messages,
@@ -186,9 +187,10 @@ async def _stream_with_gguf(messages: list):
                     delta = chunk["choices"][0].get("delta", {})
                     content = delta.get("content", "")
                     if content:
-                        data = json.dumps({"choices": [{"delta": {"content": content}}]})
-                        yield f"data: {data}\n\n"
+                        full_response += content
+                        yield f"data: {json.dumps({'content': content})}\n\n"
             yield "data: [DONE]\n\n"
+            state.conversation_history.append({"role": "assistant", "content": full_response})
         except Exception as e:
             logger.error(f"GGUF 流式调用失败: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"

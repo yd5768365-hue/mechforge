@@ -364,9 +364,9 @@
       if (mode === 'chat' || mode === 'knowledge') {
         if (window.apiClient) {
           apiClient.post('/mode', { mode }).then(() => {
-            showToast(`已切换到 ${mode} 模式`);
+            showToast(`已切换到 ${mode} 模式`, 'success');
           }).catch(err => {
-            showToast(`切换失败: ${err.message}`);
+            showToast(`切换失败: ${err.message}`, 'error');
           });
         }
         return true;
@@ -631,24 +631,6 @@
       .chat-message {
         position: relative;
       }
-      .copy-toast {
-        position: fixed;
-        bottom: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 229, 255, 0.9);
-        color: #0a1520;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        z-index: 10000;
-        animation: toastFade 2s forwards;
-      }
-      @keyframes toastFade {
-        0%, 80% { opacity: 1; }
-        100% { opacity: 0; }
-      }
     `;
     document.head.appendChild(style);
 
@@ -681,23 +663,24 @@
   async function copyToClipboard(text) {
     try {
       await navigator.clipboard.writeText(text);
-      showToast('已复制到剪贴板');
+      showToast('已复制到剪贴板', 'success');
     } catch (err) {
       console.error('复制失败:', err);
-      showToast('复制失败');
+      showToast('复制失败', 'error');
     }
   }
 
   /**
-   * 显示提示
+   * 显示提示（使用统一 NotificationManager）
    * @param {string} message - 提示消息
+   * @param {string} type - success | error | warning | info
    */
-  function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'copy-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+  function showToast(message, type = 'info') {
+    if (window.showToast) {
+      window.showToast(message, type);
+    } else {
+      console.log(`[Toast] ${type}: ${message}`);
+    }
   }
 
   /**
@@ -814,7 +797,7 @@
       window.AppState.aiService.clearHistory();
     }
 
-    showToast('对话已清空');
+    showToast('对话已清空', 'success');
   }
 
   /**
@@ -835,7 +818,7 @@
     });
 
     if (messages.length === 0) {
-      showToast('没有可导出的对话');
+      showToast('没有可导出的对话', 'warning');
       return;
     }
 
@@ -854,7 +837,7 @@
     a.click();
     URL.revokeObjectURL(url);
 
-    showToast('对话已导出');
+    showToast('对话已导出', 'success');
   }
 
   // ==================== 公共 API ====================

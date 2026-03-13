@@ -42,7 +42,6 @@ DATA_FILES: list[str] = [
     "index.html",
     "styles.css",
     "styles-modular.css",
-    "experience.css",
     "dj-whale.png",
     # CSS 模块
     "css",
@@ -56,6 +55,15 @@ DATA_FILES: list[str] = [
     "experience.js",
     # Daily Feed UI
     "daily_feed_ui.js",
+    # 后端 Python 模块
+    "api",
+    "server.py",
+    "config.py",
+    "daily_agent.py",
+    # 知识库文档
+    "knowledge",
+    # 配置文件
+    "config.yaml.example",
 ]
 
 # 父项目模块（api/deps 等会导入）
@@ -394,6 +402,41 @@ def build(onefile: bool = True, windowed: bool = True, optimize: bool = False) -
         if src.exists() and src.is_dir():
             cmd.extend(["--collect-all", str(src)])
             print_info(f"添加项目模块: {mod}")
+
+    # 添加关键隐藏导入（PyInstaller 无法自动检测的模块）
+    hidden_imports = [
+        "chromadb",
+        "chromadb.api",
+        "chromadb.config",
+        "onnxruntime",
+        "tokenizers",
+        "tqdm",
+        "fastapi",
+        "uvicorn",
+        "uvicorn.logging",
+        "uvicorn.protocols",
+        "uvicorn.protocols.http",
+        "uvicorn.protocols.http.auto",
+        "uvicorn.lifespan",
+        "uvicorn.lifespan.on",
+        "pydantic",
+        "webview",
+        "llama_cpp",
+        "api",
+        "api.chat",
+        "api.config",
+        "api.rag",
+        "api.health",
+        "api.gguf",
+        "api.state",
+        "api.deps",
+        "api.errors",
+        "api.middleware",
+        "api.database",
+        "api.knowledge_engine",
+    ]
+    for mod in hidden_imports:
+        cmd.extend(["--hidden-import", mod])
 
     # 添加排除项
     for pattern in EXCLUDE_PATTERNS:

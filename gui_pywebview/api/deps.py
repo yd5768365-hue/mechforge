@@ -55,7 +55,32 @@ def should_use_rag(request_rag: bool) -> bool:
 
 
 def retrieve_context(message: str) -> tuple[str, bool]:
-    """尝试 RAG 检索，返回 (context, rag_used)"""
+    """尝试 RAG 检索，返回 (context, rag_used)
+
+    优先使用本地 ChromaDB 向量引擎，若不可用则回退到原始 RAG 引擎。
+    """
+    # 1) 优先使用本地 ChromaDB 向量引擎
+    try:
+        from .knowledge_engine import get_knowledge_engine
+
+        engine = get_knowledge_engine()
+        engine._ensure_ready()
+        if engine.doc_count > 0:
+            results = engine.search(message, top_k=state.config.knowledge.rag.top_k)
+            if results:
+                context_parts = []
+                for r in results:
+                    src = r.get("source", "unknown")
+                    score = r.get("score", 0)
+                    content = r.get("content", "")
+                    context_parts.append(f"[来源: {src} | 相关度: {score:.2f}]\n{content}")
+                context = "\n\n".join(context_parts)
+                logger.info("ChromaDB 向量检索命中 %d 条结果", len(results))
+                return context, True
+    except Exception as e:
+        logger.debug("ChromaDB 向量检索不可用: %s", e)
+
+    # 2) 回退到原始 RAG 引擎
     try:
         rag = get_rag_engine()
         if rag.is_available and rag.check_trigger(message):
@@ -63,5 +88,5 @@ def retrieve_context(message: str) -> tuple[str, bool]:
             logger.info("RAG 已触发，检索到上下文")
             return context, True
     except Exception as e:
-        logger.warning(f"RAG 检索失败，跳过: {e}")
+        logger.warning("RAG 检索失败，跳过: %s", e)
     return "", False

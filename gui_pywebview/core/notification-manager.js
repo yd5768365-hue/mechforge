@@ -425,6 +425,16 @@
     return show({ type: 'info', message, title, ...options });
   }
 
+  /**
+   * 统一 Toast 快捷方法（供各模块调用）
+   * @param {string} message - 提示消息
+   * @param {string} type - success | error | warning | info
+   */
+  function showToast(message, type = 'info') {
+    const t = (type && ['success', 'error', 'warning', 'info'].includes(type)) ? type : 'info';
+    return show({ type: t, message, title: '', duration: 3000 });
+  }
+
   // ==================== 工具函数 ====================
 
   function escapeHtml(text) {
@@ -434,7 +444,7 @@
   }
 
   // ==================== 导出 ====================
-  window.NotificationManager = {
+  const api = {
     config,
     init,
     show,
@@ -445,7 +455,10 @@
     error,
     warning,
     info,
+    showToast,
     setPosition
   };
+  window.NotificationManager = api;
+  window.showToast = showToast;
 
 })();

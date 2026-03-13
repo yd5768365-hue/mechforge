@@ -136,7 +136,8 @@
       { name: 'ChatHandler', required: true, deps: ['aiService'] },
       { name: 'ChatFeatures', required: false },
       { name: 'KnowledgeUI', required: false, deps: ['aiService'] },
-      { name: 'StatusBarManager', required: true }
+      { name: 'StatusBarManager', required: true },
+      { name: 'ModelDownload', required: false }
     ];
 
     for (const { name, required, deps } of modules) {
@@ -244,10 +245,20 @@
     if (!eventBus) return;
 
     const handlers = {
-      [Events.CONFIG_UPDATED]: ({ ai }) => {
-        // 配置更新时，更新 AIService 的 provider
+      [Events.CONFIG_UPDATED]: async ({ ai, rag }) => {
         if (ai && state.aiService) {
           state.aiService.setProvider(ai.provider || 'ollama');
+        }
+        if (ai || rag) {
+          updateStatusBar({ ai: ai || {}, rag: rag || {} });
+        }
+        if (rag && typeof rag.enabled === 'boolean') {
+          updateRAGStatus(rag.enabled);
+        }
+        try {
+          await state.configService?.reload();
+        } catch (e) {
+          console.warn('[Main] ConfigService reload after update:', e);
         }
       },
       [Events.AI_MESSAGE_SENT]: ({ message }) => {

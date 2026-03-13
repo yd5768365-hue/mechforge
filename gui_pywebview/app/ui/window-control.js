@@ -114,11 +114,11 @@
   }
 
   /**
-   * 显示提示
+   * 显示提示（使用统一 NotificationManager）
    */
   function showToast(message, type = 'info') {
-    if (window.ChatFeatures?.showToast) {
-      ChatFeatures.showToast(message, type);
+    if (window.showToast) {
+      window.showToast(message, type);
     } else {
       console.log(`[Toast] ${type}: ${message}`);
     }

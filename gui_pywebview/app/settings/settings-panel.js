@@ -30,29 +30,25 @@
   /**
    * 初始化设置面板
    */
-  function init() {
+  async function init() {
     console.log('[Settings] 初始化设置面板');
 
     // 检查 DOM 元素是否存在
     const scrollContainer = document.getElementById('settings-scroll');
-    console.log('[Settings] scrollContainer:', scrollContainer ? '存在' : '不存在');
     if (scrollContainer) {
       console.log('[Settings] scrollContainer overflowY:', getComputedStyle(scrollContainer).overflowY);
-      console.log('[Settings] scrollContainer height:', getComputedStyle(scrollContainer).height);
-      console.log('[Settings] scrollContainer scrollHeight:', scrollContainer.scrollHeight);
-      console.log('[Settings] scrollContainer clientHeight:', scrollContainer.clientHeight);
     }
 
     // 缓存 DOM 元素
     cacheElements();
 
-    // 加载保存的配置
-    loadConfig();
+    // 加载配置（优先后端，再合并 localStorage）
+    await loadConfig();
 
     // 绑定事件
     bindEvents();
 
-    // 应用当前配置
+    // 应用当前配置到 UI
     applyConfig();
   }
 
@@ -146,29 +142,64 @@
     const btn = elements['setting-daily-enabled-btn'];
     if (!btn) return;
 
+    btn.classList.remove('is-on', 'is-off');
     if (dailyFeedEnabled) {
       btn.textContent = '开启';
-      btn.style.background = 'linear-gradient(135deg, #00e5ff, #00a8ff)';
-      btn.style.color = '#0d1117';
+      btn.classList.add('is-on');
     } else {
       btn.textContent = '关闭';
-      btn.style.background = 'rgba(100, 116, 139, 0.3)';
-      btn.style.color = 'rgba(200, 216, 224, 0.6)';
+      btn.classList.add('is-off');
     }
   }
 
   /**
-   * 加载配置
+   * 获取 API 基础地址
    */
-  function loadConfig() {
+  function getApiBase() {
+    if (window.location && window.location.protocol === 'file:') {
+      return 'http://localhost:5000';
+    }
+    return window.location?.origin || 'http://localhost:5000';
+  }
+
+  /**
+   * 加载配置（优先从后端，再合并 localStorage）
+   */
+  async function loadConfig() {
+    try {
+      const res = await fetch(`${getApiBase()}/api/config`);
+      if (res.ok) {
+        const data = await res.json();
+        config = {
+          ...DEFAULT_CONFIG,
+          provider: data.ai?.provider || 'ollama',
+          model: data.ai?.model || '',
+          theme: data.ui?.theme || 'dark',
+          language: data.ui?.language || 'zh-CN',
+          kbPath: data.knowledge?.path || './knowledge',
+          ragEnabled: data.rag?.enabled ?? true
+        };
+        console.log('[Settings] 已从后端加载配置');
+      }
+    } catch (e) {
+      console.warn('[Settings] 从后端加载失败，使用本地缓存:', e);
+    }
+
     try {
       const saved = localStorage.getItem('mechforge-config');
       if (saved) {
-        config = { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
-        console.log('[Settings] 已加载保存的配置');
+        const parsed = JSON.parse(saved);
+        config = {
+          ...config,
+          apiKey: parsed.apiKey ?? config.apiKey,
+          fontSize: parsed.fontSize ?? config.fontSize,
+          dailyEnabled: parsed.dailyEnabled ?? config.dailyEnabled,
+          dailyCount: parsed.dailyCount ?? config.dailyCount,
+          dailyTime: parsed.dailyTime ?? config.dailyTime
+        };
       }
     } catch (e) {
-      console.warn('[Settings] 加载配置失败:', e);
+      console.warn('[Settings] 合并 localStorage 失败:', e);
     }
   }
 
@@ -234,22 +265,30 @@
   /**
    * 保存配置
    */
-  function saveConfig() {
+  async function saveConfig() {
     config = collectConfig();
 
     try {
       localStorage.setItem('mechforge-config', JSON.stringify(config));
-      console.log('[Settings] 配置已保存');
+      console.log('[Settings] 配置已保存到本地');
 
-      // 应用配置
+      // 应用 UI 配置
       applyTheme(config.theme);
       applyFontSize(config.fontSize);
 
-      // 显示成功提示
-      showToast('设置已保存');
-
-      // 通知后端配置变更
-      notifyBackendConfigChange(config);
+      // 同步到后端
+      const ok = await notifyBackendConfigChange(config);
+      if (ok) {
+        showToast('设置已保存');
+        if (typeof eventBus !== 'undefined' && typeof Events !== 'undefined') {
+          eventBus.emit(Events.CONFIG_UPDATED, {
+            ai: { provider: config.provider, model: config.model },
+            rag: { enabled: config.ragEnabled }
+          });
+        }
+      } else {
+        showToast('设置已保存（后端同步失败）', 'error');
+      }
     } catch (e) {
       console.error('[Settings] 保存配置失败:', e);
       showToast('保存失败', 'error');
@@ -324,65 +363,48 @@
    * 显示滑块值
    */
   function showSliderValue(slider, text) {
-    // 创建或更新提示
-    let tooltip = slider.parentElement.querySelector('.slider-tooltip');
+    const wrapper = slider.parentElement;
+    if (!wrapper) return;
+
+    wrapper.classList.add('slider-wrapper');
+
+    let tooltip = wrapper.querySelector('.slider-tooltip');
     if (!tooltip) {
       tooltip = document.createElement('span');
       tooltip.className = 'slider-tooltip';
-      tooltip.style.cssText = `
-        position: absolute;
-        right: 0;
-        top: -20px;
-        font-size: 11px;
-        color: #00e5ff;
-        font-family: monospace;
-      `;
-      slider.parentElement.style.position = 'relative';
-      slider.parentElement.appendChild(tooltip);
+      wrapper.appendChild(tooltip);
     }
     tooltip.textContent = text;
   }
 
   /**
-   * 显示提示
+   * 显示提示（使用统一 NotificationManager）
    */
   function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      padding: 12px 24px;
-      background: ${type === 'error' ? 'rgba(255, 71, 87, 0.9)' : 'rgba(0, 229, 255, 0.9)'};
-      color: ${type === 'error' ? '#fff' : '#0d1117'};
-      border-radius: 4px;
-      font-family: 'Orbitron', monospace;
-      font-size: 12px;
-      letter-spacing: 1px;
-      z-index: 10000;
-      animation: slideIn 0.3s ease;
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.style.animation = 'slideOut 0.3s ease';
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    if (window.showToast) {
+      window.showToast(message, type);
+    } else {
+      console.log(`[Toast] ${type}: ${message}`);
+    }
   }
 
   /**
-   * 通知后端配置变更
+   * 同步配置到后端
+   * @returns {Promise<boolean>} 是否成功
    */
-  function notifyBackendConfigChange(config) {
-    // 通过 API 通知后端
-    fetch('/api/config/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config)
-    }).catch(err => {
-      console.warn('[Settings] 通知后端失败:', err);
-    });
+  async function notifyBackendConfigChange(config) {
+    const base = getApiBase();
+    try {
+      const res = await fetch(`${base}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('[Settings] 同步后端失败:', err);
+      return false;
+    }
   }
 
   /**

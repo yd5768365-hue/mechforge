@@ -497,6 +497,33 @@
     setupCarousel();
 
     displayResults(mockResults);
+
+    // 获取向量知识库状态
+    fetchRAGStatus();
+  }
+
+  async function fetchRAGStatus() {
+    try {
+      const resp = await fetch('/api/rag/status');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const statusEl = document.getElementById('rag-status-bar');
+      if (!statusEl) {
+        const bar = document.createElement('div');
+        bar.id = 'rag-status-bar';
+        bar.style.cssText = 'padding:6px 16px;font-size:11px;color:var(--ind-text-dim,#889);display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(0,229,255,0.06);';
+        const indicator = data.available && data.doc_count > 0
+          ? `<span style="width:6px;height:6px;border-radius:50%;background:#2ed573;display:inline-block;"></span>
+             向量知识库就绪 · ${data.doc_count} 个文档块 · ${data.indexed_files || 0} 个文件`
+          : `<span style="width:6px;height:6px;border-radius:50%;background:#ff6b6b;display:inline-block;"></span>
+             向量知识库未就绪 · 请在 knowledge/ 目录放入文档`;
+        bar.innerHTML = indicator;
+        const searchArea = document.querySelector('.knowledge-search-area') || searchInput?.parentElement;
+        if (searchArea) searchArea.parentElement.insertBefore(bar, searchArea);
+      }
+    } catch (e) {
+      console.warn('[KnowledgeUI] RAG status fetch failed:', e);
+    }
   }
 
   // ==================== 书籍轮播 ====================
@@ -547,7 +574,7 @@
     carouselContainer.querySelectorAll('.book-card').forEach(card => {
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.index);
-        if (mockResults[idx]) openBookDrawer(mockResults[idx]);
+        if (books[idx]) openBookDrawer(books[idx]);
       });
     });
   }
@@ -907,14 +934,26 @@
     searchHistory.unshift(query);
     if (searchHistory.length > 10) searchHistory.pop();
 
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // 1) 直接搜索书籍
+    const bookResults = filterResults(mockResults, query, currentFilter);
+    renderCarousel(bookResults.length > 0 ? bookResults : []);
+    displayResults(bookResults, query);
 
+    // 2) 同时发起向量检索，命中时追加到书籍列表下方
     try {
-      const results = filterResults(mockResults, query, currentFilter);
-      renderCarousel(results.length > 0 ? results : []);
-      displayResults(results, query);
-    } catch (error) {
-      showError(error.message);
+      const resp = await fetch('/api/rag/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 5 })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.results && data.results.length > 0) {
+          appendVectorResults(data.results, query);
+        }
+      }
+    } catch (e) {
+      console.warn('[KnowledgeUI] Vector search unavailable:', e);
     }
   }
 
@@ -1032,8 +1071,107 @@
     setTimeout(() => initBookListEvents(), results.length * 50 + 100);
   }
 
+  /**
+   * 将向量检索结果追加到书籍列表下方
+   */
+  function appendVectorResults(results, query = '') {
+    if (!searchResults || !results || results.length === 0) return;
+
+    const section = document.createElement('div');
+    section.className = 'vector-results-section';
+    section.innerHTML =
+      `<div class="book-list-header" style="margin-top:16px; border-top:1px solid rgba(0,229,255,0.08); padding-top:12px;">
+        <span>📡 知识库深度检索 (${results.length})</span>
+        <span style="font-size:10px; color: var(--ind-text-dim); margin-left:auto;">语义向量匹配</span>
+      </div>` +
+      results.map((item, index) => {
+        const score = item.score || 0;
+        const scorePercent = Math.round(score * 100);
+        const scoreColor = score > 0.7 ? '#2ed573' : score > 0.4 ? '#ffa502' : '#ff6b6b';
+        const content = (item.content || '').substring(0, 200);
+        const source = item.source || 'unknown';
+        const chunkInfo = item.total_chunks > 1
+          ? `块 ${item.chunk_index + 1}/${item.total_chunks}`
+          : '';
+
+        return `
+        <div class="book-list-item vector-result" data-vindex="${index}"
+             style="animation: slideIn 0.3s ease-out ${index * 0.05}s both; --book-color: ${scoreColor};">
+          <div class="book-list-cover" style="background: linear-gradient(135deg, ${scoreColor}22, ${scoreColor}11);">
+            <span class="book-list-icon" style="font-size:14px; color:${scoreColor};">${scorePercent}%</span>
+          </div>
+          <div class="book-list-info">
+            <div class="book-list-title">
+              <span class="type-badge" style="background:${scoreColor}22; color:${scoreColor}; border-color:${scoreColor}44;">
+                📄 ${escapeHtml(source)}
+              </span>
+              ${chunkInfo ? `<span style="font-size:10px; color:var(--ind-text-dim); margin-left:6px;">${chunkInfo}</span>` : ''}
+            </div>
+            <div class="book-list-desc" style="margin-top:4px;">
+              ${highlightKeywords(escapeHtml(content), query)}
+            </div>
+            <div class="book-list-meta">
+              <span>相关度: ${scorePercent}%</span>
+              <span style="display:inline-block; width:60px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; vertical-align:middle;">
+                <span style="display:block; width:${scorePercent}%; height:100%; background:${scoreColor}; border-radius:2px;"></span>
+              </span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+    searchResults.appendChild(section);
+
+    section.querySelectorAll('.vector-result').forEach(item => {
+      item.addEventListener('click', () => {
+        const idx = parseInt(item.dataset.vindex);
+        if (results[idx]) openVectorResultDrawer(results[idx]);
+      });
+    });
+  }
+
+  function openVectorResultDrawer(result) {
+    if (!detailOverlay || !detailDrawer) return;
+
+    if (drawerTitle) drawerTitle.textContent = result.source || '知识库检索结果';
+
+    const drawerBody = detailDrawer.querySelector('.drawer-body');
+    if (drawerBody) {
+      const scorePercent = Math.round((result.score || 0) * 100);
+      const scoreColor = result.score > 0.7 ? '#2ed573' : result.score > 0.4 ? '#ffa502' : '#ff6b6b';
+      drawerBody.innerHTML = `
+        <div style="padding: 20px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <span style="font-size:24px; font-weight:700; color:${scoreColor};">${scorePercent}%</span>
+            <span style="font-size:12px; color:var(--text-secondary);">相关度</span>
+            <span style="display:inline-block; width:100px; height:6px; background:rgba(255,255,255,0.1); border-radius:3px;">
+              <span style="display:block; width:${scorePercent}%; height:100%; background:${scoreColor}; border-radius:3px;"></span>
+            </span>
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">
+            来源: ${escapeHtml(result.source || '')} · 
+            块 ${(result.chunk_index || 0) + 1}/${result.total_chunks || 1}
+          </div>
+          <div style="
+            background: rgba(0,229,255,0.03);
+            border: 1px solid rgba(0,229,255,0.1);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+          ">${escapeHtml(result.content || '')}</div>
+        </div>`;
+    }
+
+    detailOverlay.classList.add('active');
+    detailDrawer.classList.add('active');
+  }
+
   function initBookListEvents() {
-    searchResults.querySelectorAll('.book-list-item').forEach(item => {
+    searchResults.querySelectorAll('.book-list-item:not(.vector-result)').forEach(item => {
       item.addEventListener('click', () => {
         const idx = parseInt(item.dataset.index);
         if (currentResults[idx]) openBookDrawer(currentResults[idx]);
@@ -1248,7 +1386,8 @@
     init,
     performSearch,
     openBookDrawer,
-    closeDetailDrawer
+    closeDetailDrawer,
+    fetchRAGStatus
   };
 
 })();

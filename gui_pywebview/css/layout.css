@@ -340,8 +340,9 @@
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
-  cursor: default;
+  cursor: pointer;
   position: relative;
+  user-select: none;
 }
 
 .status-bar-item::before {
@@ -356,6 +357,26 @@
 .status-bar-item[data-status="api"]::before {
   background: var(--success);
   box-shadow: 0 0 6px rgba(46, 213, 115, 0.5);
+}
+
+.status-bar-item.api-gguf[data-status="api"]::before {
+  background: #8a2be2;
+  box-shadow: 0 0 6px rgba(138, 43, 226, 0.6);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-bar-item.api-ollama[data-status="api"]::before {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(46, 213, 115, 0.5);
+}
+
+.status-bar-item[data-status="api"]:hover {
+  background: rgba(0, 229, 255, 0.12);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+.status-bar-item[data-status="api"]:active {
+  transform: scale(0.95);
 }
 
 .status-bar-item[data-status="model"]::before {

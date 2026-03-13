@@ -47,6 +47,10 @@ You MUST follow these rules:
 Current mode: KNOWLEDGE BASE - Strict technical mode activated.""",
         }
 
+    def get_mode(self) -> str:
+        """获取当前模式"""
+        return self.mode
+
     def get_system_prompt(self) -> str:
         """获取当前模式的系统提示词"""
         return self.system_prompts.get(self.mode, self.system_prompts["chat"])

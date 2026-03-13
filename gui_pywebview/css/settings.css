@@ -1,0 +1,484 @@
+/**
+ * MechForge AI - Settings Panel Styles
+ * 设置面板工业风样式
+ *
+ * 设计目标：
+ * - 与知识库 / 经验库的冷锻工业主题保持统一
+ * - 让配置项以“钛合金铭牌 + 控制台”的形式呈现
+ */
+
+/* 面板整体 */
+#settings-panel {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+}
+
+#settings-panel .panel-header {
+  position: relative;
+  padding: 32px 28px 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 37, 47, 0.95) 0%,
+    rgba(15, 21, 28, 0.9) 50%,
+    rgba(5, 7, 15, 0.95) 100%
+  );
+  border-bottom: none;
+  overflow: hidden;
+}
+
+#settings-panel .panel-header h2 {
+  font-family: 'Chakra Petch', 'DIN Next Pro Condensed', 'Impact', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: #e8f0f8;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.8),
+    0 0 2px rgba(255, 255, 255, 0.6),
+    0 0 8px rgba(0, 212, 255, 0.3),
+    0 0 12px rgba(0, 212, 255, 0.2),
+    0 0 20px rgba(0, 212, 255, 0.1);
+  position: relative;
+}
+
+#settings-panel .panel-header p {
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: #8aa0b8;
+  margin-top: 10px;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.8),
+    0 -1px 1px rgba(255, 255, 255, 0.1),
+    0 0 6px rgba(0, 212, 255, 0.15);
+  opacity: 0.9;
+}
+
+#settings-panel .panel-header .header-mark {
+  position: absolute;
+  top: 16px;
+  right: 28px;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255, 107, 53, 0.6);
+  text-transform: uppercase;
+  transform: rotate(90deg);
+  transform-origin: right top;
+}
+
+#settings-panel .panel-header .archive-id {
+  position: absolute;
+  bottom: 16px;
+  right: 28px;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--ind-text-dim, #5a7088);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 2px;
+}
+
+/* 滚动容器 */
+.settings-scroll-container {
+  position: relative;
+  padding: 24px 28px 28px;
+  height: calc(100% - 120px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#settings-panel .settings-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+#settings-panel .settings-scroll-container::-webkit-scrollbar-track {
+  background: rgba(5, 10, 18, 0.85);
+}
+
+#settings-panel .settings-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.35);
+  border-radius: 4px;
+}
+
+/* 分区标题 */
+.settings-section {
+  position: relative;
+}
+
+.settings-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  font-family: 'Chakra Petch', 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ind-text-secondary, #8aa0b8);
+  background: radial-gradient(circle at 0 0, rgba(0, 212, 255, 0.3), transparent 60%);
+}
+
+.settings-section-title .section-icon {
+  font-size: 14px;
+}
+
+/* 设置卡片 */
+.settings-card {
+  position: relative;
+  padding: 16px 18px;
+  border-radius: 6px;
+  border: var(--border-forged, 1px solid rgba(0, 212, 255, 0.15));
+  background: linear-gradient(
+    135deg,
+    rgba(26, 37, 47, 0.96) 0%,
+    rgba(15, 21, 28, 0.96) 60%,
+    rgba(8, 12, 18, 0.98) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 16px rgba(0, 0, 0, 0.65);
+}
+
+.setting-item + .setting-item {
+  border-top: 1px solid rgba(0, 212, 255, 0.08);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.setting-info {
+  flex: 1.2;
+  min-width: 0;
+}
+
+.setting-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ind-text-primary, #e0e8f0);
+  letter-spacing: 0.5px;
+}
+
+.setting-desc {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ind-text-dim, #5a7088);
+  letter-spacing: 0.3px;
+}
+
+/* 控件基础样式 */
+.setting-select,
+.setting-input,
+.setting-slider {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--ind-text-primary, #e0e8f0);
+}
+
+.setting-select,
+.setting-input[type="text"],
+.setting-input[type="password"],
+.setting-input[type="time"] {
+  min-width: 220px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  background: rgba(5, 10, 18, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.setting-select:focus,
+.setting-input:focus {
+  border-color: rgba(0, 212, 255, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 255, 0.5),
+    0 0 12px rgba(0, 212, 255, 0.3);
+  background: rgba(8, 14, 24, 0.98);
+}
+
+.setting-input[readonly] {
+  opacity: 0.85;
+  cursor: default;
+}
+
+/* 路径选择器 */
+.setting-path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.setting-path .setting-input {
+  flex: 1;
+}
+
+/* 通用按钮 */
+.setting-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 255, 0.15),
+    rgba(0, 180, 220, 0.4)
+  );
+  color: #e0f7ff;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setting-btn:hover {
+  box-shadow:
+    0 0 12px rgba(0, 212, 255, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Daily Feed 开关按钮 */
+.setting-btn-daily {
+  min-width: 96px;
+  text-align: center;
+}
+
+.setting-btn-daily.is-on {
+  background: linear-gradient(135deg, #00e5ff, #00a8ff);
+  color: #0d1117;
+  border-color: rgba(0, 212, 255, 0.7);
+  box-shadow:
+    0 0 16px rgba(0, 212, 255, 0.6),
+    0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
+.setting-btn-daily.is-off {
+  background: rgba(15, 23, 42, 0.9);
+  color: rgba(200, 216, 224, 0.7);
+  border-color: rgba(51, 65, 85, 0.9);
+  box-shadow: none;
+}
+
+/* 滑块 */
+.setting-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 220px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 212, 255, 0.2),
+    rgba(0, 212, 255, 0.05)
+  );
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00e5ff;
+  box-shadow:
+    0 0 10px rgba(0, 212, 255, 0.7),
+    0 0 0 2px rgba(5, 10, 18, 1);
+}
+
+.setting-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00e5ff;
+  border: none;
+  box-shadow:
+    0 0 10px rgba(0, 212, 255, 0.7),
+    0 0 0 2px rgba(5, 10, 18, 1);
+}
+
+.slider-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.slider-tooltip {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  font-size: 11px;
+  color: #00e5ff;
+  font-family: monospace;
+}
+
+/* Toggle 开关 */
+.setting-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.setting-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  transition: all 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 2px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.9);
+  box-shadow:
+    0 0 4px rgba(148, 163, 184, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.setting-toggle input:checked + .toggle-slider {
+  background: radial-gradient(circle at 20% 20%, rgba(0, 229, 255, 0.7), rgba(15, 23, 42, 1));
+  border-color: rgba(0, 212, 255, 0.9);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
+}
+
+.setting-toggle input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: #00e5ff;
+  box-shadow:
+    0 0 8px rgba(0, 212, 255, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.7);
+}
+
+/* 底部操作按钮 */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.settings-btn {
+  min-width: 100px;
+  padding: 9px 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  font-family: 'Chakra Petch', monospace;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5edf5;
+}
+
+.settings-btn.primary {
+  border-color: rgba(0, 212, 255, 0.9);
+  background: linear-gradient(135deg, #00d4ff, #00a8ff);
+  color: #041017;
+  box-shadow:
+    0 0 14px rgba(0, 212, 255, 0.5),
+    0 6px 20px rgba(0, 0, 0, 0.8);
+}
+
+.settings-btn.secondary:hover,
+.settings-btn.primary:hover {
+  transform: translateY(-1px);
+}
+
+/* 关于卡片 */
+.about-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.about-logo svg {
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
+}
+
+.about-info {
+  flex: 1;
+}
+
+.about-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ind-text-primary, #e0e8f0);
+  letter-spacing: 2px;
+}
+
+.about-version {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ind-text-secondary, #8aa0b8);
+  letter-spacing: 1px;
+}
+
+.about-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ind-text-secondary, #8aa0b8);
+}
+
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.about-link {
+  font-size: 12px;
+  color: #80cfff;
+  text-decoration: none;
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 1px;
+}
+
+.about-link:hover {
+  text-decoration: underline;
+  color: #bde9ff;
+}
+

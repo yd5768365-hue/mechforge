@@ -83,6 +83,7 @@
     "configService": "writable",
     "AnimationEngine": "readonly",
     "NotificationManager": "readonly",
+    "showToast": "readonly",
     "Store": "readonly",
     "CacheManager": "readonly",
     "ErrorHandler": "readonly",

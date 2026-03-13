@@ -1,0 +1,471 @@
+/**
+ * MechForge AI - 效果与动画样式
+ * 粒子、火花、吉祥物、符文共鸣
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   背景效果
+   ═══════════════════════════════════════════════════════════════ */
+.hex-grid,
+.node-network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hex-grid {
+  opacity: 0.07;
+  mix-blend-mode: screen;
+}
+
+.node-network {
+  opacity: 0.15;
+  mix-blend-mode: screen;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   浮动粒子
+   ═══════════════════════════════════════════════════════════════ */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.9) 0%, rgba(0, 229, 255, 0.3) 50%, transparent 70%);
+  pointer-events: none;
+  animation: floatParticle linear infinite, twinkle ease-in-out infinite;
+}
+
+.particle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: particleTrail 2s ease-out infinite;
+}
+
+@keyframes floatParticle {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    transform: translateY(-100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes particleTrail {
+  0% {
+    transform: translateX(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   火花粒子
+   ═══════════════════════════════════════════════════════════════ */
+.spark-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00e5ff 0%, transparent 70%);
+  box-shadow: 0 0 6px #00e5ff, 0 0 12px #00e5ff;
+  pointer-events: none;
+  animation: sparkFly 0.8s ease-out forwards;
+}
+
+@keyframes sparkFly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   节点网络流动动画
+   ═══════════════════════════════════════════════════════════════ */
+.flow-line {
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+  animation: flowDash 8s linear infinite;
+}
+
+.flow-line:nth-child(2n) {
+  animation-delay: -2s;
+  animation-duration: 10s;
+}
+
+.flow-line:nth-child(3n) {
+  animation-delay: -4s;
+  animation-duration: 12s;
+}
+
+@keyframes flowDash {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+}
+
+.node {
+  animation: nodePulse 3s ease-in-out infinite;
+}
+
+.node:nth-child(odd) {
+  animation-delay: -1s;
+}
+
+@keyframes nodePulse {
+  0%, 100% {
+    r: 4;
+    opacity: 0.6;
+  }
+  50% {
+    r: 6;
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   吉祥物切换按钮
+   ═══════════════════════════════════════════════════════════════ */
+.mascot-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  background: rgba(0, 229, 255, 0.05);
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all var(--transition-normal);
+}
+
+.mascot-toggle:hover {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+
+.mascot-toggle.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: var(--accent-primary);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+
+.gear-icon {
+  transition: transform var(--transition-normal);
+}
+
+.mascot-toggle:hover .gear-icon {
+  transform: rotate(45deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   默认齿轮动画
+   ═══════════════════════════════════════════════════════════════ */
+.default-gear {
+  position: absolute;
+  top: 50%;
+  right: 60px;
+  transform: translateY(-50%);
+  z-index: 0;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.default-gear.hidden {
+  display: none;
+}
+
+.spinning-gear {
+  animation: spinSlow 20s linear infinite;
+  filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.5));
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   吉祥物鲸鱼
+   ═══════════════════════════════════════════════════════════════ */
+.mascot-whale {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.mascot-whale.visible {
+  opacity: 0.25;
+}
+
+.mascot-whale.hidden {
+  display: none;
+}
+
+.whale-img {
+  width: 320px;
+  filter: drop-shadow(0 0 40px rgba(0, 229, 255, 1))
+          drop-shadow(0 0 80px rgba(0, 255, 163, 0.6))
+          drop-shadow(0 0 120px rgba(0, 229, 255, 0.3))
+          saturate(1.2);
+  animation: floatDJ 6s ease-in-out infinite;
+}
+
+@keyframes floatDJ {
+  0%, 100% {
+    transform: translateY(0px) rotate(-2deg);
+    filter: drop-shadow(0 0 40px rgba(0, 229, 255, 1))
+            drop-shadow(0 0 80px rgba(0, 255, 163, 0.6))
+            drop-shadow(0 0 120px rgba(0, 229, 255, 0.3))
+            saturate(1.2);
+  }
+  50% {
+    transform: translateY(-20px) rotate(2deg);
+    filter: drop-shadow(0 0 60px rgba(0, 255, 163, 1))
+            drop-shadow(0 0 100px rgba(0, 229, 255, 0.7))
+            drop-shadow(0 0 150px rgba(0, 255, 163, 0.4))
+            saturate(1.4);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   数据共鸣状态
+   ═══════════════════════════════════════════════════════════════ */
+.mascot-whale.resonating {
+  opacity: 1;
+}
+
+.mascot-whale.resonating .whale-img {
+  animation: resonateFloat 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 60px rgba(0, 229, 255, 1))
+          drop-shadow(0 0 100px rgba(138, 43, 226, 0.8))
+          drop-shadow(0 0 150px rgba(0, 255, 163, 0.5))
+          saturate(1.5);
+}
+
+@keyframes resonateFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(-3deg) scale(1);
+  }
+  25% {
+    transform: translateY(-15px) rotate(1deg) scale(1.02);
+  }
+  50% {
+    transform: translateY(-25px) rotate(3deg) scale(1.05);
+  }
+  75% {
+    transform: translateY(-10px) rotate(-1deg) scale(1.02);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   符文容器
+   ═══════════════════════════════════════════════════════════════ */
+.rune-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.rune-container.active {
+  opacity: 1;
+}
+
+.rune-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  animation: runeSpin 8s linear infinite;
+}
+
+.rune-ring:nth-child(1) {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-color: rgba(0, 229, 255, 0.4);
+  animation-duration: 12s;
+}
+
+.rune-ring:nth-child(2) {
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  border-color: rgba(138, 43, 226, 0.4);
+  animation-duration: 8s;
+  animation-direction: reverse;
+}
+
+.rune-ring:nth-child(3) {
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+  border-color: rgba(0, 255, 163, 0.4);
+  animation-duration: 6s;
+}
+
+@keyframes runeSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rune-char {
+  position: absolute;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(0, 229, 255, 0.8);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.8), 0 0 20px rgba(0, 229, 255, 0.5);
+  animation: runePulse 2s ease-in-out infinite;
+}
+
+.rune-char:nth-child(odd) {
+  color: rgba(138, 43, 226, 0.8);
+  text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 20px rgba(138, 43, 226, 0.5);
+}
+
+@keyframes runePulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   思考波纹
+   ═══════════════════════════════════════════════════════════════ */
+.thought-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  border: 2px solid rgba(0, 229, 255, 0.5);
+  border-radius: 50%;
+  animation: rippleExpand 2s ease-out infinite;
+  pointer-events: none;
+}
+
+.thought-ripple:nth-child(2) {
+  animation-delay: 0.5s;
+  border-color: rgba(138, 43, 226, 0.5);
+}
+
+.thought-ripple:nth-child(3) {
+  animation-delay: 1s;
+  border-color: rgba(0, 255, 163, 0.5);
+}
+
+@keyframes rippleExpand {
+  0% {
+    width: 100px;
+    height: 100px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 350px;
+    height: 350px;
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   鲸鱼语音气泡
+   ═══════════════════════════════════════════════════════════════ */
+.whale-speech {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 14, 20, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--accent-primary);
+  white-space: nowrap;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+.whale-speech.active {
+  opacity: 1;
+}
+
+.whale-speech .typing-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  background: var(--accent-primary);
+  margin-left: 4px;
+  animation: blink 1s infinite;
+}

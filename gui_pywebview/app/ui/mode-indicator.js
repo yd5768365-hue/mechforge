@@ -246,18 +246,15 @@
   }
 
   /**
-   * 显示错误提示
+   * 显示错误提示（使用统一 NotificationManager）
    * @param {string} message - 错误消息
    */
   function showError(message) {
-    const toast = document.createElement('div');
-    toast.className = 'mode-error-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
+    if (window.showToast) {
+      window.showToast(message, 'error');
+    } else {
+      console.error('[ModeIndicator]', message);
+    }
   }
 
   // ==================== 公共 API ====================

@@ -62,18 +62,10 @@
   function cacheElements() {
     elements = {
       apiTrigger: $('api-trigger'),
-      apiSelector: $('api-selector'),
       modelTrigger: document.querySelector('[data-status="model"]'),
       ragTrigger: document.querySelector('[data-status="rag"]'),
       memoryTrigger: document.querySelector('[data-status="memory"]'),
       expTrigger: document.querySelector('[data-status="exp"]'),
-      ggufSection: $('gguf-section'),
-      ggufModelList: $('gguf-model-list'),
-      ggufScanBtn: $('gguf-scan-btn'),
-      ggufBrowseBtn: $('gguf-browse-btn'),
-      ggufBrowseDirBtn: $('gguf-browse-dir-btn'),
-      ggufRefreshBtn: $('gguf-refresh-btn'),
-      ggufModelInfo: $('gguf-model-info')
     };
   }
 
@@ -102,7 +94,10 @@
       state.ggufModelPath = ggufInfo.model_path || '';
       state.pendingAPI = state.currentAPI;
 
-      // 更新 UI
+      if (window.aiService) {
+        window.aiService.setProvider(state.currentAPI);
+      }
+
       updateAPIUI();
       updateModelUI();
       updateRAGUI();
@@ -129,14 +124,6 @@
       console.warn('[StatusBar] API trigger element not found!');
     }
 
-    // API 选择器内部点击
-    if (elements.apiSelector) {
-      elements.apiSelector.addEventListener('click', handleAPISelectorClick);
-      console.log('[StatusBar] API selector listener added');
-    } else {
-      console.warn('[StatusBar] API selector element not found!');
-    }
-
     // Model 按钮点击
     elements.modelTrigger?.addEventListener('click', handleModelTriggerClick);
 
@@ -149,16 +136,65 @@
     // 经验库按钮点击
     elements.expTrigger?.addEventListener('click', handleExpTriggerClick);
 
-    // GGUF 按钮
-    elements.ggufScanBtn?.addEventListener('click', (e) => { e.stopPropagation(); scanGGUFModels(); });
-    elements.ggufBrowseBtn?.addEventListener('click', (e) => { e.stopPropagation(); browseGGUFFile(); });
-    elements.ggufBrowseDirBtn?.addEventListener('click', (e) => { e.stopPropagation(); browseGGUFDirectory(); });
-
     // 点击外部关闭选择器
     document.addEventListener('click', handleDocumentClick, false);
 
     // 定期更新内存
     setInterval(updateMemoryUI, 30000);
+
+    // 定期同步后端 provider/model 状态（每 5 秒）
+    setInterval(syncProviderState, 5000);
+
+    // 监听 model-loaded 事件（内置模型下载完成后触发）
+    if (window.eventBus) {
+      window.eventBus.on('model-loaded', () => {
+        syncProviderState();
+      });
+      // 设置面板保存配置后立即同步
+      if (typeof Events !== 'undefined') {
+        window.eventBus.on(Events.CONFIG_UPDATED, () => {
+          syncProviderState();
+        });
+      }
+    }
+  }
+
+  /**
+   * 从后端同步当前 provider 和 model 状态
+   */
+  async function syncProviderState() {
+    try {
+      const [config, ggufInfo] = await Promise.all([
+        apiClient.getConfig().catch(() => null),
+        apiClient.get('/gguf/info').catch(() => ({ loaded: false }))
+      ]);
+
+      if (!config) return;
+
+      const newAPI = config.ai?.provider || 'ollama';
+      const newModel = config.ai?.model || state.currentModel;
+      const newRAG = config.rag?.enabled ?? state.ragEnabled;
+
+      const changed = newAPI !== state.currentAPI || newModel !== state.currentModel || newRAG !== state.ragEnabled;
+
+      state.currentAPI = newAPI;
+      state.currentModel = newModel;
+      state.ragEnabled = newRAG;
+      state.ggufLoaded = ggufInfo.loaded || false;
+      state.ggufModelName = ggufInfo.model || '';
+      state.ggufModelPath = ggufInfo.model_path || '';
+
+      if (changed) {
+        if (window.aiService) {
+          window.aiService.setProvider(state.currentAPI);
+        }
+        updateAPIUI();
+        updateModelUI();
+        updateRAGUI();
+      }
+    } catch (e) {
+      // 静默忽略
+    }
   }
 
   /**
@@ -167,28 +203,25 @@
   function handleDocumentClick(e) {
     const target = e.target;
 
-    // 点击在任何弹窗/选择器内部时不关闭
-    if (elements.apiTrigger?.contains(target)) return;
     if ($('model-selector-popup')?.contains(target)) return;
     if ($('memory-popup')?.contains(target)) return;
 
-    // 点击在状态栏按钮上时不关闭（各自的handler会处理）
     if (elements.modelTrigger?.contains(target)) return;
     if (elements.memoryTrigger?.contains(target)) return;
     if (elements.ragTrigger?.contains(target)) return;
     if (elements.expTrigger?.contains(target)) return;
+    if (elements.apiTrigger?.contains(target)) return;
 
     closeAllSelectors();
   }
 
   /**
-   * 处理 API 按钮点击
+   * 处理 API 按钮点击 — 直接切换 Ollama ↔ GGUF
    */
   function handleAPITriggerClick(e) {
-    console.log('[StatusBar] handleAPITriggerClick called', e);
     e.preventDefault();
     e.stopPropagation();
-    toggleAPISelector();
+    toggleProvider();
   }
 
   /**
@@ -218,287 +251,65 @@
     showMemoryDetails();
   }
 
-  // ==================== API 选择器 ====================
+  // ==================== Provider 切换 ====================
 
   /**
-   * 切换 API 选择器显示
+   * 一键切换 Ollama ↔ 本地 GGUF
    */
-  function toggleAPISelector() {
-    console.log('[StatusBar] toggleAPISelector called');
-    const isOpen = elements.apiSelector?.classList.contains('active');
-    console.log('[StatusBar] isOpen:', isOpen);
-    closeAllSelectors();
-    if (!isOpen) {
-      elements.apiSelector?.classList.add('active');
-      elements.apiTrigger?.classList.add('selector-open');
-      console.log('[StatusBar] API selector opened');
-    }
-  }
+  async function toggleProvider() {
+    const targetAPI = state.currentAPI === 'gguf' ? 'ollama' : 'gguf';
+    const apiNames = { ollama: 'Ollama', gguf: '本地模型' };
 
-  /**
-   * 处理 API 选择器点击
-   */
-  function handleAPISelectorClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const option = e.target.closest('.api-option');
-    if (option) {
-      selectAPI(option.dataset.api);
+    if (targetAPI === 'gguf' && !state.ggufLoaded) {
+      showToast('本地模型未加载，请先在聊天界面下载内置模型', 'warning');
       return;
     }
 
-    // GGUF 模型列表项点击
-    const ggufItem = e.target.closest('.gguf-model-item');
-    if (ggufItem) {
-      const modelPath = ggufItem.dataset.path;
-      const modelName = ggufItem.dataset.name;
-      if (modelPath) {
-        selectGGUFModel(modelPath, modelName);
-      }
-      return;
-    }
+    const prevAPI = state.currentAPI;
+    state.currentAPI = targetAPI;
+    state.pendingAPI = targetAPI;
 
-    if (e.target.closest('#gguf-refresh-btn')) {
-      switchToSelectedAPI();
-    }
-  }
-
-  /**
-   * 选择 API
-   */
-  function selectAPI(api) {
-    state.pendingAPI = api;
-
-    $$('.api-option').forEach(opt => {
-      opt.classList.toggle('selected', opt.dataset.api === api);
-    });
-
-    // 展开/收起 GGUF 区域
-    if (elements.ggufSection) {
-      elements.ggufSection.classList.toggle('visible', api === 'gguf');
-    }
-
-    if (api === 'gguf' && state.ggufScannedModels.length === 0) {
-      scanGGUFModels();
-    }
-
-    if (elements.ggufModelInfo) {
-      if (api === 'gguf') {
-        elements.ggufModelInfo.textContent = state.ggufLoaded
-          ? `已加载: ${state.ggufModelName}`
-          : '请选择一个 GGUF 模型';
-        elements.ggufModelInfo.className = state.ggufLoaded ? 'gguf-model-info loaded' : 'gguf-model-info';
-      } else {
-        elements.ggufModelInfo.textContent = '';
-        elements.ggufModelInfo.className = 'gguf-model-info';
-      }
-    }
-  }
-
-  /**
-   * 切换到选中的 API
-   */
-  async function switchToSelectedAPI() {
-    const apiNames = { ollama: 'Ollama', gguf: '本地 GGUF' };
-
-    if (state.pendingAPI === 'gguf' && !state.ggufLoaded) {
-      showToast('请先选择并加载一个 GGUF 模型', 'warning');
-      return;
-    }
-
-    state.currentAPI = state.pendingAPI;
-    closeAllSelectors();
-
-    // 更新 UI
-    updateAPIUI();
-
-    // 更新模型显示
-    if (state.pendingAPI === 'gguf') {
-      state.currentModel = state.ggufModelName;
+    if (targetAPI === 'gguf') {
+      state.currentModel = state.ggufModelName || 'gguf-local';
     } else {
       const ollamaModel = state.availableModels.find(m => m.provider === 'ollama');
       state.currentModel = ollamaModel?.name || 'qwen2.5:3b';
     }
+
+    updateAPIUI();
     updateModelUI();
 
     try {
-      await apiClient.post('/config/provider', { provider: state.pendingAPI });
-      showToast(`已切换到 ${apiNames[state.pendingAPI]}`, 'success');
+      await apiClient.post('/config/provider', { provider: targetAPI });
+      if (window.aiService) {
+        window.aiService.setProvider(targetAPI);
+      }
+      showToast(`已切换到 ${apiNames[targetAPI]}`, 'success');
     } catch (error) {
-      console.error('[StatusBar] Switch failed:', error);
-      showToast('切换失败', 'error');
+      console.error('[StatusBar] Provider switch failed:', error);
+      state.currentAPI = prevAPI;
+      updateAPIUI();
+      updateModelUI();
+      showToast('切换失败: ' + (error.message || ''), 'error');
     }
   }
 
   /**
-   * 扫描 GGUF 模型目录
-   */
-  async function scanGGUFModels(directory = '') {
-    if (!elements.ggufModelList) return;
-
-    elements.ggufModelList.innerHTML = '<div class="gguf-model-list-loading">扫描中...</div>';
-
-    try {
-      const url = directory ? `/gguf/scan?directory=${encodeURIComponent(directory)}` : '/gguf/scan';
-      const result = await apiClient.get(url);
-
-      state.ggufScannedModels = result.models || [];
-      state.ggufDirectory = result.directory || '';
-
-      renderGGUFModelList();
-    } catch (error) {
-      console.error('[StatusBar] GGUF scan failed:', error);
-      elements.ggufModelList.innerHTML = '<div class="gguf-model-list-empty">扫描失败</div>';
-    }
-  }
-
-  /**
-   * 渲染 GGUF 模型列表
-   */
-  function renderGGUFModelList() {
-    if (!elements.ggufModelList) return;
-
-    if (state.ggufScannedModels.length === 0) {
-      elements.ggufModelList.innerHTML = `
-        <div class="gguf-model-list-empty">
-          未找到 .gguf 文件
-          ${state.ggufDirectory ? `<br><span class="gguf-dir-hint">${state.ggufDirectory}</span>` : ''}
-        </div>`;
-      return;
-    }
-
-    const html = state.ggufScannedModels.map(m => {
-      const sizeMB = (m.size / 1024 / 1024).toFixed(1);
-      const isActive = m.loaded;
-      return `
-        <div class="gguf-model-item ${isActive ? 'active' : ''}"
-             data-path="${m.path}" data-name="${m.filename}" title="${m.path}">
-          <div class="gguf-model-item-info">
-            <span class="gguf-model-item-name">${m.name}</span>
-            <span class="gguf-model-item-size">${sizeMB} MB</span>
-          </div>
-          <span class="gguf-model-item-status">${isActive ? '● 已加载' : ''}</span>
-        </div>`;
-    }).join('');
-
-    elements.ggufModelList.innerHTML = html;
-
-    if (state.ggufDirectory) {
-      const dirLabel = document.createElement('div');
-      dirLabel.className = 'gguf-dir-label';
-      dirLabel.textContent = state.ggufDirectory;
-      elements.ggufModelList.prepend(dirLabel);
-    }
-  }
-
-  /**
-   * 选择并加载一个 GGUF 模型
-   */
-  async function selectGGUFModel(modelPath, modelName) {
-    if (elements.ggufModelInfo) {
-      elements.ggufModelInfo.textContent = `正在加载 ${modelName}...`;
-      elements.ggufModelInfo.className = 'gguf-model-info';
-    }
-
-    // 高亮选中项
-    elements.ggufModelList?.querySelectorAll('.gguf-model-item').forEach(el => {
-      el.classList.toggle('selected', el.dataset.path === modelPath);
-    });
-
-    try {
-      const response = await apiClient.post('/gguf/load', { model_path: modelPath });
-      if (response.success) {
-        state.ggufLoaded = true;
-        state.ggufModelName = response.model;
-        state.ggufModelPath = modelPath;
-        state.pendingAPI = 'gguf';
-
-        if (elements.ggufModelInfo) {
-          elements.ggufModelInfo.textContent = `已加载: ${response.model}`;
-          elements.ggufModelInfo.className = 'gguf-model-info loaded';
-        }
-
-        // 更新列表中的加载状态
-        state.ggufScannedModels.forEach(m => {
-          m.loaded = (m.path === modelPath);
-        });
-        renderGGUFModelList();
-
-        showToast(`模型已加载: ${response.model}`, 'success');
-      }
-    } catch (error) {
-      if (elements.ggufModelInfo) {
-        elements.ggufModelInfo.textContent = error.message || '加载失败';
-        elements.ggufModelInfo.className = 'gguf-model-info error';
-      }
-      showToast('模型加载失败', 'error');
-    }
-  }
-
-  /**
-   * 浏览并选择 GGUF 文件
-   */
-  async function browseGGUFFile() {
-    if (!window.pywebview?.api) {
-      showToast('开发模式下请使用目录扫描', 'info');
-      return;
-    }
-
-    const api = window.pywebview.api;
-    if (api?.select_gguf_file) {
-      try {
-        const filePath = await api.select_gguf_file();
-        if (filePath) {
-          await selectGGUFModel(filePath, filePath.split(/[\\/]/).pop());
-        }
-      } catch (error) {
-        console.error('[StatusBar] File dialog failed:', error);
-        showToast('文件选择失败', 'error');
-      }
-    } else {
-      showToast('文件选择对话框不可用', 'info');
-    }
-  }
-
-  /**
-   * 浏览并设置 GGUF 模型目录
-   */
-  async function browseGGUFDirectory() {
-    if (window.pywebview?.api?.select_folder) {
-      try {
-        const dirPath = await window.pywebview.api.select_folder('选择 GGUF 模型目录');
-        if (dirPath) {
-          await scanGGUFModels(dirPath);
-          showToast(`已设置模型目录: ${dirPath}`, 'success');
-        }
-      } catch (error) {
-        console.error('[StatusBar] Folder dialog failed:', error);
-        showToast('目录选择失败', 'error');
-      }
-    } else {
-      const dir = prompt('请输入 GGUF 模型所在目录路径:');
-      if (dir) {
-        await scanGGUFModels(dir);
-      }
-    }
-  }
-
-  /**
-   * 更新 API UI
+   * 更新 API UI — 实时反映当前 provider 状态
    */
   function updateAPIUI() {
     if (!elements.apiTrigger) return;
 
-    const apiNames = { ollama: 'Ollama', gguf: '本地 GGUF' };
+    const isGGUF = state.currentAPI === 'gguf';
+    const apiLabel = isGGUF ? '本地模型' : 'Ollama';
+    const apiIcon = isGGUF ? '📦' : '🦙';
 
     elements.apiTrigger.classList.remove('api-ollama', 'api-gguf');
     elements.apiTrigger.classList.add(`api-${state.currentAPI}`);
-
-    const textNode = Array.from(elements.apiTrigger.childNodes).find(n => n.nodeType === 3);
-    if (textNode) {
-      textNode.textContent = `API: ${apiNames[state.currentAPI]} `;
-    }
+    elements.apiTrigger.textContent = `${apiIcon} ${apiLabel}`;
+    elements.apiTrigger.title = isGGUF
+      ? '当前: 本地 GGUF 模型 — 点击切换到 Ollama'
+      : '当前: Ollama — 点击切换到本地模型';
   }
 
   // ==================== Model 选择器 ====================
@@ -606,22 +417,35 @@
     // 关闭选择器
     $('model-selector-popup')?.remove();
 
-    // 通知后端
     try {
-      await apiClient.post('/config', { ai: { model, provider } });
+      const modelData = state.availableModels.find(m => m.name === model && m.provider === provider);
+      await apiClient.post('/config/model', {
+        model,
+        provider,
+        model_path: modelData?.path || ''
+      });
+      if (window.aiService) {
+        window.aiService.setProvider(provider);
+      }
       showToast(`已切换模型: ${model}`, 'success');
     } catch (error) {
       console.error('[StatusBar] Failed to set model:', error);
+      showToast('模型切换失败: ' + (error.message || ''), 'error');
     }
   }
 
   /**
-   * 更新 Model UI
+   * 更新 Model UI — 显示当前模型名及来源
    */
   function updateModelUI() {
-    if (elements.modelTrigger) {
-      elements.modelTrigger.textContent = `模型: ${state.currentModel}`;
+    if (!elements.modelTrigger) return;
+
+    let displayName = state.currentModel || '未选择';
+    if (displayName.length > 25) {
+      displayName = displayName.substring(0, 22) + '…';
     }
+    elements.modelTrigger.textContent = `模型: ${displayName}`;
+    elements.modelTrigger.title = `${state.currentAPI === 'gguf' ? '本地 GGUF' : 'Ollama'} — ${state.currentModel}`;
   }
 
   // ==================== RAG 开关 ====================
@@ -880,8 +704,6 @@
    * 关闭所有选择器
    */
   function closeAllSelectors() {
-    elements.apiSelector?.classList.remove('active');
-    elements.apiTrigger?.classList.remove('selector-open');
     $('model-selector-popup')?.remove();
     $('memory-popup')?.remove();
   }
@@ -896,11 +718,11 @@
   }
 
   /**
-   * 显示提示
+   * 显示提示（使用统一 NotificationManager）
    */
   function showToast(message, type = 'info') {
-    if (window.ChatFeatures?.showToast) {
-      ChatFeatures.showToast(message);
+    if (window.showToast) {
+      window.showToast(message, type);
     } else {
       console.log(`[Toast] ${type}: ${message}`);
     }

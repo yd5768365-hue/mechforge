@@ -173,6 +173,85 @@ async def get_gguf_info() -> dict:
     }
 
 
+@router.get("/bundled/status")
+async def bundled_model_status() -> dict:
+    """检查内置模型状态（是否已下载、是否已加载）"""
+    from .model_downloader import (
+        BUNDLED_MODEL,
+        download_state,
+        get_bundled_model_path,
+        is_bundled_model_ready,
+    )
+
+    ready = is_bundled_model_ready()
+    loaded = (
+        state.gguf_llm is not None
+        and state.gguf_model_path == str(get_bundled_model_path())
+    )
+    return {
+        "model_name": BUNDLED_MODEL["name"],
+        "model_description": BUNDLED_MODEL["description"],
+        "size_mb": round(BUNDLED_MODEL["size_bytes"] / 1024 / 1024),
+        "ready": ready,
+        "loaded": loaded,
+        "download": download_state.to_dict(),
+    }
+
+
+@router.post("/bundled/download")
+async def download_bundled_model() -> dict:
+    """开始下载内置模型"""
+    from .model_downloader import (
+        auto_load_bundled_model,
+        is_bundled_model_ready,
+        start_download,
+    )
+
+    if is_bundled_model_ready():
+        loaded = auto_load_bundled_model()
+        return {"success": True, "message": "模型已存在", "already_ready": True, "loaded": loaded}
+
+    def _on_complete(model_path):
+        try:
+            auto_load_bundled_model()
+        except Exception as e:
+            logger.error(f"下载完成后自动加载失败: {e}")
+
+    started = start_download(on_complete=_on_complete)
+    if started:
+        return {"success": True, "message": "开始下载内置模型"}
+    return {"success": False, "message": "下载已在进行中或模型已存在"}
+
+
+@router.post("/bundled/cancel")
+async def cancel_bundled_download() -> dict:
+    """取消下载内置模型"""
+    from .model_downloader import cancel_download
+    cancel_download()
+    return {"success": True, "message": "下载已取消"}
+
+
+@router.get("/bundled/progress")
+async def bundled_download_progress() -> dict:
+    """获取下载进度"""
+    from .model_downloader import download_state
+    return download_state.to_dict()
+
+
+@router.post("/bundled/load")
+async def load_bundled_model() -> dict:
+    """手动加载已下载的内置模型"""
+    from .model_downloader import auto_load_bundled_model, is_bundled_model_ready
+
+    if not is_bundled_model_ready():
+        raise HTTPException(status_code=404, detail="内置模型尚未下载")
+
+    success = auto_load_bundled_model()
+    if success:
+        return {"success": True, "message": "内置模型加载成功"}
+    raise HTTPException(status_code=500, detail="内置模型加载失败")
+
+
 @router.get("/scan")
 async def scan_gguf_models(directory: str = "") -> dict:
     """扫描指定目录（或默认模型目录）中的 .gguf 文件"""
