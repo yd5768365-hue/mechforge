@@ -1,0 +1,58 @@
+/**
+ * MechForge AI - 主样式入口
+ * 优化版本：CSS加载性能优化
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   关键CSS - 首屏渲染必需
+   优先加载，内联或放在最前面
+   ═══════════════════════════════════════════════════════════════ */
+
+/* CSS变量和基础重置 */
+@import url('./css/variables.css');
+
+/* 布局 - 应用框架 */
+@import url('./css/layout.css');
+
+/* ═══════════════════════════════════════════════════════════════
+   非关键CSS - 延迟加载或异步加载
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 聊天面板 */
+@import url('./css/chat.css');
+
+/* 知识库和CAE面板 */
+@import url('./css/panels.css');
+
+/* 视觉效果 */
+@import url('./css/effects.css');
+
+/* 组件 */
+@import url('./css/components.css');
+
+/* 工具类 */
+@import url('./css/utilities.css');
+
+/* ═══════════════════════════════════════════════════════════════
+   打印样式
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  .sidebar,
+  .title-bar,
+  .status-bar,
+  .particles,
+  .hex-grid,
+  .node-network {
+    display: none !important;
+  }
+  
+  .tab-panels {
+    position: static;
+    overflow: visible;
+  }
+  
+  .tab-panel {
+    position: static;
+    display: block !important;
+  }
+}

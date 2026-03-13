@@ -1,0 +1,50 @@
+{
+  "date": "2026-03-13",
+  "gen_id": "45171359",
+  "items": [
+    {
+      "id": "2026-03-13_standard_spotlight",
+      "type": "standard_spotlight",
+      "type_cn": "标准速览",
+      "icon": "📋",
+      "severity": "info",
+      "data": {
+        "std_no": "ISO 12225",
+        "std_name": "Standard for the design and manufacture of gearboxes for hydraulic and electric drive systems",
+        "scope": "This standard covers the design and manufacture of gearboxes used in hydraulic and electric drive systems. It applies to gearboxes for various applications, including construction, mining, marine, and aerospace.",
+        "key_requirements": [
+          "Gearbox design and manufacture should comply with the safety and operational requirements for the intended application.",
+          "The gearbox's dimensions and load capacity should be carefully calculated to ensure proper operation under expected conditions.",
+          "The gearbox must be designed to withstand the specified loads and mechanical stresses."
+        ],
+        "query_points": [
+          "Load capacity and dimensions of gearboxes",
+          "Safety and operational requirements for gearboxes"
+        ],
+        "source_url": "https://www.iso.org/standards/search?query=Gearbox"
+      },
+      "generated_at": "2026-03-13T13:28:56",
+      "schema": [
+        "std_no",
+        "std_name",
+        "scope",
+        "key_requirements",
+        "query_points",
+        "source_url"
+      ]
+    }
+  ],
+  "status": "generating",
+  "total": 0,
+  "target": 3,
+  "provider": {
+    "provider": "gguf",
+    "model": "C:\\Users\\yd576\\AppData\\Local\\mechforge\\models\\qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "base_url": ""
+  },
+  "progress": {
+    "current": 3,
+    "total": 3,
+    "current_type": "材料洞察"
+  }
+}

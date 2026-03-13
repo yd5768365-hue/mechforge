@@ -1,0 +1,88 @@
+# MechForge AI GUI 配置文件模板
+# 复制此文件为 config.yaml 并根据需要修改
+
+# ═══════════════════════════════════════════════════════════════
+# AI 配置
+# ═══════════════════════════════════════════════════════════════
+ai:
+  # 默认提供商: ollama, openai, anthropic, gguf
+  provider: ollama
+  
+  # Ollama 配置
+  ollama:
+    url: http://localhost:11434
+    model: qwen2.5:3b
+  
+  # OpenAI 配置
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    model: gpt-4o
+  
+  # Anthropic 配置
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    model: claude-3-sonnet-20240229
+  
+  # GGUF 本地模型配置
+  gguf:
+    model_path: ""
+    n_ctx: 2048
+    n_threads: 4
+
+# ═══════════════════════════════════════════════════════════════
+# RAG 配置
+# ═══════════════════════════════════════════════════════════════
+rag:
+  enabled: false
+  knowledge_path: ./knowledge
+  top_k: 5
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  
+  # 检索触发关键词
+  triggers:
+    - 查询
+    - 搜索
+    - 找到
+    - 知识库
+
+# ═══════════════════════════════════════════════════════════════
+# UI 配置
+# ═══════════════════════════════════════════════════════════════
+ui:
+  theme: dark
+  language: zh-CN
+  
+  # 窗口设置
+  window:
+    width: 1200
+    height: 800
+    min_width: 1000
+    min_height: 700
+  
+  # 动画设置
+  animations:
+    enabled: true
+    particles: true
+    mascot: true
+
+# ═══════════════════════════════════════════════════════════════
+# 服务器配置
+# ═══════════════════════════════════════════════════════════════
+server:
+  host: 127.0.0.1
+  port: 5000
+  debug: false
+  
+  # CORS 设置
+  cors:
+    origins:
+      - http://localhost:5000
+      - http://127.0.0.1:5000
+
+# ═══════════════════════════════════════════════════════════════
+# 日志配置
+# ═══════════════════════════════════════════════════════════════
+logging:
+  level: INFO
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  file: null  # 设置为路径以启用文件日志

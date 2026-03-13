@@ -1,0 +1,552 @@
+/**
+ * MechForge AI — Experience Library 样式
+ * 冷锻工业全息风格
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   经验库面板 — 基础布局
+   ═══════════════════════════════════════════════════════════════ */
+#experience-panel {
+  padding: 0;
+  z-index: 2;
+  position: relative;
+}
+
+#experience-panel .panel-header {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── 搜索区 ───────────────────────────────────────────────────── */
+.exp-search-section {
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+  position: relative;
+  z-index: 2;
+}
+
+.exp-search-section .search-wrapper {
+  position: relative;
+}
+
+.exp-count-badge {
+  padding: 3px 10px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: var(--radius-xl);
+  color: var(--accent-primary);
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ── 标签过滤器 ────────────────────────────────────────────────── */
+.exp-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 24px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.exp-tag-filter {
+  padding: 4px 12px;
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 14px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.exp-tag-filter:hover {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--text-primary);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.exp-tag-filter.active {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #0a1520;
+  border-color: var(--accent-primary);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Daily Feed — 内嵌区域（无内联样式版本）
+   ═══════════════════════════════════════════════════════════════ */
+#daily-feed-section {
+  margin: 14px 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.03), rgba(0, 0, 0, 0.1));
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+#daily-feed-section .df-embedded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+}
+
+#daily-feed-section .df-embedded-title {
+  font-family: 'Orbitron', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--accent-primary);
+  letter-spacing: 2px;
+}
+
+#daily-feed-section .df-embedded-date {
+  font-family: monospace;
+  font-size: 10px;
+  color: rgba(200, 216, 224, 0.35);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   经验卡片 — 工业风重设计
+   ═══════════════════════════════════════════════════════════════ */
+#experience-panel .search-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+  padding: 16px 20px;
+  align-content: start;
+  position: relative;
+  z-index: 2;
+}
+
+.exp-card-item {
+  background: linear-gradient(160deg, rgba(17, 24, 32, 0.9), rgba(10, 14, 20, 0.95));
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.exp-card-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--exp-severity-color, var(--accent-primary));
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.exp-card-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 60%, var(--exp-severity-color, var(--accent-primary)));
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.exp-card-item:hover {
+  border-color: var(--exp-severity-color, var(--accent-primary));
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px color-mix(in srgb, var(--exp-severity-color, var(--accent-primary)) 20%, transparent);
+}
+
+.exp-card-item:hover::before {
+  opacity: 1;
+}
+
+.exp-card-item:hover::after {
+  opacity: 0.04;
+}
+
+.exp-card-inner {
+  padding: 16px;
+}
+
+.exp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.exp-card-severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.exp-card-severity.critical {
+  background: rgba(255, 71, 87, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(255, 71, 87, 0.25);
+}
+
+.exp-card-severity.warning {
+  background: rgba(255, 165, 2, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(255, 165, 2, 0.25);
+}
+
+.exp-card-severity.info {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.exp-card-id {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  color: rgba(200, 216, 224, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.exp-card-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.exp-card-snippet {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  opacity: 0.75;
+}
+
+.exp-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.exp-card-tag {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  padding: 2px 7px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  border-radius: 3px;
+  color: rgba(0, 229, 255, 0.5);
+}
+
+.exp-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 229, 255, 0.06);
+}
+
+.exp-card-category {
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+.exp-card-arrow {
+  color: var(--text-dim);
+  font-size: 14px;
+  transition: all 0.25s;
+  opacity: 0.4;
+}
+
+.exp-card-item:hover .exp-card-arrow {
+  transform: translateX(4px);
+  color: var(--accent-primary);
+  opacity: 1;
+}
+
+/* ── 空状态 ────────────────────────────────────────────────────── */
+#experience-panel .result-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 20px;
+  color: rgba(200, 216, 224, 0.25);
+}
+
+#experience-panel .result-placeholder svg {
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+#experience-panel .result-placeholder p {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: rgba(200, 216, 224, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   详情弹窗 — 工业档案风格
+   ═══════════════════════════════════════════════════════════════ */
+.exp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 8, 18, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 40px;
+}
+
+.exp-modal-overlay.active {
+  display: flex;
+}
+
+.exp-modal-container {
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  background: linear-gradient(160deg, var(--bg-secondary), var(--bg-primary));
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 0 1px rgba(0, 229, 255, 0.6),
+    0 0 30px rgba(0, 229, 255, 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: expModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes expModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.exp-modal-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+}
+
+.exp-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 71, 87, 0.08);
+  border: 1px solid rgba(255, 71, 87, 0.2);
+  border-radius: 4px;
+  color: var(--danger);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.exp-modal-close:hover {
+  background: rgba(255, 71, 87, 0.2);
+  transform: rotate(90deg);
+}
+
+.exp-modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+}
+
+.exp-modal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.exp-modal-tags .exp-tag-filter {
+  font-size: 9px;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+.exp-modal-tags .exp-card-severity {
+  font-size: 8px;
+}
+
+.exp-modal-title {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  padding-right: 40px;
+  line-height: 1.5;
+}
+
+.exp-modal-meta {
+  color: var(--accent-primary);
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+.exp-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  max-height: calc(85vh - 200px);
+}
+
+.exp-modal-section {
+  margin-bottom: 20px;
+}
+
+.exp-modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.exp-modal-section h3 {
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exp-modal-section h3::before {
+  content: '▸';
+  color: var(--accent-primary);
+  opacity: 0.5;
+}
+
+.exp-modal-section p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.exp-modal-section pre {
+  color: rgba(168, 200, 212, 0.85);
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 14px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.06);
+  border-left: 3px solid rgba(0, 229, 255, 0.2);
+  margin: 0;
+}
+
+.exp-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(0, 229, 255, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.exp-modal-source {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+}
+
+.exp-modal-link {
+  color: var(--accent-primary);
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.exp-modal-link:hover {
+  opacity: 1;
+  text-shadow: 0 0 8px var(--accent-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   工业风背景（经验库共享）
+   ═══════════════════════════════════════════════════════════════ */
+#experience-panel .industrial-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(255, 80, 60, 0.02) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 20%, rgba(0, 229, 255, 0.02) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(10, 14, 20, 0.97) 0%, rgba(13, 17, 23, 0.95) 100%);
+}
+
+/* ── 扫描线效果 ──────────────────────────────────────────────── */
+#experience-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 229, 255, 0.008) 2px,
+    rgba(0, 229, 255, 0.008) 4px
+  );
+}
