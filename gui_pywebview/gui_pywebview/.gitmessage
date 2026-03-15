@@ -1,0 +1,50 @@
+# <type>(<scope>): <subject>
+#
+# Type can be:
+#   feat     - A new feature
+#   fix      - A bug fix
+#   docs     - Documentation only changes
+#   style    - Changes that do not affect the meaning of the code
+#   refactor - A code change that neither fixes a bug nor adds a feature
+#   perf     - A code change that improves performance
+#   test     - Adding missing tests or correcting existing tests
+#   chore    - Changes to the build process or auxiliary tools
+#   ci       - Changes to CI configuration files and scripts
+#   build    - Changes that affect the build system or external dependencies
+#
+# Scope can be:
+#   core     - Core modules (utils, event-bus, api-client, etc.)
+#   app      - Application modules (chat, knowledge, cae, etc.)
+#   ui       - UI components (particles, mascot, etc.)
+#   services - Service modules (ai-service, config-service)
+#   css      - Stylesheets
+#   html     - HTML templates
+#   build    - Build scripts and configuration
+#   deps     - Dependencies
+#
+# Subject should be:
+#   - Imperative mood (add, fix, update, not added, fixed, updated)
+#   - Not capitalized
+#   - No period at the end
+#   - Maximum 50 characters
+#
+# Body (optional):
+#   - Explain what and why, not how
+#   - Wrap at 72 characters
+#   - Use bullet points for multiple changes
+#
+# Footer (optional):
+#   - Reference issues: Fixes #123, Closes #456
+#   - Breaking changes: BREAKING CHANGE: description
+#
+# Examples:
+#   feat(chat): add message typing indicator
+#   fix(ui): resolve particle animation stutter
+#   perf(core): optimize event delegation
+#   docs(readme): update installation instructions
+#   refactor(utils): simplify debounce implementation
+#   style(css): format with prettier
+#   test(chat): add unit tests for message parser
+#   chore(build): update eslint configuration
+#   deps: upgrade eslint to v8
+#

@@ -1,0 +1,236 @@
+/**
+ * Chat Markdown Styles
+ * Markdown 渲染和代码高亮样式
+ */
+
+/* ==================== Markdown 基础样式 ==================== */
+
+.chat-message.ai .md-heading {
+  color: var(--accent-primary);
+  margin: 12px 0 8px 0;
+  font-weight: 600;
+}
+
+.chat-message.ai .md-heading:first-child {
+  margin-top: 0;
+}
+
+.chat-message.ai h1.md-heading { font-size: 1.4em; }
+.chat-message.ai h2.md-heading { font-size: 1.3em; }
+.chat-message.ai h3.md-heading { font-size: 1.2em; }
+.chat-message.ai h4.md-heading { font-size: 1.1em; }
+
+.chat-message.ai .md-paragraph {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.chat-message.ai .md-link {
+  color: var(--accent-primary);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent-primary);
+  transition: all 0.2s;
+}
+
+.chat-message.ai .md-link:hover {
+  color: #fff;
+  border-bottom-style: solid;
+}
+
+.chat-message.ai .md-list {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.chat-message.ai .md-list li {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.chat-message.ai .md-quote {
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.chat-message.ai .md-hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-primary), transparent);
+  margin: 16px 0;
+}
+
+/* ==================== 行内代码 ==================== */
+
+.chat-message.ai .inline-code,
+.chat-message.ai code:not([class*="language-"]) {
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  color: var(--accent-primary);
+}
+
+/* ==================== 代码块 ==================== */
+
+.code-block {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 20, 30, 0.8);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 229, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.code-language {
+  font-size: 11px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.code-copy-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.code-copy-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent-primary);
+}
+
+.code-copy-btn.copied {
+  background: rgba(0, 229, 255, 0.2);
+  color: var(--accent-primary);
+}
+
+.code-content {
+  margin: 0;
+  padding: 12px 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.code-content code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+/* ==================== 代码高亮 ==================== */
+
+/* 关键字 */
+.code-content .keyword,
+.code-content .kw {
+  color: #ff79c6;
+}
+
+/* 字符串 */
+.code-content .string,
+.code-content .str {
+  color: #f1fa8c;
+}
+
+/* 注释 */
+.code-content .comment,
+.code-content .c {
+  color: #6272a4;
+  font-style: italic;
+}
+
+/* 函数 */
+.code-content .function,
+.code-content .fn {
+  color: #50fa7b;
+}
+
+/* 数字 */
+.code-content .number,
+.code-content .num {
+  color: #bd93f9;
+}
+
+/* 操作符 */
+.code-content .operator,
+.code-content .op {
+  color: #ff79c6;
+}
+
+/* 变量 */
+.code-content .variable,
+.code-content .var {
+  color: #8be9fd;
+}
+
+/* 类型 */
+.code-content .type,
+.code-content .class {
+  color: #8be9fd;
+}
+
+/* ==================== 滚动条 ==================== */
+
+.code-content::-webkit-scrollbar {
+  height: 6px;
+}
+
+.code-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.code-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 3px;
+}
+
+.code-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
+/* ==================== 表格支持 ==================== */
+
+.chat-message.ai table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.chat-message.ai th,
+.chat-message.ai td {
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.chat-message.ai th {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.chat-message.ai tr:hover td {
+  background: rgba(0, 229, 255, 0.05);
+}

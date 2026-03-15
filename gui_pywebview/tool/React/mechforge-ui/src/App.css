@@ -1,0 +1,130 @@
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d1117;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a2535;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3545;
+}
+
+/* 全局字体 */
+body {
+  font-family: 'Courier New', 'Microsoft YaHei', monospace;
+  background: #0a0e14;
+  color: #c8d8e0;
+  overflow: hidden;
+}
+
+/* 应用容器 */
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 窗口 */
+.window {
+  width: 1000px;
+  height: 700px;
+  background: rgba(13, 17, 23, 0.85);
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  box-shadow: 0 0 60px rgba(0, 229, 255, 0.08), 0 20px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+/* 主体区域 */
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 主面板 */
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: #0d1117;
+  overflow: hidden;
+}
+
+/* 输入框placeholder样式 */
+input::placeholder {
+  color: #5a7a8a;
+}
+
+/* 选中文本样式 */
+::selection {
+  background: rgba(0, 229, 255, 0.3);
+  color: #fff;
+}
+
+/* 按钮基础样式 */
+button {
+  font-family: inherit;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 1024px) {
+  .window {
+    width: 95vw;
+    height: 90vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .window {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}

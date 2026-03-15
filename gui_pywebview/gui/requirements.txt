@@ -1,0 +1,13 @@
+# MechForge AI GUI Requirements
+# 桌面应用和后端服务器依赖
+
+# 核心依赖
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pywebview>=4.4.1
+
+# MechForge 核心
+-e ..
+
+# 可选依赖
+python-multipart>=0.0.6

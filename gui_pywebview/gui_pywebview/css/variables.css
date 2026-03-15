@@ -1,0 +1,197 @@
+/**
+ * MechForge AI - CSS 变量与基础样式
+ * 优化版本：更好的性能和组织结构
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS 变量 - 设计系统
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* 背景色 */
+  --bg-primary:   #0a0e14;
+  --bg-secondary: #0d1117;
+  --bg-tertiary:  #111820;
+
+  /* 边框色 */
+  --border-color:     #1a2535;
+  --border-highlight: #1e2d3d;
+
+  /* 文字色 */
+  --text-primary:   #c8d8e0;
+  --text-secondary: #8ab4c8;
+  --text-muted:     #3a5068;
+  --text-dim:       #3a6070;
+
+  /* 主题色 */
+  --accent-primary:   #00e5ff;
+  --accent-secondary: #00b8d4;
+  --accent-tertiary:  #0097a7;
+
+  /* 发光效果 */
+  --accent-glow:        rgba(0, 229, 255, 0.3);
+  --accent-glow-strong: rgba(0, 183, 212, 0.4);
+
+  /* 状态色 */
+  --danger:   #ff4757;
+  --success:  #2ed573;
+  --warning:  #ffa502;
+
+  /* 动画时长 */
+  --transition-fast:   0.15s;
+  --transition-normal: 0.3s;
+  --transition-slow:   0.5s;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+
+  /* 阴影 */
+  --shadow-glow: 0 0 20px rgba(0, 229, 255, 0.25);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  /* 性能优化：硬件加速 */
+  --gpu-accelerate: translateZ(0);
+  --will-change-transform: transform;
+  --will-change-opacity: opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   基础重置 - 优化版本
+   ═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Courier New', 'Consolas', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: 'Courier New', 'Consolas', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   滚动条优化
+   ═══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   通用动画 - 优化版本（使用transform和opacity）
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* 性能优化：使用will-change */
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+  will-change: transform, opacity;
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+  will-change: opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   性能优化工具类
+   ═══════════════════════════════════════════════════════════════ */
+.gpu-accelerated {
+  transform: var(--gpu-accelerate);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* 减少动画（尊重用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   焦点样式优化（可访问性）
+   ═══════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}

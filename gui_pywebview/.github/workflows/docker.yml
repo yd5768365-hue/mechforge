@@ -1,0 +1,323 @@
+# 构建并推送 Docker 镜像到 Docker Hub 和 GitHub Container Registry
+#
+# 此工作流会:
+#   1. 在推送到 main 分支时构建镜像
+#   2. 为每个镜像变体创建标签
+#   3. 推送到 Docker Hub 和 GHCR
+#
+# 需要配置的 Secrets:
+#   - DOCKER_USERNAME: Docker Hub 用户名
+#   - DOCKER_PASSWORD: Docker Hub 访问令牌
+#   - GITHUB_TOKEN: GitHub Token (自动提供)
+#
+# 镜像变体:
+#   - ai:    轻量级 AI 对话模式
+#   - rag:   知识库 RAG 模式
+#   - work:  CAE 工作台模式
+#   - web:   Web 服务模式
+#   - full:  完整版 (所有功能)
+
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker-start.*'
+      - 'mechforge_*/**'
+      - 'pyproject.toml'
+      - 'setup.cfg'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: '构建特定变体 (ai/rag/work/web/full/all)'
+        required: false
+        default: 'all'
+
+env:
+  REGISTRY_DOCKER: docker.io
+  REGISTRY_GHCR: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # 变更检测
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker }}
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+              - '.dockerignore'
+            code:
+              - 'mechforge_*/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+
+  # 构建基础镜像用于缓存
+  build-base:
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      base-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-base-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-base-
+
+      - name: Build base image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: base
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          outputs: type=docker,dest=/tmp/base.tar
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # 构建并推送所有镜像变体
+  build-variants:
+    needs: [changes, build-base]
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { name: ai, target: ai, desc: "AI Chat Mode" }
+          - { name: rag, target: rag, desc: "Knowledge RAG Mode" }
+          - { name: work, target: work, desc: "CAE Workbench Mode" }
+          - { name: web, target: web, desc: "Web Service Mode" }
+          - { name: full, target: full, desc: "Full Featured" }
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.variant.name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.variant.name }}-
+            ${{ runner.os }}-buildx-
+
+      # 登录 Docker Hub
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 登录 GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 提取版本标签
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}
+            ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.description=MechForge AI - ${{ matrix.variant.desc }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      # 构建并推送镜像
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: ${{ matrix.variant.target }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VERSION=${{ github.ref_name }}
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # 构建默认镜像 (latest 指向 full)
+  build-latest:
+    needs: [changes, build-variants]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && (needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.description=MechForge AI - Mechanical Engineering AI Assistant
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: full
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # 测试镜像
+  test-images:
+    needs: [changes, build-variants]
+    runs-on: ubuntu-latest
+    if: ${{ needs.changes.outputs.docker == 'true' || needs.changes.outputs.code == 'true' }}
+    strategy:
+      matrix:
+        variant: [ai, rag, work, web, full]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: ${{ matrix.variant }}
+          load: true
+          tags: mechforge:test-${{ matrix.variant }}
+
+      - name: Test image
+        run: |
+          echo "Testing ${{ matrix.variant }} variant..."
+          docker run --rm mechforge:test-${{ matrix.variant }} python -c "import mechforge_core; print('Core module OK')" || true
+          docker run --rm mechforge:test-${{ matrix.variant }} python -c "import mechforge_ai; print('AI module OK')" || true
+
+  # 生成构建摘要
+  summary:
+    needs: [build-variants, build-latest, test-images]
+    runs-on: ubuntu-latest
+    if: always() && github.event_name != 'pull_request'
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## Docker 镜像构建完成 🐳" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 可用镜像" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 变体 | 描述 | Docker Hub | GHCR |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|------------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ai | AI 对话模式 | \`docker pull docker.io/${{ github.repository }}-ai:latest\` | \`docker pull ghcr.io/${{ github.repository }}-ai:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| rag | 知识库 RAG 模式 | \`docker pull docker.io/${{ github.repository }}-rag:latest\` | \`docker pull ghcr.io/${{ github.repository }}-rag:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| work | CAE 工作台模式 | \`docker pull docker.io/${{ github.repository }}-work:latest\` | \`docker pull ghcr.io/${{ github.repository }}-work:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| web | Web 服务模式 | \`docker pull docker.io/${{ github.repository }}-web:latest\` | \`docker pull ghcr.io/${{ github.repository }}-web:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| full | 完整版 | \`docker pull docker.io/${{ github.repository }}:latest\` | \`docker pull ghcr.io/${{ github.repository }}:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 快速开始" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# 使用 Docker Compose" >> $GITHUB_STEP_SUMMARY
+          echo "docker-compose --profile full up -d" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# 或直接运行" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -it --rm ghcr.io/${{ github.repository }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,61 @@
+{
+  "name": "mechforge-gui",
+  "version": "0.5.0",
+  "description": "MechForge AI PyWebView Desktop Application",
+  "main": "desktop_app.py",
+  "scripts": {
+    "start": "python desktop_app.py",
+    "start:debug": "python desktop_app.py --debug",
+    "dev": "python desktop_app.py --debug",
+    "build": "python build.py --build",
+    "build:clean": "python build.py",
+    "build:optimize": "python build.py --optimize",
+    "build:single": "python build_optimized.py --mode=single",
+    "build:folder": "python build_optimized.py --mode=folder",
+    "build:portable": "python build_optimized.py --mode=portable",
+    "build:upx": "python build_optimized.py --mode=single --upx",
+    "build:installer": "python build_optimized.py --mode=folder --installer",
+    "clean": "python build.py --clean",
+    "lint": "eslint app/**/*.js core/**/*.js services/**/*.js --fix",
+    "lint:check": "eslint app/**/*.js core/**/*.js services/**/*.js",
+    "lint:css": "stylelint css/**/*.css --fix",
+    "lint:css:check": "stylelint css/**/*.css",
+    "format": "prettier --write \"**/*.js\" \"**/*.css\" \"**/*.html\"",
+    "format:check": "prettier --check \"**/*.js\" \"**/*.css\" \"**/*.html\"",
+    "test": "node tests/test-framework.js",
+    "test:coverage": "npm test -- --coverage",
+    "optimize": "python build.py --optimize",
+    "check": "npm run lint:check && npm run format:check && npm run lint:css:check",
+    "fix": "npm run lint && npm run format && npm run lint:css",
+    "analyze": "node scripts/analyze-bundle.js",
+    "icons": "node scripts/generate-icons.js",
+    "prepare": "npm run fix"
+  },
+  "keywords": [
+    "mechforge",
+    "ai",
+    "desktop",
+    "pywebview",
+    "llm",
+    "chat"
+  ],
+  "author": "MechForge Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yd5768365-hue/mechforge"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.0",
+    "stylelint": "^16.2.0",
+    "stylelint-config-standard": "^36.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "defaults"
+  ]
+}

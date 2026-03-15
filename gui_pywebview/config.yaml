@@ -1,0 +1,96 @@
+# MechForge AI 配置文件
+
+# AI Provider 配置
+# 支持: openai, anthropic, ollama, local
+provider:
+  # 当前使用的 AI 提供商
+  default: "ollama"
+
+  # OpenAI 配置
+  openai:
+    api_key: ""  # 从环境变量 OPENAI_API_KEY 读取
+    model: "gpt-4o-mini"
+    base_url: "https://api.openai.com/v1"
+
+  # Anthropic 配置
+  anthropic:
+    api_key: ""  # 从环境变量 ANTHROPIC_API_KEY 读取
+    model: "claude-3-haiku-20240307"
+    base_url: "https://api.anthropic.com"
+
+  # Ollama 本地模型
+  ollama:
+    url: "http://localhost:11434"
+    model: "qwen2.5:1.5b"
+    # 自动启动 Ollama
+    auto_start: true
+
+  # 本地 GGUF 模型
+  local:
+    llm_model: "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+    embedding_model: "bge-m3-Q8_0.gguf"
+    model_dir: "./models"
+    n_ctx: 2048
+    n_gpu_layers: 0
+
+# 知识库配置
+knowledge:
+  # 知识库后端: local | ragflow
+  # - local: 本地 ChromaDB + BM25 实现（默认，无需外部服务）
+  # - ragflow: RAGFlow API 后端（高级文档解析：OCR、表格提取等）
+  backend: "local"
+
+  # 知识库目录（local 后端使用）
+  path: "./knowledge"
+
+  # RAG 配置
+  rag:
+    enabled: false
+    top_k: 5
+    cache_dir: ".cache/rag"
+    # 嵌入模型
+    embedding_model: "all-MiniLM-L6-v2"
+
+  # RAGFlow 配置（ragflow 后端使用）
+  ragflow:
+    url: "http://localhost:9380"
+    api_key: ""  # 从 RAGFlow 设置页面获取
+    kb_id: ""    # 知识库 ID
+    timeout: 300
+
+# MCP 服务器配置
+mcp:
+  enabled: false
+  servers: {}
+    # 示例配置:
+    # github:
+    #   command: "npx"
+    #   args: ["-y", "@modelcontextprotocol/server-github"]
+    # sqlite:
+    #   command: "python"
+    #   args: ["-m", "mcp.server", "--db-path", "./data.db"]
+
+# UI 配置
+ui:
+  # 主题: dark, light
+  theme: "dark"
+  # 彩色输出
+  color: true
+  # 显示状态指示器
+  show_status: true
+
+# 日志配置
+logging:
+  level: "info"  # debug, info, warn, error
+  file: ".logs/mechforge.log"
+
+# 聊天配置
+chat:
+  # 对话历史数量
+  history_limit: 50
+  # 系统提示词
+  system_prompt: ""
+  # 温度参数
+  temperature: 0.7
+  # 最大 token 数
+  max_tokens: 2048

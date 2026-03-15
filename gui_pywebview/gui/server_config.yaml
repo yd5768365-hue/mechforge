@@ -1,0 +1,15 @@
+# MechForge AI GUI 后端服务器配置
+
+[server]
+host = "127.0.0.1"
+port = 5000
+reload = false
+
+[api]
+base_url = "http://localhost:5000/api"
+timeout = 300
+
+[features]
+enable_rag = true
+enable_streaming = true
+enable_history = true

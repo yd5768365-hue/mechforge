@@ -1,0 +1,14 @@
+# MechForge AI Desktop App Dependencies
+
+# WebView 框架
+pywebview>=5.0.0
+
+# 打包工具
+pyinstaller>=6.0.0
+pyinstaller-hooks-contrib>=2024.0
+
+# 窗口管理（可选，用于系统托盘等）
+pystray>=0.19.5
+
+# 版本信息
+importlib-metadata>=6.0.0
