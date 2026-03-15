@@ -1,0 +1,1 @@
+"""MechForge AI 集成测试包"""
