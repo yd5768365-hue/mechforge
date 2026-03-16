@@ -20,6 +20,7 @@ from typing import Any
 import numpy as np
 
 from mechforge_core.config import get_config
+from mechforge_knowledge.model_cache import get_sentence_transformer
 
 # 抑制 HuggingFace 警告
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -288,9 +289,10 @@ class Reranker:
             return
 
         try:
-            from sentence_transformers import CrossEncoder
+            # 使用缓存的模型，避免重复加载
+            from mechforge_knowledge.model_cache import get_cross_encoder
 
-            self.model = CrossEncoder(self.model_name)
+            self.model = get_cross_encoder(self.model_name)
         except Exception:
             self.model = None
 
@@ -424,15 +426,10 @@ class RAGEngine:
             embedding_model = None
             if self.config.knowledge.rag.embedding_model:
                 try:
-                    import warnings
-
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        from sentence_transformers import SentenceTransformer
-
-                        embedding_model = SentenceTransformer(
-                            self.config.knowledge.rag.embedding_model
-                        )
+                    # 使用缓存的模型，避免重复加载
+                    embedding_model = get_sentence_transformer(
+                        self.config.knowledge.rag.embedding_model
+                    )
                 except Exception:
                     pass
             self.vector_retriever = VectorRetriever(self.documents, embedding_model)

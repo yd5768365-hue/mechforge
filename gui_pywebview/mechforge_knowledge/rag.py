@@ -14,6 +14,8 @@ from typing import Any
 
 from rich.console import Console
 
+from mechforge_knowledge.model_cache import get_sentence_transformer
+
 console = Console()
 
 
@@ -147,10 +149,8 @@ def search_with_chroma(
     # 如果集合为空，添加文档
     if collection.count() == 0:
         try:
-            from sentence_transformers import SentenceTransformer
-
-            # 尝试使用本地嵌入模型
-            embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            # 使用缓存的模型，避免重复加载
+            embedding_model = get_sentence_transformer("all-MiniLM-L6-v2")
 
             ids = [d["id"] for d in documents]
             contents = [d["content"] for d in documents]
@@ -168,9 +168,8 @@ def search_with_chroma(
 
     # 搜索
     try:
-        from sentence_transformers import SentenceTransformer
-
-        embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        # 使用缓存的模型，避免重复加载
+        embedding_model = get_sentence_transformer("all-MiniLM-L6-v2")
         query_embedding = embedding_model.encode([query]).tolist()
 
         results = collection.query(

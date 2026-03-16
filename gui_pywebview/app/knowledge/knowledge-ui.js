@@ -845,13 +845,9 @@
         // 如果点击的是已选中的标签，不执行任何操作
         if (tag.classList.contains('active')) return;
 
-        // 移除所有 active 状态并重置动画
+        // 移除所有 active 状态
         tags.forEach(t => {
           t.classList.remove('active');
-          // 强制重绘以重置动画
-          t.style.animation = 'none';
-          void t.offsetHeight; // 触发重排
-          t.style.animation = '';
         });
 
         // 添加当前 active - 触发热应力抖动动画
@@ -864,7 +860,6 @@
         createHeatRipple(tag);
 
         currentFilter = tag.dataset.filter;
-        tag.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         applyFilter();
       });
 

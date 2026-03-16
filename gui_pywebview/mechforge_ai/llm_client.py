@@ -807,6 +807,10 @@ class LLMClient:
         self._tool_handlers: dict[str, Callable] = {}
         self._local_manager = None
         self._use_local_manager = use_local_manager
+        # 缓存模型名称，避免频繁请求 Ollama API
+        self._cached_model_name: str | None = None
+        self._model_name_cache_time: float = 0
+        self._model_name_cache_ttl: float = 60  # 缓存60秒
 
         if use_local_manager:
             self._init_local_manager()
@@ -1106,7 +1110,14 @@ class LLMClient:
         self.conversation_history.append({"role": "assistant", "content": full_content})
 
     def get_current_model_name(self) -> str:
-        """获取当前模型名称"""
+        """获取当前模型名称（带缓存）"""
+        import time
+
+        # 检查缓存是否有效
+        if self._cached_model_name is not None:
+            if time.time() - self._model_name_cache_time < self._model_name_cache_ttl:
+                return self._cached_model_name
+
         provider_type = self.config.provider.get_active_provider()
         provider_cfg = self.config.provider.get_config(provider_type)
 
@@ -1116,15 +1127,22 @@ class LLMClient:
                 if resp.status_code == 200:
                     models = resp.json().get("models", [])
                     if models:
-                        return models[0].get("name", provider_cfg.model)
+                        self._cached_model_name = models[0].get("name", provider_cfg.model)
+                        self._model_name_cache_time = time.time()
+                        return self._cached_model_name
             except Exception:
                 pass
-            return self._model_override or provider_cfg.model
+            result = self._model_override or provider_cfg.model
 
-        if provider_type == "local":
-            return provider_cfg.llm_model
+        elif provider_type == "local":
+            result = provider_cfg.llm_model
+        else:
+            result = provider_cfg.model
 
-        return provider_cfg.model
+        # 缓存结果
+        self._cached_model_name = result
+        self._model_name_cache_time = time.time()
+        return result
 
     def get_api_type(self) -> str:
         """获取 API 类型名称"""

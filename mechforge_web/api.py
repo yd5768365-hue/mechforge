@@ -149,17 +149,18 @@ async def websocket_chat(websocket: WebSocket):
                 )
 
                 # 调用 LLM (流式)
+                # 优化：只发送增量内容，减少带宽占用
                 full_response = ""
                 for chunk in llm.call(message, context, stream=True):
                     full_response += chunk
                     await manager.send_message(
                         websocket,
-                        {"type": "stream", "messageId": message_id, "content": full_response},
+                        {"type": "stream", "messageId": message_id, "content": chunk},
                     )
 
                 # 流式结束
                 await manager.send_message(
-                    websocket, {"type": "stream_end", "messageId": message_id}
+                    websocket, {"type": "stream_end", "messageId": message_id, "fullContent": full_response}
                 )
 
                 # 保存到历史

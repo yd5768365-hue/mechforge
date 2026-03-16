@@ -258,6 +258,12 @@ class Database:
                 )
             """)
 
+            # 添加会话表索引，优化按更新时间排序查询
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sessions_updated_at
+                ON sessions(updated_at DESC)
+            """)
+
             # 知识库文档表
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS knowledge_documents (

@@ -227,9 +227,6 @@ class MechForgeTerminal:
 
             # 打印响应
             print()
-            from rich.console import Console
-
-            console = Console()
             console.print(response, style="cyan")
             self.conversation_history.append({"role": "assistant", "content": response})
 
