@@ -446,3 +446,34 @@
   border-color: rgba(0, 229, 255, 0.3);
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
 }
+
+/* 界面底部文档链接 */
+.content-footer-docs {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  background: linear-gradient(180deg,
+    rgba(8, 12, 16, 0.6) 0%,
+    rgba(5, 8, 12, 0.8) 100%);
+  border-top: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.content-footer-docs a {
+  color: var(--text-dim, #6a7a8a);
+  text-decoration: none;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  background: rgba(0, 20, 30, 0.4);
+}
+
+.content-footer-docs a:hover {
+  color: var(--accent-primary, #00e5ff);
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  transform: translateY(-2px);
+}
