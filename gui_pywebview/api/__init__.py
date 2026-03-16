@@ -7,6 +7,7 @@ from .chat import router as chat_router
 from .config import router as config_router
 from .gguf import router as gguf_router
 from .health import router as health_router
+from .obsidian import router as obsidian_router
 from .rag import router as rag_router
 from .ragflow_installer import router as ragflow_router
 
@@ -19,6 +20,7 @@ __all__ = [
     "chat_router",
     "rag_router",
     "ragflow_router",
+    "obsidian_router",
     "config_router",
     "gguf_router",
     "health_router",

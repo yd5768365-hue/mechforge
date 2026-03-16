@@ -311,6 +311,7 @@ class KnowledgeConfig(BaseModel):
     file_extensions: list[str] = Field(
         default=[".md", ".txt", ".pdf"], description="支持的文件扩展名"
     )
+    obsidian_vault_path: str = Field(default="", description="Obsidian Vault 路径")
 
     @field_validator("path")
     @classmethod
