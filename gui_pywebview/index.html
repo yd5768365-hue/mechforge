@@ -1305,6 +1305,159 @@
     window.openPushToObsidianModal = openPushToObsidianModal;
     window.closePushToObsidianModal = closePushToObsidianModal;
     window.pushToObsidian = pushToObsidian;
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // 书籍阅读器功能
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    let currentBookId = '';
+    let currentBookTitle = '';
+    let bookQAHistory = [];
+
+    // 打开书籍阅读器
+    async function openBookReader(bookId, title) {
+      currentBookId = bookId;
+      currentBookTitle = title;
+      document.getElementById('reader-title').textContent = '阅读: ' + title;
+
+      const modal = document.getElementById('book-reader-modal');
+      const contentEl = document.getElementById('reader-content');
+      const chaptersEl = document.getElementById('reader-chapters');
+
+      modal.classList.add('active');
+      contentEl.innerHTML = '<div class="reader-loading">正在加载书籍内容...</div>';
+      chaptersEl.innerHTML = '';
+
+      try {
+        const resp = await fetch('/api/knowledge/book_content/' + encodeURIComponent(bookId));
+        const data = await resp.json();
+
+        // 显示章节导航
+        if (data.chapters && data.chapters.length > 0) {
+          chaptersEl.innerHTML = '<div class="chapter-list">' +
+            data.chapters.map(ch => '<span class="chapter-item">' + escapeHtml(ch) + '</span>').join('') +
+            '</div>';
+        }
+
+        // 显示内容
+        contentEl.innerHTML = '<div class="markdown-body">' + data.content + '</div>';
+      } catch (e) {
+        contentEl.innerHTML = '<div class="reader-error">加载失败: ' + e.message + '</div>';
+      }
+    }
+
+    // 关闭书籍阅读器
+    function closeBookReader(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      document.getElementById('book-reader-modal').classList.remove('active');
+    }
+
+    // 打开书籍问答
+    function openBookQA(bookId, title) {
+      currentBookId = bookId;
+      currentBookTitle = title;
+      bookQAHistory = [];
+      document.getElementById('qa-title').textContent = '问答: ' + title;
+      document.getElementById('qa-messages').innerHTML = '<div class="qa-welcome">你好！我是《' + title + '》的阅读助手。请提出关于这本书的问题。</div>';
+      document.getElementById('qa-input').value = '';
+      document.getElementById('book-qa-modal').classList.add('active');
+    }
+
+    // 关闭书籍问答
+    function closeBookQA(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      document.getElementById('book-qa-modal').classList.remove('active');
+    }
+
+    // 向书籍提问
+    async function askBook() {
+      const input = document.getElementById('qa-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      const messagesEl = document.getElementById('qa-messages');
+
+      // 添加用户问题
+      messagesEl.innerHTML += '<div class="qa-message qa-user">' + escapeHtml(question) + '</div>';
+
+      // 清空输入
+      input.value = '';
+
+      // 添加加载中提示
+      const loadingEl = document.createElement('div');
+      loadingEl.className = 'qa-message qa-loading';
+      loadingEl.textContent = '思考中...';
+      messagesEl.appendChild(loadingEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // 更新历史
+      bookQAHistory.push({ role: 'user', content: question });
+
+      try {
+        const resp = await fetch('/api/knowledge/ask_book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            book_id: currentBookId,
+            question: question,
+            history: bookQAHistory
+          })
+        });
+
+        // 处理 SSE 流式响应
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let answer = '';
+
+        loadingEl.textContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                loadingEl.remove();
+                // 添加 AI 回答
+                messagesEl.innerHTML += '<div class="qa-message qa-assistant">' + answer + '</div>';
+                bookQAHistory.push({ role: 'assistant', content: answer });
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                return;
+              }
+              try {
+                const json = JSON.parse(data);
+                if (json.content) {
+                  answer += json.content;
+                  loadingEl.textContent = answer + '▌';
+                } else if (json.error) {
+                  loadingEl.textContent = '错误: ' + json.error;
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+            }
+          }
+        }
+      } catch (e) {
+        loadingEl.textContent = '请求失败: ' + e.message;
+      }
+    }
+
+    // 暴露函数到全局
+    window.openBookReader = openBookReader;
+    window.closeBookReader = closeBookReader;
+    window.openBookQA = openBookQA;
+    window.closeBookQA = closeBookQA;
+    window.askBook = askBook;
   </script>
 
   <script src="experience.js"></script>
@@ -1533,6 +1686,58 @@
           </svg>
           推送到 Obsidian
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 书籍阅读器模态框 -->
+  <div id="book-reader-modal" class="modal-overlay" onclick="closeBookReader(event)">
+    <div class="modal-container book-reader-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          <span id="reader-title">阅读书籍</span>
+        </div>
+        <button class="modal-close" onclick="closeBookReader()">✕</button>
+      </div>
+
+      <!-- 章节导航 -->
+      <div class="reader-chapters" id="reader-chapters"></div>
+
+      <!-- 阅读内容 -->
+      <div class="reader-content" id="reader-content">
+        <div class="reader-loading">正在加载书籍内容...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 书籍问答模态框 -->
+  <div id="book-qa-modal" class="modal-overlay" onclick="closeBookQA(event)">
+    <div class="modal-container book-qa-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+          </svg>
+          <span id="qa-title">问答书籍</span>
+        </div>
+        <button class="modal-close" onclick="closeBookQA()">✕</button>
+      </div>
+
+      <!-- 问答内容 -->
+      <div class="qa-content" id="qa-content">
+        <div class="qa-messages" id="qa-messages"></div>
+        <div class="qa-input-area">
+          <input type="text" class="setting-input" id="qa-input" placeholder="向书籍提问..." onkeypress="if(event.key==='Enter')askBook()">
+          <button class="btn-confirm primary" onclick="askBook()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            发送
+          </button>
+        </div>
       </div>
     </div>
   </div>

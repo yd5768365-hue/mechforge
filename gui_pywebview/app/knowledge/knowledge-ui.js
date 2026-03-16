@@ -472,6 +472,9 @@
    * 初始化知识库模块
    * @param {Object} service - AIService 实例
    */
+  // 存储从 API 获取的真实书籍列表
+  let realBooks = [];
+
   function init(service) {
     aiService = service;
 
@@ -496,10 +499,33 @@
     setupDrawerListeners();
     setupCarousel();
 
-    displayResults(mockResults);
+    // 优先加载真实书籍列表，失败则使用模拟数据
+    loadRealBooks().then(books => {
+      if (books && books.length > 0) {
+        realBooks = books;
+        displayResults(books);
+      } else {
+        displayResults(mockResults);
+      }
+    }).catch(() => {
+      displayResults(mockResults);
+    });
 
     // 获取向量知识库状态
     fetchRAGStatus();
+  }
+
+  // 从 API 加载真实书籍列表
+  async function loadRealBooks() {
+    try {
+      const resp = await fetch('/api/knowledge/list');
+      if (!resp.ok) return null;
+      const books = await resp.json();
+      return books;
+    } catch (e) {
+      console.warn('[Knowledge] 加载书籍列表失败，使用模拟数据:', e);
+      return null;
+    }
   }
 
   async function fetchRAGStatus() {
@@ -1203,25 +1229,58 @@
     if (!detailOverlay || !detailDrawer) return;
 
     const color = bookColors[book.type] || bookColors.design;
+    const isRealBook = book.id && realBooks.some(rb => rb.id === book.id);
 
     if (drawerTitle) drawerTitle.textContent = book.title;
-    if (drawerBadges) drawerBadges.innerHTML = getTypeBadge(book.type);
+    if (drawerBadges) drawerBadges.innerHTML = getTypeBadge(book.type || 'book');
+
+    // 处理真实书籍和模拟书籍的元数据
     if (drawerMeta) {
-      drawerMeta.innerHTML = `
-        <span>作者: ${escapeHtml(book.author)}</span>
-        <span>版本: ${escapeHtml(book.edition)}</span>
-        <span>出版社: ${escapeHtml(book.publisher)}</span>
-        <span>ISBN: ${book.isbn}</span>
-      `;
+      if (isRealBook) {
+        // 真实书籍元数据
+        drawerMeta.innerHTML = `
+          <span>分块数: ${book.chunks || 0}</span>
+          <span>大小: ${book.size || '-'}</span>
+        `;
+      } else {
+        // 模拟书籍元数据
+        drawerMeta.innerHTML = `
+          <span>作者: ${escapeHtml(book.author)}</span>
+          <span>版本: ${escapeHtml(book.edition)}</span>
+          <span>出版社: ${escapeHtml(book.publisher)}</span>
+          <span>ISBN: ${book.isbn}</span>
+        `;
+      }
     }
 
     if (drawerBody) {
-      drawerBody.innerHTML = generateBookContent(book, color);
+      drawerBody.innerHTML = generateBookContent(book, color, isRealBook);
     }
 
+    // 添加阅读和问答按钮（仅真实书籍）
     if (drawerSource) {
-      drawerSource.href = '#';
-      drawerSource.textContent = '查看详情';
+      if (isRealBook) {
+        drawerSource.style.display = 'flex';
+        drawerSource.style.gap = '10px';
+        drawerSource.innerHTML = `
+          <button class="book-action-btn read-btn" onclick="event.preventDefault(); event.stopPropagation(); openBookReader('${book.id}', '${escapeHtml(book.title)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            阅读本书
+          </button>
+          <button class="book-action-btn ask-btn" onclick="event.preventDefault(); event.stopPropagation(); openBookQA('${book.id}', '${escapeHtml(book.title)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+            </svg>
+            问答
+          </button>
+        `;
+      } else {
+        drawerSource.style.display = 'block';
+        drawerSource.href = '#';
+        drawerSource.textContent = '查看详情';
+      }
     }
 
     playDrawerOpenSound();
@@ -1230,7 +1289,31 @@
     document.body.style.overflow = 'hidden';
   }
 
-  function generateBookContent(book, color) {
+  function generateBookContent(book, color, isRealBook = false) {
+    // 真实书籍的简化内容展示
+    if (isRealBook) {
+      return `
+        <div class="book-detail-header" style="border-left: 3px solid ${color.primary}; padding-left: 16px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="font-size: 28px;">${color.icon}</span>
+            <div>
+              <div style="color: ${color.primary}; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">已入库书籍</div>
+              <div style="color: var(--ind-text-dim); font-size: 12px;">${book.chunks || 0} 个知识块</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>操作</h3>
+        <p style="color: var(--ind-text-dim);">点击下方的"阅读本书"查看书籍正文，或点击"问答"向书籍提问。</p>
+
+        <h3>标签</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          ${(book.tags || []).map(t => `<span style="padding: 3px 10px; background: ${color.primary}15; border: 1px solid ${color.primary}33; border-radius: 12px; font-size: 11px; color: ${color.primary};">${escapeHtml(t)}</span>`).join('') || '<span style="color: var(--ind-text-dim);">无</span>'}
+        </div>
+      `;
+    }
+
+    // 模拟书籍的完整展示
     return `
       <div class="book-detail-header" style="border-left: 3px solid ${color.primary}; padding-left: 16px; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">

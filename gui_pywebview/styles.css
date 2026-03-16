@@ -2633,6 +2633,179 @@ body {
   padding: 20px;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   书籍阅读器样式
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.book-reader-modal {
+  width: 800px;
+  max-width: 95vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reader-chapters {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.chapter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chapter-item {
+  padding: 4px 12px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chapter-item:hover {
+  background: rgba(0, 229, 255, 0.2);
+}
+
+.reader-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.reader-loading,
+.reader-error {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.reader-error {
+  color: var(--danger);
+}
+
+.reader-content .markdown-body {
+  color: var(--text-primary);
+}
+
+.reader-content .markdown-body h1,
+.reader-content .markdown-body h2,
+.reader-content .markdown-body h3 {
+  color: var(--accent-primary);
+  margin: 1em 0 0.5em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   书籍问答样式
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.book-qa-modal {
+  width: 650px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qa-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qa-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.qa-welcome {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-secondary);
+  background: rgba(0, 229, 255, 0.05);
+  border-radius: 8px;
+}
+
+.qa-message {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.qa-user {
+  background: rgba(0, 229, 255, 0.15);
+  border-left: 3px solid var(--accent-primary);
+  margin-left: 20%;
+}
+
+.qa-assistant {
+  background: rgba(138, 43, 226, 0.1);
+  border-left: 3px solid #8b5cf6;
+  margin-right: 20%;
+}
+
+.qa-loading {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.qa-input-area {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.qa-input-area .setting-input {
+  flex: 1;
+}
+
+/* 书籍操作按钮 */
+.book-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.book-action-btn.read-btn {
+  background: linear-gradient(135deg, #00b8d4, #0097a7);
+  color: white;
+}
+
+.book-action-btn.read-btn:hover {
+  box-shadow: 0 4px 15px rgba(0, 184, 212, 0.4);
+}
+
+.book-action-btn.ask-btn {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+}
+
+.book-action-btn.ask-btn:hover {
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
 .form-group {
   margin-bottom: 16px;
 }
