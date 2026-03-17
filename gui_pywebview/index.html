@@ -13,9 +13,12 @@
   <!-- 模块化 CSS -->
   <link rel="stylesheet" href="styles-modular.css">
   <link rel="stylesheet" href="experience.css">
+  <link rel="stylesheet" href="css/chat.css">
   <link rel="stylesheet" href="css/chat-markdown.css">
   <link rel="stylesheet" href="css/industrial-theme.css">
   <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/knowledge.css">
+  <link rel="stylesheet" href="css/experience.css">
 </head>
 <body>
   <div class="app-container">
@@ -39,48 +42,8 @@
 
     <!-- Main Content -->
     <div class="main-content">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <div class="sidebar-icon active" data-tab="chat" title="AI 助手">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-            <circle cx="9" cy="10" r="1.5" fill="currentColor"/>
-            <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
-          </svg>
-          <span class="icon-label">AI</span>
-        </div>
-        <div class="sidebar-icon" data-tab="knowledge" title="知识库">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-            <path d="M8 7h8M8 11h6M8 15h4"/>
-          </svg>
-          <span class="icon-label">RAG</span>
-        </div>
-        <div class="sidebar-icon" data-tab="cae" title="CAE 工作台">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M2 20h20"/>
-            <path d="M6 20V8l6-4 6 4v12"/>
-            <path d="M10 20v-6h4v6"/>
-            <circle cx="12" cy="4" r="2"/>
-          </svg>
-          <span class="icon-label">CAE</span>
-        </div>
-        <div class="sidebar-icon" data-tab="experience" title="经验库">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <span class="icon-label">EXP</span>
-        </div>
-        <div class="sidebar-icon" data-tab="settings" title="设置">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-          </svg>
-          <span class="icon-label">设置</span>
-        </div>
-      </div>
+      <!-- Sidebar (loaded by sidebar.js) -->
+      <div id="sidebar-placeholder"></div>
 
       <!-- Tab Panels -->
       <div class="tab-panels">
@@ -147,654 +110,21 @@
           <circle cx="80%" cy="80%" r="1.5" fill="#00e5ff" opacity="1"/>
         </svg>
 
-        <!-- Chat Panel -->
-        <div class="tab-panel active" id="chat-panel">
-          <!-- Mascot Toggle Button -->
-          <button class="mascot-toggle" id="mascot-toggle" title="切换吉祥物">
-            <svg class="gear-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-            </svg>
-          </button>
+        <!-- Chat Panel (loaded by chat-panel.js) -->
+        <div id="chat-panel-placeholder"></div>
 
-          <!-- Mascot Whale (hidden by default) -->
-          <div class="mascot-whale hidden">
-            <img src="dj-whale.png" alt="MechForge 吉祥物" class="whale-img">
-            <!-- 符文容器 - 数据共鸣效果 -->
-            <div class="rune-container" id="rune-container">
-              <div class="rune-ring"></div>
-              <div class="rune-ring"></div>
-              <div class="rune-ring"></div>
-              <!-- 符文字符将通过 JS 动态生成 -->
-            </div>
-            <!-- 思考波纹 -->
-            <div class="thought-ripple"></div>
-            <div class="thought-ripple"></div>
-            <div class="thought-ripple"></div>
-            <!-- AI 响应同步显示 -->
-            <div class="whale-speech" id="whale-speech"></div>
-          </div>
+        <!-- Knowledge Panel (loaded by knowledge-panel.js) -->
+        <div id="knowledge-panel-placeholder"></div>
 
-          <!-- Gear Animation (visible by default) -->
-          <div class="default-gear">
-            <svg class="spinning-gear" viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="0.5">
-              <circle cx="12" cy="12" r="2" fill="rgba(0, 229, 255, 0.3)"/>
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="rgba(0, 229, 255, 0.4)"/>
-              <path d="M12 6a6 6 0 00-6 6 6 6 0 006 6 6 6 0 006-6 6 6 0 00-6-6z" stroke="rgba(0, 229, 255, 0.2)"/>
-            </svg>
-          </div>
+        <!-- CAE Panel (loaded by cae-panel.js) -->
+        <div id="cae-panel-placeholder"></div>
 
-          <!-- 内置模型下载提示 -->
-          <div class="model-download-banner" id="model-download-banner" style="display: none;">
-            <div class="mdb-icon">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </div>
-            <div class="mdb-content">
-              <div class="mdb-title">下载内置 AI 模型</div>
-              <div class="mdb-desc" id="mdb-desc">下载 Qwen2.5-1.5B 模型 (~1 GB)，即可离线使用 AI 对话</div>
-              <div class="mdb-progress-wrap" id="mdb-progress-wrap" style="display: none;">
-                <div class="mdb-progress-bar"><div class="mdb-progress-fill" id="mdb-progress-fill"></div></div>
-                <div class="mdb-progress-text" id="mdb-progress-text">0%</div>
-              </div>
-            </div>
-            <div class="mdb-actions" id="mdb-actions">
-              <button class="mdb-btn primary" id="mdb-download-btn">开始下载</button>
-              <button class="mdb-btn secondary" id="mdb-dismiss-btn">稍后</button>
-            </div>
-          </div>
+        <!-- Experience Panel (loaded by experience-panel.js) -->
+        <div id="experience-panel-placeholder"></div>
 
-          <div class="boot-sequence" id="boot-sequence">
-            <div class="boot-line" id="boot-line-0">[21:04] 系统: 正在初始化 MechForge AI...</div>
-          </div>
-          <div class="chat-output" id="chat-output"></div>
-          <div class="chat-input-container">
-            <div class="input-wrapper">
-              <input type="text" id="chat-input" placeholder="输入您的问题..." autocomplete="off">
-              <button id="send-btn">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="white">
-                  <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
-                </svg>
-                发送
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- Settings Panel (loaded by settings-panel.js) -->
+        <div id="settings-panel-placeholder"></div>
 
-        <!-- Knowledge Panel -->
-        <div class="tab-panel" id="knowledge-panel">
-          <!-- 工业风背景 -->
-          <div class="industrial-background"></div>
-          
-          <!-- 工业网格 - 粗细不均 + 烧蚀感 -->
-          <svg class="industrial-grid" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <!-- 粗线条 - 主要应力线 -->
-              <pattern id="ind-grid-thick" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-                <path d="M0 60 Q60 55, 120 60" class="grid-thick" fill="none"/>
-                <path d="M60 0 Q55 60, 60 120" class="grid-thick" fill="none"/>
-              </pattern>
-              <!-- 中等线条 - 普通加工线 -->
-              <pattern id="ind-grid-medium" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="30" x2="60" y2="30" class="grid-medium"/>
-                <line x1="30" y1="0" x2="30" y2="60" class="grid-medium"/>
-              </pattern>
-              <!-- 细线条 - 细微划痕 -->
-              <pattern id="ind-grid-thin" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="15" x2="30" y2="15" class="grid-thin"/>
-                <line x1="15" y1="0" x2="15" y2="30" class="grid-thin"/>
-              </pattern>
-              <!-- 烧蚀线条 - 模糊断裂 -->
-              <pattern id="ind-grid-burn" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-                <path d="M0 40 Q20 35, 40 40 T80 40" class="grid-burn" fill="none"/>
-                <path d="M40 0 Q35 20, 40 40 T40 80" class="grid-burn" fill="none"/>
-              </pattern>
-              <!-- 热影响区线条 -->
-              <pattern id="ind-grid-heat" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="50" x2="100" y2="50" class="grid-heat"/>
-                <line x1="50" y1="0" x2="50" y2="100" class="grid-heat"/>
-              </pattern>
-              <!-- 断裂线 -->
-              <pattern id="ind-grid-broken" x="0" y="0" width="45" height="45" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="22" x2="45" y2="22" class="grid-broken"/>
-                <line x1="22" y1="0" x2="22" y2="45" class="grid-broken"/>
-              </pattern>
-              <!-- 警示网格 -->
-              <pattern id="ind-grid-alert" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="200" height="3" class="grid-alert" fill="none"/>
-                <rect x="0" y="197" width="200" height="3" class="grid-alert" fill="none"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#ind-grid-thick)" opacity="0.5"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-medium)" opacity="0.4"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-thin)" opacity="0.3"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-burn)" opacity="0.35"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-heat)" opacity="0.25"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-broken)" opacity="0.3"/>
-            <rect width="100%" height="100%" fill="url(#ind-grid-alert)" opacity="0.2"/>
-          </svg>
-          
-          <!-- 金属尘埃粒子容器 -->
-          <div class="metal-dust-container" id="metal-dust-container"></div>
-          
-          <!-- 热应力波脉冲容器 -->
-          <div class="heat-pulse-container" id="heat-pulse-container"></div>
-          
-          <div class="panel-header">
-            <span class="header-mark">锻造</span>
-            <h2>知识库</h2>
-            <p>机械工程专业书籍库</p>
-            <span class="archive-id">MECHFORGE-KB-V3.0</span>
-          </div>
-          
-          <!-- 分类标签 -->
-          <div class="knowledge-tags" id="knowledge-tags">
-            <span class="knowledge-tag active" data-filter="all">全部</span>
-            <span class="knowledge-tag" data-filter="mechanics">力学</span>
-            <span class="knowledge-tag" data-filter="materials">材料</span>
-            <span class="knowledge-tag" data-filter="design">设计</span>
-            <span class="knowledge-tag" data-filter="manufacturing">制造</span>
-            <span class="knowledge-tag" data-filter="thermo">热力学</span>
-            <span class="knowledge-tag" data-filter="control">控制</span>
-            <span class="knowledge-tag" data-filter="fea">有限元</span>
-            <span class="knowledge-tag" data-filter="fluid">流体</span>
-            <span class="knowledge-tag" data-filter="tribology">摩擦学</span>
-          </div>
-          
-          <div class="search-container">
-            <div class="search-wrapper">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input type="text" id="knowledge-search" placeholder="搜索书籍名称、作者或关键词...">
-              <button id="search-btn">搜索</button>
-            </div>
-          </div>
-
-          <!-- 书籍轮播区域 -->
-          <div class="book-carousel-section" id="book-carousel-section">
-            <div class="book-carousel-header">
-              <h3>推荐书籍</h3>
-              <div class="carousel-nav">
-                <button class="add-book-btn" onclick="openAddBookModal()" title="添加书籍到知识库">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                  添加书籍
-                </button>
-                <button class="carousel-nav-btn" id="carousel-prev" title="上一页">‹</button>
-                <button class="carousel-nav-btn" id="carousel-next" title="下一页">›</button>
-              </div>
-            </div>
-            <div class="book-carousel" id="book-carousel"></div>
-          </div>
-
-          <!-- 搜索结果 / 全部书籍列表 -->
-          <div class="search-results" id="search-results"></div>
-
-          <!-- 详情抽屉 - 全息投影机密板 -->
-          <div class="detail-overlay" id="detail-overlay"></div>
-          <div class="detail-drawer" id="detail-drawer">
-            <!-- 能量线边框 -->
-            <div class="drawer-energy-border">
-              <div class="energy-line top"></div>
-              <div class="energy-line right"></div>
-              <div class="energy-line bottom"></div>
-              <div class="energy-line left"></div>
-              <div class="energy-corner tl"></div>
-              <div class="energy-corner tr"></div>
-              <div class="energy-corner bl"></div>
-              <div class="energy-corner br"></div>
-            </div>
-
-            <!-- 关闭按钮 -->
-            <button class="drawer-close" id="drawer-close" title="关闭档案">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-
-            <!-- 抽屉内容 -->
-            <div class="drawer-content" id="drawer-content">
-              <!-- 头部 -->
-              <div class="drawer-header">
-                <div class="drawer-classification">MechForge 知识库 // 书籍详情</div>
-                <div class="drawer-title" id="drawer-title"></div>
-                <div class="drawer-badges" id="drawer-badges"></div>
-              </div>
-
-              <!-- 元信息 -->
-              <div class="drawer-meta" id="drawer-meta"></div>
-
-              <!-- 分隔线 -->
-              <div class="drawer-divider">
-                <div class="divider-line"></div>
-                <div class="divider-glow"></div>
-              </div>
-
-              <!-- 主体内容 -->
-              <div class="drawer-body" id="drawer-body"></div>
-
-              <!-- 底部 -->
-              <div class="drawer-footer">
-                <a class="drawer-source" id="drawer-source" href="#" target="_blank">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15,3 21,3 21,9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                  查看源文档
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CAE Panel -->
-        <div class="tab-panel" id="cae-panel">
-          <div class="panel-header">
-            <h2>CAE 工作台</h2>
-            <p>模型加载、网格划分、求解和可视化</p>
-          </div>
-          <div class="cae-toolbar">
-            <button class="cae-btn" id="demo-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-              示例悬臂梁
-            </button>
-            <button class="cae-btn" id="load-model-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              加载模型
-            </button>
-            <button class="cae-btn" id="mesh-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
-                <line x1="12" y1="22" x2="12" y2="15.5"/>
-                <polyline points="22 8.5 12 15.5 2 8.5"/>
-              </svg>
-              网格
-            </button>
-            <button class="cae-btn" id="solve-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-              求解
-            </button>
-            <button class="cae-btn" id="visualize-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="12" cy="12" r="3"/>
-                <line x1="12" y1="2" x2="12" y2="6"/>
-                <line x1="12" y1="18" x2="12" y2="22"/>
-              </svg>
-              可视化
-            </button>
-            <button class="cae-btn" id="clear-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18"/>
-                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-              </svg>
-              清除
-            </button>
-          </div>
-          <div class="cae-viewport" id="cae-viewport">
-            <canvas id="cae-canvas"></canvas>
-            <div class="viewport-overlay" id="viewport-overlay">
-              <div class="overlay-content">
-                <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                  <line x1="12" y1="22.08" x2="12" y2="12"/>
-                </svg>
-                <p>CAE 工作台就绪</p>
-                <span>加载模型以开始仿真</span>
-              </div>
-            </div>
-          </div>
-          <div class="cae-status" id="cae-status">
-            <div class="status-item">
-              <span class="status-label">状态:</span>
-              <span class="status-value" id="status-text">就绪</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">模型:</span>
-              <span class="status-value" id="model-name">无</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">单元:</span>
-              <span class="status-value" id="element-count">0</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">节点:</span>
-              <span class="status-value" id="node-count">0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Experience Library Panel -->
-        <div class="tab-panel" id="experience-panel">
-          <!-- 工业风背景 -->
-          <div class="industrial-background"></div>
-
-          <!-- 面板头部 -->
-          <div class="panel-header">
-            <span class="header-mark">锻造</span>
-            <h2>经验库</h2>
-            <p>机械工程故障案例与解决方案</p>
-            <span class="archive-id">MECHFORGE-EXP-V3.0</span>
-          </div>
-
-          <!-- 搜索容器 -->
-          <div class="exp-search-section">
-            <div class="search-wrapper">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input type="text" id="exp-search-input" placeholder="搜索故障案例、标签或关键词...">
-              <span id="exp-count-badge" class="exp-count-badge">12</span>
-            </div>
-          </div>
-
-          <!-- Daily Feed 区域 -->
-          <div id="daily-feed-section">
-            <div class="df-embedded-header">
-              <div>
-                <div class="df-embedded-title">◈ DAILY KNOWLEDGE FEED</div>
-                <div class="df-embedded-date" id="df-embedded-date">── 未生成 ──</div>
-              </div>
-            </div>
-            <div id="df-history-selector" class="df-history-selector"></div>
-            <div class="df-embedded-content" id="df-embedded-content">
-              <div class="df-embedded-empty" id="df-embedded-empty">
-                <div class="df-embedded-empty-icon">📡</div>
-                <div class="df-embedded-empty-text">每日机械工程知识推送</div>
-                <button class="df-generate-btn" id="df-generate-btn">
-                  <span class="btn-icon">⚡</span>
-                  <span class="btn-text">生成今日推送</span>
-                </button>
-                <div class="df-generate-hint">自动使用当前 AI 模型生成 3 条机械工程知识</div>
-              </div>
-              <div class="df-embedded-list" id="df-embedded-list" style="display:none;"></div>
-              <div class="df-embedded-actions" id="df-actions-bar" style="display:none;">
-                <button class="df-embedded-btn primary" id="df-refresh-btn">⟳ 重新生成</button>
-                <button class="df-embedded-btn history" id="df-history-btn">📅 历史</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 标签过滤 -->
-          <div class="exp-tags-container" id="exp-tags-container"></div>
-
-          <!-- 经验卡片网格 -->
-          <div class="search-results" id="exp-results">
-            <div class="result-placeholder">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
-              <p>加载中...</p>
-            </div>
-          </div>
-
-          <!-- 详情弹窗 -->
-          <div class="exp-modal-overlay" id="exp-modal-overlay">
-            <div class="exp-modal-container" id="exp-modal">
-              <button class="exp-modal-close" id="exp-modal-close">&times;</button>
-              <div class="exp-modal-header">
-                <div class="exp-modal-tags" id="exp-modal-tags"></div>
-                <h2 class="exp-modal-title" id="exp-modal-title"></h2>
-                <div class="exp-modal-meta" id="exp-modal-meta"></div>
-              </div>
-              <div class="exp-modal-body">
-                <div class="exp-modal-section">
-                  <h3>故障条件</h3>
-                  <p id="exp-modal-condition"></p>
-                </div>
-                <div class="exp-modal-section">
-                  <h3>原因分析</h3>
-                  <p id="exp-modal-cause"></p>
-                </div>
-                <div class="exp-modal-section">
-                  <h3>解决方案</h3>
-                  <pre id="exp-modal-solution"></pre>
-                </div>
-              </div>
-              <div class="exp-modal-footer">
-                <span class="exp-modal-source" id="exp-modal-source"></span>
-                <a href="#" class="exp-modal-link" id="exp-modal-link" target="_blank">查看来源 →</a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Settings Panel -->
-        <div class="tab-panel" id="settings-panel">
-          <!-- 工业风背景 -->
-          <div class="industrial-background"></div>
-
-          <!-- 面板头部 -->
-          <div class="panel-header">
-            <span class="header-mark">系统</span>
-            <h2>设置</h2>
-            <p>应用配置与个性化选项</p>
-            <span class="archive-id">MECHFORGE-CFG-V3.0</span>
-          </div>
-
-          <!-- 可滑动设置内容区 -->
-          <div class="settings-scroll-container" id="settings-scroll">
-            <!-- API 配置 -->
-            <div class="settings-section">
-              <div class="settings-section-title">
-                <span class="section-icon">🔌</span>
-                <span>API 配置</span>
-              </div>
-              <div class="settings-card">
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">AI 服务提供商</div>
-                    <div class="setting-desc">选择使用的 AI 后端服务</div>
-                  </div>
-                  <select class="setting-select" id="setting-provider">
-                    <option value="ollama">Ollama (本地)</option>
-                    <option value="gguf">GGUF (本地模型)</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="anthropic">Anthropic</option>
-                  </select>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">API Key</div>
-                    <div class="setting-desc">在线服务所需的 API 密钥</div>
-                  </div>
-                  <input type="password" class="setting-input" id="setting-apikey" placeholder="sk-...">
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">模型名称</div>
-                    <div class="setting-desc">使用的 AI 模型</div>
-                  </div>
-                  <input type="text" class="setting-input" id="setting-model" placeholder="gpt-4o-mini">
-                </div>
-              </div>
-            </div>
-
-            <!-- 界面设置 -->
-            <div class="settings-section">
-              <div class="settings-section-title">
-                <span class="section-icon">🎨</span>
-                <span>界面设置</span>
-              </div>
-              <div class="settings-card">
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">主题</div>
-                    <div class="setting-desc">选择界面主题风格</div>
-                  </div>
-                  <select class="setting-select" id="setting-theme">
-                    <option value="dark">深色 (默认)</option>
-                    <option value="light">浅色</option>
-                    <option value="industrial">工业风</option>
-                  </select>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">语言</div>
-                    <div class="setting-desc">界面显示语言</div>
-                  </div>
-                  <select class="setting-select" id="setting-language">
-                    <option value="zh-CN">简体中文</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">字体大小</div>
-                    <div class="setting-desc">调整界面字体大小</div>
-                  </div>
-                  <input type="range" class="setting-slider" id="setting-fontsize" min="12" max="20" value="14">
-                </div>
-              </div>
-            </div>
-
-            <!-- Daily Feed 设置 -->
-            <div class="settings-section">
-              <div class="settings-section-title">
-                <span class="section-icon">📡</span>
-                <span>Daily Feed 设置</span>
-              </div>
-              <div class="settings-card">
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">启用 Daily Feed</div>
-                    <div class="setting-desc">在经验库显示每日知识推送</div>
-                  </div>
-                  <button type="button" class="setting-btn setting-btn-daily" id="setting-daily-enabled-btn">
-                    开启
-                  </button>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">每日推送数量</div>
-                    <div class="setting-desc">每次生成的知识条目数</div>
-                  </div>
-                  <input type="range" class="setting-slider" id="setting-daily-count" min="1" max="5" value="3">
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">推送时间</div>
-                    <div class="setting-desc">自动生成时间 (自动模式)</div>
-                  </div>
-                  <input type="time" class="setting-input" id="setting-daily-time" value="07:00">
-                </div>
-              </div>
-            </div>
-
-            <!-- 知识库设置 -->
-            <div class="settings-section">
-              <div class="settings-section-title">
-                <span class="section-icon">📚</span>
-                <span>知识库设置</span>
-              </div>
-              <div class="settings-card">
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">知识库路径</div>
-                    <div class="setting-desc">本地知识库文件夹位置</div>
-                  </div>
-                  <div class="setting-path">
-                    <input type="text" class="setting-input" id="setting-kb-path" readonly value="./knowledge">
-                    <button class="setting-btn" id="btn-select-kb">选择</button>
-                  </div>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">启用 RAG</div>
-                    <div class="setting-desc">检索增强生成功能</div>
-                  </div>
-                  <label class="setting-toggle">
-                    <input type="checkbox" id="setting-rag-enabled" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">RAGFlow 向导</div>
-                    <div class="setting-desc">配置 RAGFlow 云端知识库（支持 OCR、表格解析）</div>
-                  </div>
-                  <button class="setting-btn primary" id="btn-ragflow-wizard" onclick="openRagflowWizard()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                    </svg>
-                    启动向导
-                  </button>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-name">Obsidian 同步</div>
-                    <div class="setting-desc">同步 Obsidian Vault 笔记到知识库</div>
-                  </div>
-                  <button class="setting-btn" id="btn-obsidian-sync" onclick="openObsidianSyncPanel()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    配置
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 关于 -->
-            <div class="settings-section">
-              <div class="settings-section-title">
-                <span class="section-icon">ℹ️</span>
-                <span>关于</span>
-              </div>
-              <div class="settings-card about-card">
-                <div class="about-logo">
-                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#00e5ff" stroke-width="1.5">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                  </svg>
-                </div>
-                <div class="about-info">
-                  <div class="about-name">MechForge AI</div>
-                  <div class="about-version">版本 0.5.0</div>
-                  <div class="about-desc">机械工程智能助手</div>
-                </div>
-                <div class="about-links">
-                  <a href="#" class="about-link">文档</a>
-                  <a href="#" class="about-link">GitHub</a>
-                  <a href="#" class="about-link">反馈</a>
-                </div>
-              </div>
-            </div>
-
-            <!-- 保存按钮 -->
-            <div class="settings-actions">
-              <button class="settings-btn secondary" id="btn-reset">重置</button>
-              <button class="settings-btn primary" id="btn-save">保存设置</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 界面底部文档链接 -->
-        <div class="content-footer-docs">
-          <a href="docs/OPTIMIZATION_2026-03-16.md" target="_blank">📄 优化日志</a>
-          <a href="docs/USAGE.md" target="_blank">📖 使用指南</a>
-          <a href="docs/CONFIG.md" target="_blank">⚙️ 配置</a>
-          <a href="docs/ARCHITECTURE.md" target="_blank">🏗️ 架构</a>
-        </div>
       </div>
     </div>
 
@@ -806,10 +136,6 @@
       <span class="status-bar-item status-on" data-status="rag">RAG: 开启</span>
       <span class="status-bar-item" data-status="exp">经验库: 关闭</span>
       <span class="status-bar-item" data-status="memory">内存: 42 KB</span>
-    </div>
-        <a href="docs/CONFIG.md" target="_blank" title="配置文档">⚙️ 配置</a>
-        <a href="docs/ARCHITECTURE.md" target="_blank" title="架构文档">🏗️ 架构</a>
-      </span>
     </div>
   </div>
 
@@ -860,6 +186,7 @@
 
   <!-- UI Modules -->
   <script src="app/ui/particles.js"></script>
+  <script src="app/layout/sidebar.js"></script>
   <script src="app/ui/window-control.js"></script>
   <script src="app/ui/mascot.js"></script>
 
@@ -869,13 +196,19 @@
   <script src="app/components/card.js"></script>
   <script src="app/components/index.js"></script>
 
-  <!-- Chat Modules -->
+  <!-- Chat Modules (panel first to load HTML) -->
+  <script src="app/chat/chat-panel.js"></script>
   <script src="app/chat/chat-ui.js"></script>
   <script src="app/chat/chat-handler.js"></script>
   <script src="app/chat/chat-features.js"></script>
 
   <!-- Feature Modules -->
+  <!-- Knowledge Modules (panel first to load HTML) -->
+  <script src="app/knowledge/knowledge-panel.js"></script>
   <script src="app/knowledge/knowledge-ui.js"></script>
+  <script src="app/experience/experience-panel.js"></script>
+  <!-- CAE Modules (panel first to load HTML) -->
+  <script src="app/cae/cae-panel.js"></script>
   <script src="app/cae/cae-workbench.js"></script>
   <script src="app/settings/model-download.js"></script>
   <script src="app/settings/status-bar.js"></script>
@@ -1479,6 +812,92 @@
 
   <!-- Main Application Entry -->
   <script src="app/main.js"></script>
+
+  <!-- 用户知识库 JavaScript -->
+  <script>
+  const TAG_COLORS = {
+    '力学':  '#00d4ff', '材料':  '#7b2ff7', '设计':  '#ffd166',
+    '制造':  '#00ff88', '热力学':'#ff6b35', '控制':  '#a78bfa',
+    '有限元':'#34d399', '流体':  '#38bdf8', '摩擦学':'#fb923c',
+  };
+  const TAG_ICONS = {
+    '力学':'⚙️','材料':'🔬','设计':'📐','制造':'🔧',
+    '热力学':'🔥','控制':'🎛️','有限元':'📊','流体':'💧','摩擦学':'⚡',
+  };
+
+  async function refreshUserBooks() {
+    const btn  = document.getElementById('refresh-btn');
+    const grid = document.getElementById('user-book-grid');
+
+    if (!btn || !grid) return;
+
+    btn.classList.add('spinning');
+    btn.disabled = true;
+
+    grid.innerHTML = Array(4).fill(0)
+      .map(() => '<div class="book-skeleton"></div>').join('');
+
+    try {
+      const res = await fetch('/api/knowledge/list');
+      const books = await res.json();
+      renderUserBooks(books);
+      showToast('已加载 ' + books.length + ' 本书籍', 'success');
+    } catch {
+      const demo = [
+        { id:'1', title:'机械设计手册', author:'闻邦椿', edition:'第6版', tags:['设计'], chunks:1420 },
+        { id:'2', title:'材料力学',     author:'刘鸿文', edition:'第6版', tags:['力学'], chunks:980  },
+        { id:'3', title:'工程热力学',   author:'曾丹苓', edition:'第5版', tags:['热力学'], chunks:620 },
+        { id:'4', title:'有限元分析',   author:'王勖成', edition:'第2版', tags:['有限元'], chunks:530 },
+      ];
+      renderUserBooks(demo);
+      showToast('已加载 ' + demo.length + ' 本书籍', 'success');
+    } finally {
+      btn.classList.remove('spinning');
+      btn.disabled = false;
+    }
+  }
+
+  function renderUserBooks(books) {
+    const grid  = document.getElementById('user-book-grid');
+    const count = document.getElementById('user-book-count');
+
+    if (!grid) return;
+
+    // 确保 books 是数组
+    if (!Array.isArray(books)) {
+      books = [];
+    }
+
+    if (count) count.textContent = books.length + ' 本';
+
+    if (!books.length) {
+      grid.innerHTML = '<div class="kb-empty-state"><div class="kb-empty-icon">📂</div><div class="kb-empty-text">还没有添加书籍</div><div class="kb-empty-sub">点击「添加书籍」导入 PDF 或文本文件</div></div>';
+      return;
+    }
+
+    grid.innerHTML = books.map(b => {
+      const tag   = (b.tags || [])[0] || '其他';
+      const color = TAG_COLORS[tag] || '#00d4ff';
+      const icon  = TAG_ICONS[tag]  || '📘';
+      return '<div class="user-book-card" style="--card-color:' + color + '" onclick="openBook(\'' + b.id + '\')"><div class="card-status ready"></div><div class="card-icon">' + icon + '</div><div class="card-title">' + b.title + '</div><div class="card-author">' + (b.author || '未知作者') + '</div><div class="card-tag" style="background:' + color + '1a;color:' + color + ';border-color:' + color + '33">' + tag + '</div><div class="card-chunks">' + (b.chunks || 0) + ' 个片段</div></div>';
+    }).join('');
+  }
+
+  let _toastTimer;
+  function showToast(msg, type) {
+    type = type || '';
+    const t = document.getElementById('kb-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'kb-toast show ' + type;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.className = 'kb-toast', 2500);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(refreshUserBooks, 500);
+  });
+  </script>
 
   <!-- 添加书籍弹窗 -->
   <div id="addBookModal" class="modal-overlay" onclick="closeModalOutside(event)">

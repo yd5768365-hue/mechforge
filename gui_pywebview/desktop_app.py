@@ -452,7 +452,6 @@ class WindowAPI:
                     "All Files (*.*)",
                     "*.*",
                 ),
-                title="Select GGUF Model File",
             )
             if result and len(result) > 0:
                 return result[0]
@@ -473,7 +472,6 @@ class WindowAPI:
             result = self._window.create_file_dialog(
                 webview.OPEN_DIALOG,
                 file_types=file_types,
-                title=title,
             )
             if result and len(result) > 0:
                 return result[0]
@@ -491,7 +489,6 @@ class WindowAPI:
 
             result = self._window.create_file_dialog(
                 webview.FOLDER_DIALOG,
-                title=title,
             )
             if result and len(result) > 0:
                 return result[0]

@@ -1,0 +1,226 @@
+<!-- Knowledge Panel - 知识库界面 -->
+<div class="tab-panel" id="knowledge-panel">
+  <!-- 工业风背景 -->
+  <div class="industrial-background"></div>
+
+  <!-- 工业网格 - 粗细不均 + 烧蚀感 -->
+  <svg class="industrial-grid" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- 粗线条 - 主要应力线 -->
+      <pattern id="ind-grid-thick" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+        <path d="M0 60 Q60 55, 120 60" class="grid-thick" fill="none"/>
+        <path d="M60 0 Q55 60, 60 120" class="grid-thick" fill="none"/>
+      </pattern>
+      <!-- 中等线条 - 普通加工线 -->
+      <pattern id="ind-grid-medium" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="30" x2="60" y2="30" class="grid-medium"/>
+        <line x1="30" y1="0" x2="30" y2="60" class="grid-medium"/>
+      </pattern>
+      <!-- 细线条 - 细微划痕 -->
+      <pattern id="ind-grid-thin" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="15" x2="30" y2="15" class="grid-thin"/>
+        <line x1="15" y1="0" x2="15" y2="30" class="grid-thin"/>
+      </pattern>
+      <!-- 烧蚀线条 - 模糊断裂 -->
+      <pattern id="ind-grid-burn" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+        <path d="M0 40 Q20 35, 40 40 T80 40" class="grid-burn" fill="none"/>
+        <path d="M40 0 Q35 20, 40 40 T40 80" class="grid-burn" fill="none"/>
+      </pattern>
+      <!-- 热影响区线条 -->
+      <pattern id="ind-grid-heat" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="50" x2="100" y2="50" class="grid-heat"/>
+        <line x1="50" y1="0" x2="50" y2="100" class="grid-heat"/>
+      </pattern>
+      <!-- 断裂线 -->
+      <pattern id="ind-grid-broken" x="0" y="0" width="45" height="45" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="22" x2="45" y2="22" class="grid-broken"/>
+        <line x1="22" y1="0" x2="22" y2="45" class="grid-broken"/>
+      </pattern>
+      <!-- 警示网格 -->
+      <pattern id="ind-grid-alert" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="200" height="3" class="grid-alert" fill="none"/>
+        <rect x="0" y="197" width="200" height="3" class="grid-alert" fill="none"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#ind-grid-thick)" opacity="0.5"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-medium)" opacity="0.4"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-thin)" opacity="0.3"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-burn)" opacity="0.35"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-heat)" opacity="0.25"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-broken)" opacity="0.3"/>
+    <rect width="100%" height="100%" fill="url(#ind-grid-alert)" opacity="0.2"/>
+  </svg>
+
+  <!-- 金属尘埃粒子容器 -->
+  <div class="metal-dust-container" id="metal-dust-container"></div>
+
+  <!-- 热应力波脉冲容器 -->
+  <div class="heat-pulse-container" id="heat-pulse-container"></div>
+
+  <div class="panel-header">
+    <span class="header-mark">锻造</span>
+    <h2>知识库</h2>
+    <p>机械工程专业书籍库</p>
+    <span class="archive-id">MECHFORGE-KB-V3.0</span>
+  </div>
+
+  <!-- 分类标签 -->
+  <div class="knowledge-tags" id="knowledge-tags">
+    <span class="knowledge-tag active" data-filter="all">全部</span>
+    <span class="knowledge-tag" data-filter="mechanics">力学</span>
+    <span class="knowledge-tag" data-filter="materials">材料</span>
+    <span class="knowledge-tag" data-filter="design">设计</span>
+    <span class="knowledge-tag" data-filter="manufacturing">制造</span>
+    <span class="knowledge-tag" data-filter="thermo">热力学</span>
+    <span class="knowledge-tag" data-filter="control">控制</span>
+    <span class="knowledge-tag" data-filter="fea">有限元</span>
+    <span class="knowledge-tag" data-filter="fluid">流体</span>
+    <span class="knowledge-tag" data-filter="tribology">摩擦学</span>
+  </div>
+
+  <div class="search-container">
+    <div class="search-wrapper">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input type="text" id="knowledge-search" placeholder="搜索书籍名称、作者或关键词...">
+      <button id="search-btn">搜索</button>
+    </div>
+  </div>
+
+  <!-- 书籍轮播区域 -->
+  <div class="book-carousel-section" id="book-carousel-section">
+    <div class="book-carousel-header">
+      <h3>推荐书籍</h3>
+      <div class="carousel-nav">
+        <button class="add-book-btn" onclick="openAddBookModal()" title="添加书籍到知识库">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          添加书籍
+        </button>
+        <button class="carousel-nav-btn" id="carousel-prev" title="上一页">‹</button>
+        <button class="carousel-nav-btn" id="carousel-next" title="下一页">›</button>
+      </div>
+    </div>
+    <div class="book-carousel" id="book-carousel"></div>
+  </div>
+
+  <!-- 搜索结果 / 全部书籍列表 -->
+  <div class="search-results" id="search-results"></div>
+
+  <!-- 详情抽屉 - 全息投影机密板 -->
+  <div class="detail-overlay" id="detail-overlay"></div>
+  <div class="detail-drawer" id="detail-drawer">
+    <!-- 能量线边框 -->
+    <div class="drawer-energy-border">
+      <div class="energy-line top"></div>
+      <div class="energy-line right"></div>
+      <div class="energy-line bottom"></div>
+      <div class="energy-line left"></div>
+      <div class="energy-corner tl"></div>
+      <div class="energy-corner tr"></div>
+      <div class="energy-corner bl"></div>
+      <div class="energy-corner br"></div>
+    </div>
+
+    <!-- 关闭按钮 -->
+    <button class="drawer-close" id="drawer-close" title="关闭档案">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- 抽屉内容 -->
+    <div class="drawer-content" id="drawer-content">
+      <!-- 头部 -->
+      <div class="drawer-header">
+        <div class="drawer-classification">MechForge 知识库 // 书籍详情</div>
+        <div class="drawer-title" id="drawer-title"></div>
+        <div class="drawer-badges" id="drawer-badges"></div>
+      </div>
+
+      <!-- 元信息 -->
+      <div class="drawer-meta" id="drawer-meta"></div>
+
+      <!-- 分隔线 -->
+      <div class="drawer-divider">
+        <div class="divider-line"></div>
+        <div class="divider-glow"></div>
+      </div>
+
+      <!-- 主体内容 -->
+      <div class="drawer-body" id="drawer-body"></div>
+
+      <!-- 底部 -->
+      <div class="drawer-footer">
+        <a class="drawer-source" id="drawer-source" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          查看源文档
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       用户知识库 - 底部书籍网格
+  ══════════════════════════════════════════════ -->
+<style>
+.user-kb-header{display:flex;align-items:center;justify-content:space-between;padding:16px 4px 12px;margin-bottom:14px}
+.user-kb-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#e0f7ff}
+.user-kb-dot{width:6px;height:6px;border-radius:50%;background:#00d4ff;box-shadow:0 0 6px #00d4ff;flex-shrink:0}
+.user-kb-count{font-size:12px;font-weight:400;color:rgba(160,196,212,0.55)}
+.user-kb-actions{display:flex;gap:8px}
+.kb-refresh-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;background:transparent;border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:rgba(160,196,212,0.7);font-size:12px;cursor:pointer;transition:all .2s}
+.kb-refresh-btn:hover{border-color:rgba(0,212,255,0.6);color:#00d4ff;background:rgba(0,212,255,0.06)}
+.kb-add-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.45);border-radius:6px;color:#00d4ff;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.kb-add-btn:hover{background:rgba(0,212,255,0.2)}
+.user-kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;min-height:160px;padding:0 4px}
+.kb-empty-state{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 0;gap:8px}
+.kb-empty-icon{font-size:36px;opacity:.4}
+.kb-empty-text{font-size:13px;color:rgba(160,196,212,0.45)}
+.kb-empty-sub{font-size:11px;color:rgba(160,196,212,0.3)}
+.user-book-card{position:relative;border-radius:10px;border:1px solid rgba(0,212,255,0.15);background:rgba(255,255,255,0.02);padding:14px 12px 12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.user-book-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--card-color,#00d4ff),transparent)}
+.user-book-card:hover{border-color:rgba(0,212,255,0.4);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3)}
+.card-icon{font-size:26px;text-align:center;padding:6px 0 2px}
+.card-title{font-size:12.5px;font-weight:600;color:#e0f7ff;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-author{font-size:11px;color:rgba(160,196,212,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;align-self:flex-start}
+.card-chunks{font-size:10px;color:rgba(160,196,212,0.35)}
+.card-status{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%}
+.card-status.ready{background:#00ff88;box-shadow:0 0 5px #00ff88}
+.kb-toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(13,31,45,0.95);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:9px 20px;font-size:13px;color:#e0f7ff;opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
+.kb-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.kb-toast.success{border-color:rgba(0,255,136,0.4);color:#00ff88}
+.kb-toast.error{border-color:rgba(255,77,109,0.4);color:#ff4d6d}
+</style>
+
+  <div class="user-kb-header">
+    <div class="user-kb-title">
+      <span class="user-kb-dot"></span>
+      我的知识库
+      <span class="user-kb-count" id="user-book-count">0 本</span>
+    </div>
+    <div class="user-kb-actions">
+      <button class="kb-refresh-btn" id="refresh-btn" onclick="refreshUserBooks()">刷新</button>
+      <button class="kb-add-btn" onclick="openAddBookModal()">+ 添加书籍</button>
+    </div>
+  </div>
+
+  <div class="user-kb-grid" id="user-book-grid">
+    <div class="kb-empty-state" id="kb-empty">
+      <div class="kb-empty-icon">📂</div>
+      <div class="kb-empty-text">还没有添加书籍</div>
+      <div class="kb-empty-sub">点击「添加书籍」导入文件</div>
+    </div>
+  </div>
+
+  <div class="kb-toast" id="kb-toast"></div>
+</div>

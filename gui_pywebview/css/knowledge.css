@@ -1,0 +1,855 @@
+/* ═══════════════════════════════════════════════════════════════
+   Knowledge Panel - 知识库界面样式
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 面板基础 */
+#knowledge-panel {
+  position: relative;
+  background: transparent;
+}
+
+/* 工业风背景 */
+#knowledge-panel .industrial-background {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(10, 14, 20, 0.97) 0%,
+    rgba(5, 8, 12, 0.98) 50%,
+    rgba(3, 5, 8, 0.99) 100%);
+  z-index: 0;
+}
+
+/* 工业网格 */
+#knowledge-panel .industrial-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 面板头部 - 锻造铭牌风格 */
+#knowledge-panel .panel-header {
+  position: relative;
+  padding: 32px 28px 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 37, 47, 0.95) 0%,
+    rgba(15, 21, 28, 0.9) 50%,
+    rgba(5, 7, 15, 0.95) 100%
+  );
+  border-bottom: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+#knowledge-panel .panel-header::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 229, 255, 0.3) 20%,
+    rgba(0, 229, 255, 0.5) 50%,
+    rgba(0, 229, 255, 0.3) 80%,
+    transparent 100%);
+}
+
+#knowledge-panel .panel-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 28px;
+  right: 28px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 229, 255, 0.1) 50%,
+    transparent 100%);
+}
+
+#knowledge-panel .panel-header h2 {
+  font-family: 'Chakra Petch', 'Noto Sans SC', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #e0f7ff;
+  margin: 0 0 8px 0;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  position: relative;
+  display: inline-block;
+}
+
+#knowledge-panel .panel-header h2::before {
+  content: '//';
+  position: absolute;
+  left: -35px;
+  color: rgba(0, 229, 255, 0.4);
+  font-size: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#knowledge-panel .panel-header p {
+  font-size: 13px;
+  color: rgba(160, 196, 212, 0.6);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+#knowledge-panel .panel-header .header-mark {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  font-size: 10px;
+  color: rgba(0, 229, 255, 0.4);
+  letter-spacing: 2px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+#knowledge-panel .panel-header .archive-id {
+  position: absolute;
+  bottom: 8px;
+  right: 28px;
+  font-size: 10px;
+  color: rgba(0, 229, 255, 0.3);
+  letter-spacing: 1px;
+}
+
+/* 分类标签 */
+#knowledge-panel .knowledge-tags {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 28px;
+  background: rgba(15, 21, 28, 0.8);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+#knowledge-panel .knowledge-tag {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: rgba(160, 196, 212, 0.7);
+  background: rgba(0, 20, 30, 0.4);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#knowledge-panel .knowledge-tag:hover {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.4);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+#knowledge-panel .knowledge-tag.active {
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+/* 搜索容器 */
+#knowledge-panel .search-container {
+  position: relative;
+  z-index: 2;
+  padding: 16px 28px;
+  background: rgba(15, 21, 28, 0.6);
+}
+
+#knowledge-panel .search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#knowledge-panel .search-wrapper svg {
+  position: absolute;
+  left: 14px;
+  color: rgba(0, 229, 255, 0.4);
+  pointer-events: none;
+}
+
+#knowledge-panel .search-wrapper input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background: rgba(0, 20, 30, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 6px;
+  color: #e0f7ff;
+  font-size: 14px;
+  transition: all 0.25s ease;
+}
+
+#knowledge-panel .search-wrapper input:focus {
+  outline: none;
+  border-color: rgba(0, 229, 255, 0.6);
+  background: rgba(0, 30, 45, 0.7);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+}
+
+#knowledge-panel .search-wrapper input::placeholder {
+  color: rgba(160, 196, 212, 0.4);
+}
+
+#knowledge-panel #search-btn {
+  position: absolute;
+  right: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 180, 216, 0.15) 100%);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 4px;
+  color: #00e5ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#knowledge-panel #search-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.35) 0%, rgba(0, 180, 216, 0.3) 100%);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* 书籍轮播区域 */
+#knowledge-panel .book-carousel-section {
+  position: relative;
+  z-index: 2;
+  padding: 20px 28px;
+}
+
+#knowledge-panel .book-carousel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#knowledge-panel .book-carousel-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0f7ff;
+  margin: 0;
+}
+
+#knowledge-panel .carousel-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#knowledge-panel .add-book-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  color: #00e5ff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .add-book-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+}
+
+#knowledge-panel .carousel-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 20, 30, 0.5);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  color: rgba(160, 196, 212, 0.7);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .carousel-nav-btn:hover {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+#knowledge-panel .book-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+#knowledge-panel .book-carousel::-webkit-scrollbar {
+  height: 4px;
+}
+
+#knowledge-panel .book-carousel::-webkit-scrollbar-track {
+  background: rgba(0, 20, 30, 0.3);
+  border-radius: 2px;
+}
+
+#knowledge-panel .book-carousel::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
+}
+
+/* 书籍卡片 */
+#knowledge-panel .book-card {
+  flex-shrink: 0;
+  width: 140px;
+  padding: 16px;
+  background: rgba(0, 20, 30, 0.4);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#knowledge-panel .book-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 229, 255, 0.4);
+  background: rgba(0, 40, 60, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+              0 0 20px rgba(0, 229, 255, 0.1);
+}
+
+#knowledge-panel .book-card-icon {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#knowledge-panel .book-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0f7ff;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#knowledge-panel .book-card-meta {
+  font-size: 11px;
+  color: rgba(160, 196, 212, 0.6);
+  margin-bottom: 8px;
+}
+
+#knowledge-panel .book-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#knowledge-panel .book-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 3px;
+  color: rgba(0, 229, 255, 0.8);
+}
+
+/* 搜索结果 */
+#knowledge-panel .search-results {
+  position: relative;
+  z-index: 2;
+  padding: 20px 28px;
+  display: none;
+}
+
+#knowledge-panel .search-results.active {
+  display: block;
+}
+
+#knowledge-panel .result-item {
+  position: relative;
+  padding: 16px 20px;
+  background: rgba(0, 20, 30, 0.4);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#knowledge-panel .result-item:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  background: rgba(0, 40, 60, 0.5);
+  transform: translateX(4px);
+}
+
+#knowledge-panel .result-type {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  background: rgba(0, 229, 255, 0.15);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+#knowledge-panel .result-type.critical {
+  background: rgba(255, 77, 109, 0.15);
+  color: #ff4d6d;
+  border-color: rgba(255, 77, 109, 0.3);
+}
+
+#knowledge-panel .result-type.warning {
+  background: rgba(255, 209, 102, 0.15);
+  color: #ffd166;
+  border-color: rgba(255, 209, 102, 0.3);
+}
+
+#knowledge-panel .result-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0f7ff;
+  margin-bottom: 6px;
+}
+
+#knowledge-panel .result-snippet {
+  font-size: 13px;
+  color: rgba(160, 196, 212, 0.7);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+#knowledge-panel .result-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: rgba(160, 196, 212, 0.5);
+}
+
+#knowledge-panel .result-placeholder {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(160, 196, 212, 0.4);
+  font-size: 14px;
+}
+
+/* 详情抽屉 */
+#knowledge-panel .detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+#knowledge-panel .detail-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#knowledge-panel .detail-drawer {
+  position: fixed;
+  top: 0;
+  right: -600px;
+  width: 600px;
+  max-width: 90vw;
+  height: 100vh;
+  background: linear-gradient(180deg,
+    rgba(10, 14, 20, 0.98) 0%,
+    rgba(5, 8, 12, 0.99) 100%);
+  z-index: 1001;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  border-left: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+#knowledge-panel .detail-drawer.open {
+  right: 0;
+}
+
+/* 详情抽屉内容 */
+#knowledge-panel .drawer-content {
+  padding: 32px 28px;
+}
+
+#knowledge-panel .drawer-header {
+  margin-bottom: 24px;
+}
+
+#knowledge-panel .drawer-classification {
+  font-size: 11px;
+  color: rgba(0, 229, 255, 0.5);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+#knowledge-panel .drawer-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e0f7ff;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+#knowledge-panel .drawer-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#knowledge-panel .drawer-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  color: #00e5ff;
+}
+
+#knowledge-panel .drawer-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: rgba(160, 196, 212, 0.7);
+  margin-bottom: 24px;
+}
+
+#knowledge-panel .drawer-divider {
+  position: relative;
+  height: 1px;
+  margin: 24px 0;
+}
+
+#knowledge-panel .divider-line {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 229, 255, 0.3) 50%,
+    transparent 100%);
+}
+
+#knowledge-panel .divider-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+#knowledge-panel .drawer-body {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(160, 196, 212, 0.9);
+}
+
+#knowledge-panel .drawer-footer {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+#knowledge-panel .drawer-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #00e5ff;
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .drawer-source:hover {
+  text-decoration: underline;
+}
+
+#knowledge-panel .drawer-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 20, 30, 0.5);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(160, 196, 212, 0.7);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .drawer-close:hover {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+/* 滚动条 */
+#knowledge-panel ::-webkit-scrollbar {
+  width: 6px;
+}
+
+#knowledge-panel ::-webkit-scrollbar-track {
+  background: rgba(0, 20, 30, 0.3);
+}
+
+#knowledge-panel ::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 3px;
+}
+
+#knowledge-panel ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
+/* 骨架屏动画 */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* 用户知识库区域样式 */
+#knowledge-panel .user-kb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 12px;
+  margin-bottom: 14px;
+}
+
+#knowledge-panel .user-kb-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0f7ff;
+}
+
+#knowledge-panel .user-kb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 6px #00d4ff;
+  flex-shrink: 0;
+}
+
+#knowledge-panel .user-kb-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(160, 196, 212, 0.55);
+}
+
+#knowledge-panel .user-kb-actions {
+  display: flex;
+  gap: 8px;
+}
+
+#knowledge-panel .kb-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 6px;
+  color: rgba(160, 196, 212, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .kb-refresh-btn:hover {
+  border-color: rgba(0, 212, 255, 0.6);
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.06);
+}
+
+#knowledge-panel .kb-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.45);
+  border-radius: 6px;
+  color: #00d4ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#knowledge-panel .kb-add-btn:hover {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+#knowledge-panel .user-kb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  min-height: 160px;
+  padding: 0 4px;
+}
+
+#knowledge-panel .kb-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 8px;
+}
+
+#knowledge-panel .kb-empty-icon {
+  font-size: 36px;
+  opacity: 0.4;
+}
+
+#knowledge-panel .kb-empty-text {
+  font-size: 13px;
+  color: rgba(160, 196, 212, 0.45);
+}
+
+#knowledge-panel .kb-empty-sub {
+  font-size: 11px;
+  color: rgba(160, 196, 212, 0.3);
+}
+
+#knowledge-panel .user-book-card {
+  position: relative;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px 12px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+#knowledge-panel .user-book-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--card-color, #00d4ff), transparent);
+}
+
+#knowledge-panel .user-book-card:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+#knowledge-panel .card-icon {
+  font-size: 26px;
+  text-align: center;
+  padding: 6px 0 2px;
+}
+
+#knowledge-panel .card-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #e0f7ff;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#knowledge-panel .card-author {
+  font-size: 11px;
+  color: rgba(160, 196, 212, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#knowledge-panel .card-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+#knowledge-panel .card-chunks {
+  font-size: 10px;
+  color: rgba(160, 196, 212, 0.35);
+}
+
+#knowledge-panel .card-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+#knowledge-panel .card-status.ready {
+  background: #00ff88;
+  box-shadow: 0 0 5px #00ff88;
+}
+
+#knowledge-panel .kb-toast {
+  position: fixed;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(13, 31, 45, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  color: #e0f7ff;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+#knowledge-panel .kb-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#knowledge-panel .kb-toast.success {
+  border-color: rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+}
+
+#knowledge-panel .kb-toast.error {
+  border-color: rgba(255, 77, 109, 0.4);
+  color: #ff4d6d;
+}

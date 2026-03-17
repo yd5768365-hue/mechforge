@@ -1,10 +1,245 @@
 /**
  * MechForge AI - Settings Panel
  * 设置面板控制器
+ * 完全独立：不依赖 index.html 的 CSS
  */
 
 (function() {
   'use strict';
+
+  // ==================== 加载自己的 CSS ====================
+  (function() {
+    const cssFiles = ['css/settings.css', 'css/industrial-theme.css'];
+    cssFiles.forEach(cssFile => {
+      if (!document.querySelector(`link[href="${cssFile}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = cssFile;
+        document.head.appendChild(link);
+      }
+    });
+  })();
+
+  // ==================== HTML 内容 ====================
+  const SETTINGS_PANEL_HTML = `
+<!-- Settings Panel -->
+<div class="tab-panel" id="settings-panel">
+  <!-- 工业风背景 -->
+  <div class="industrial-background"></div>
+
+  <!-- 面板头部 -->
+  <div class="panel-header">
+    <span class="header-mark">系统</span>
+    <h2>设置</h2>
+    <p>应用配置与个性化选项</p>
+    <span class="archive-id">MECHFORGE-CFG-V3.0</span>
+  </div>
+
+  <!-- 可滑动设置内容区 -->
+  <div class="settings-scroll-container" id="settings-scroll">
+    <!-- API 配置 -->
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span class="section-icon">🔌</span>
+        <span>API 配置</span>
+      </div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">AI 服务提供商</div>
+            <div class="setting-desc">选择使用的 AI 后端服务</div>
+          </div>
+          <select class="setting-select" id="setting-provider">
+            <option value="ollama">Ollama (本地)</option>
+            <option value="gguf">GGUF (本地模型)</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">API Key</div>
+            <div class="setting-desc">在线服务所需的 API 密钥</div>
+          </div>
+          <input type="password" class="setting-input" id="setting-apikey" placeholder="sk-...">
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">模型名称</div>
+            <div class="setting-desc">使用的 AI 模型</div>
+          </div>
+          <input type="text" class="setting-input" id="setting-model" placeholder="gpt-4o-mini">
+        </div>
+      </div>
+    </div>
+
+    <!-- 界面设置 -->
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span class="section-icon">🎨</span>
+        <span>界面设置</span>
+      </div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">主题</div>
+            <div class="setting-desc">选择界面主题风格</div>
+          </div>
+          <select class="setting-select" id="setting-theme">
+            <option value="dark">深色 (默认)</option>
+            <option value="light">浅色</option>
+            <option value="industrial">工业风</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">语言</div>
+            <div class="setting-desc">界面显示语言</div>
+          </div>
+          <select class="setting-select" id="setting-language">
+            <option value="zh-CN">简体中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">字体大小</div>
+            <div class="setting-desc">调整界面字体大小</div>
+          </div>
+          <input type="range" class="setting-slider" id="setting-fontsize" min="12" max="20" value="14">
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Feed 设置 -->
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span class="section-icon">📡</span>
+        <span>Daily Feed 设置</span>
+      </div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">启用 Daily Feed</div>
+            <div class="setting-desc">在经验库显示每日知识推送</div>
+          </div>
+          <button type="button" class="setting-btn setting-btn-daily" id="setting-daily-enabled-btn">
+            开启
+          </button>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">每日推送数量</div>
+            <div class="setting-desc">每次生成的知识条目数</div>
+          </div>
+          <input type="range" class="setting-slider" id="setting-daily-count" min="1" max="5" value="3">
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">推送时间</div>
+            <div class="setting-desc">自动生成时间 (自动模式)</div>
+          </div>
+          <input type="time" class="setting-input" id="setting-daily-time" value="07:00">
+        </div>
+      </div>
+    </div>
+
+    <!-- 知识库设置 -->
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span class="section-icon">📚</span>
+        <span>知识库设置</span>
+      </div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">知识库路径</div>
+            <div class="setting-desc">本地知识库文件夹位置</div>
+          </div>
+          <div class="setting-path">
+            <input type="text" class="setting-input" id="setting-kb-path" readonly value="./knowledge">
+            <button class="setting-btn" id="btn-select-kb">选择</button>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">启用 RAG</div>
+            <div class="setting-desc">检索增强生成功能</div>
+          </div>
+          <label class="setting-toggle">
+            <input type="checkbox" id="setting-rag-enabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">RAGFlow 向导</div>
+            <div class="setting-desc">配置 RAGFlow 云端知识库（支持 OCR、表格解析）</div>
+          </div>
+          <button class="setting-btn primary" id="btn-ragflow-wizard" onclick="openRagflowWizard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            启动向导
+          </button>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-name">Obsidian 同步</div>
+            <div class="setting-desc">同步 Obsidian Vault 笔记到知识库</div>
+          </div>
+          <button class="setting-btn" id="btn-obsidian-sync" onclick="openObsidianSyncPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            配置
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关于 -->
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span class="section-icon">ℹ️</span>
+        <span>关于</span>
+      </div>
+      <div class="settings-card about-card">
+        <div class="about-logo">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#00e5ff" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="about-info">
+          <div class="about-name">MechForge AI</div>
+          <div class="about-version">版本 0.5.0</div>
+          <div class="about-desc">机械工程智能助手</div>
+        </div>
+        <div class="about-links">
+          <a href="#" class="about-link">文档</a>
+          <a href="#" class="about-link">GitHub</a>
+          <a href="#" class="about-link">反馈</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 保存按钮 -->
+    <div class="settings-actions">
+      <button class="settings-btn secondary" id="btn-reset">重置</button>
+      <button class="settings-btn primary" id="btn-save">保存设置</button>
+    </div>
+  </div>
+</div>
+`;
+
+  // 导出到全局
+  window.SettingsPanel = {
+    init: initSettingsPanel,
+    isInitialized: false,
+    html: SETTINGS_PANEL_HTML
+  };
 
   // 默认配置
   const DEFAULT_CONFIG = {
@@ -28,16 +263,42 @@
   const elements = {};
 
   /**
+   * 加载设置面板 HTML
+   */
+  function loadHtml() {
+    return new Promise((resolve) => {
+      const placeholder = document.getElementById('settings-panel-placeholder');
+
+      if (placeholder) {
+        placeholder.outerHTML = SETTINGS_PANEL_HTML;
+        console.log('[SettingsPanel] HTML 已加载到页面');
+      } else {
+        const existingPanel = document.getElementById('settings-panel');
+        if (!existingPanel) {
+          // 查找 experience-panel 并在其后插入
+          const experiencePanel = document.getElementById('experience-panel');
+          if (experiencePanel) {
+            experiencePanel.insertAdjacentHTML('afterend', SETTINGS_PANEL_HTML);
+          }
+        }
+      }
+
+      resolve();
+    });
+  }
+
+  /**
    * 初始化设置面板
    */
-  async function init() {
+  async function initSettingsPanel() {
+    if (window.SettingsPanel.isInitialized) {
+      return;
+    }
+
     console.log('[Settings] 初始化设置面板');
 
-    // 检查 DOM 元素是否存在
-    const scrollContainer = document.getElementById('settings-scroll');
-    if (scrollContainer) {
-      console.log('[Settings] scrollContainer overflowY:', getComputedStyle(scrollContainer).overflowY);
-    }
+    // 加载 HTML
+    await loadHtml();
 
     // 缓存 DOM 元素
     cacheElements();
@@ -50,7 +311,25 @@
 
     // 应用当前配置到 UI
     applyConfig();
+
+    window.SettingsPanel.isInitialized = true;
+    console.log('[Settings] 初始化完成');
   }
+
+  // 保留原有 init 别名
+  function init() {
+    return initSettingsPanel();
+  }
+
+  // 立即执行
+  loadHtml().then(() => {
+    cacheElements();
+    loadConfig().then(() => {
+      bindEvents();
+      applyConfig();
+      window.SettingsPanel.isInitialized = true;
+    });
+  });
 
   /**
    * 缓存 DOM 元素
@@ -431,10 +710,4 @@
     resetConfig
   };
 
-  // 自动初始化
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
 })();
