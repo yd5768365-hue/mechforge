@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-17
+
+### Added
+- **模块化框架** - 将 index.html 中的硬编码 HTML 抽取为独立 JS 模块
+  - `app/layout/sidebar.js` - 侧边栏模块
+  - `app/chat/chat-panel.js` + `.html` - 对话面板模块
+  - `app/knowledge/knowledge-panel.js` + `.html` - 知识库面板模块
+  - `app/cae/cae-panel.js` + `.html` - CAE 工作台模块
+  - `app/experience/experience-panel.js` + `.html` - 经验库模块
+  - `app/settings/settings-panel.js` + `.html` - 设置面板模块
+
+### Changed
+- **知识库界面完善**
+  - 添加「我的知识库」用户书籍管理区块
+  - 支持添加书籍、刷新列表功能
+  - 详情抽屉展示、标签筛选、搜索功能
+  - 工业风格 UI 优化
+
+### Added Files
+- `css/knowledge.css` - 知识库样式
+- `css/experience.css` - 经验库样式
+
 ## [0.4.0] - 2026-03-02
 
 ### Added

@@ -1,5 +1,35 @@
 
 
+## 2026年3月17日
+
+### 重构：项目框架模块化 + 知识库界面完善
+- **问题描述**：index.html 包含大量硬编码 HTML，结构混乱，难以维护
+- **解决方法**：
+  1. 将侧边栏和面板 HTML 抽取为独立 JS 模块
+  2. 新增 `app/layout/sidebar.js` 侧边栏模块
+  3. 新增 `app/chat/chat-panel.js` + `.html` 对话面板
+  4. 新增 `app/knowledge/knowledge-panel.js` + `.html` 知识库面板
+  5. 新增 `app/cae/cae-panel.js` + `.html` CAE 工作台面板
+  6. 新增 `app/experience/experience-panel.js` + `.html` 经验库面板
+  7. 新增 `app/settings/settings-panel.js` + `.html` 设置面板
+- **知识库完善**：
+  - 添加「我的知识库」用户书籍管理区块
+  - 支持添加书籍、刷新列表功能
+  - 详情抽屉展示、标签筛选、搜索功能
+  - 工业风格 UI 优化（热应力波、金属尘埃粒子效果）
+- **新增文件**：
+  - `app/layout/sidebar.js` - 侧边栏模块
+  - `app/chat/chat-panel.js`, `chat-panel.html` - 对话面板
+  - `app/knowledge/knowledge-panel.js`, `knowledge-panel.html` - 知识库面板
+  - `app/cae/cae-panel.js`, `cae-panel.html` - CAE 面板
+  - `app/experience/experience-panel.js`, `experience-panel.html` - 经验库面板
+  - `app/settings/settings-panel.js`, `settings-panel.html` - 设置面板
+  - `css/knowledge.css` - 知识库样式
+  - `css/experience.css` - 经验库样式
+- **修改文件**：
+  - `index.html` - 移除硬编码面板，改为动态加载
+  - `css/industrial-theme.css` - 优化工业主题效果
+
 ## 2026年3月8日
 
 ### 重构：PySide6 桌面应用迁移至 PyWebView
